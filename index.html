@@ -202,56 +202,48 @@
   </div>
 </article>
 
-<!-- DWG 004 RAVE MODE -->
-<section id="rave" class="pin dark" style="--h:250vh">
+<!-- DWG 004 RAVE MODE: a night cabin, built for the thing it was made for -->
+<section id="rave" class="pin dark" style="--h:620vh">
   <div class="sticky">
+    <canvas id="car" aria-label="A car cabin at night, its ambient light lines driven by Rave Mode"></canvas>
+    <p class="car-cap" id="carCapA" aria-hidden="true">Built for my desk.</p>
+    <p class="car-cap" id="carCapB" aria-hidden="true">Made for a car.</p>
     <div class="rave-inner">
       <header class="sheet-head on-dark">
         <span class="dwg">DWG 004</span>
         <h3>Rave Mode</h3>
-        <span class="tag">v2.1 · ESP32 · WLED · UDP · Python · FastAPI</span>
+        <span class="tag">v2.1 · Python · NumPy · FastAPI · WLED over UDP</span>
       </header>
       <div class="rave-grid">
         <div class="copy">
-          <p class="big">Turns my room into an extension of whatever's playing.</p>
-          <p>It hooks Windows WASAPI loopback directly, so there are no virtual cables. Each frame is split into bass and treble, only the transient energy punching above a moving floor is kept, and auto-gain plus attack/decay envelopes make a quiet ambient track and a heavy drop both read right.</p>
-          <p>Bass blooms from the centre of each segment and treble flashes at its edges, coloured by a three-colour palette pulled from the album art and lerped between tracks. Frames go out over UDP at 50 Hz to WLED on an ESP32. The strip around this section is running a browser port of that engine.</p>
+          <p class="big">Ambient light that plays along with whatever's on.</p>
+          <p>It reads Windows WASAPI loopback directly, with no virtual cables. Bass is the transient energy punching above a moving floor; treble is spectral flux behind a crest-factor gate, so hiss and pads don't strobe. Auto-gain and attack/decay envelopes let a quiet intro and a drop both land, and the colours come from the album art.</p>
+          <p class="port-note">It lights my desk today, but a car cabin is where it belongs: these four light zones are the real strip's four segments, run by a browser port of the same engine.</p>
           <ul class="spec on-dark">
+            <li><span>Output</span>UDP → WLED · 50 fps · ~20–30 ms</li>
             <li><span>Rig</span>197 × WS2812B · 4 segments</li>
-            <li><span>Latency</span>~20–30 ms end-to-end</li>
-            <li><span>Ships as</span>Windows installer</li>
           </ul>
           <p class="links"><a class="link" href="https://github.com/arshhjain/RAVE-MODE" target="_blank" rel="noopener">GitHub ↗</a> <a class="link" href="https://drive.google.com/drive/folders/1nj2Y85VmDmHyBLojrzciqGqGfaEA986O?usp=sharing" target="_blank" rel="noopener">Demo videos ↗</a></p>
-        </div>
-        <div class="rm-window" id="rmWindow">
-          <div class="rm-fluid" aria-hidden="true"><canvas id="fluid"></canvas></div>
-          <div class="rm-titlebar">
-            <span class="rm-hb" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="rm-name">RAVE MODE 2.1</span>
-            <label class="rm-power" title="Sound on / off">
-              <input type="checkbox" id="pPlay" aria-label="Play">
-              <span></span>
-            </label>
-          </div>
-          <div class="rm-main">
+          <div class="car-player" id="rmWindow">
+            <div class="rm-fluid" aria-hidden="true"><canvas id="fluid"></canvas></div>
             <div class="rm-cover" id="pCover">
               <img class="rm-art" id="pCoverImg" alt="">
               <img class="rm-art rm-art-next" id="pCoverNext" alt="">
             </div>
             <div class="rm-title-wrap">
               <b id="pTitle">Sound is off</b>
-              <span id="pArtist">Flip the switch · this section is the speaker</span>
+              <span id="pArtist">Flip the switch</span>
             </div>
-            <div class="rm-transport">
-              <button id="pNext" aria-label="Next track">Skip ⏭</button>
-            </div>
+            <label class="rm-power" title="Sound on / off">
+              <input type="checkbox" id="pPlay" aria-label="Play">
+              <span></span>
+            </label>
+            <button class="rm-skip" id="pNext" aria-label="Next track">⏭</button>
             <div class="rm-vibe">
               <input type="range" id="vibe" min="0" max="3" step="1" value="2" aria-label="Palette cone, cozy to rave">
               <div class="rm-ticks"><span>Cozy</span><span id="vibeName">Accurate</span><span>Rave</span></div>
             </div>
-            <div class="rm-meters" aria-hidden="true">
-              <i><b id="mBass"></b></i><i><b id="mTreb"></b></i>
-            </div>
+            <div class="rm-meters" aria-hidden="true"><i><b id="mBass"></b></i><i><b id="mTreb"></b></i></div>
           </div>
         </div>
       </div>
@@ -519,5 +511,6 @@
 </script>
 <script src="js/main.js"></script>
 <script type="module" src="js/cad3d.js"></script>
+<script type="module" src="js/car3d.js"></script>
 </body>
 </html>

@@ -601,6 +601,7 @@
     if (t.cover) {
       const img = new Image();
       img.onload = () => {
+        coverSrc = t.cover;
         flipCover(t.cover);
         try { candidates = extractCandidates(img); applyVibe(); } catch (e) { candidates = null; }
       };
@@ -628,6 +629,15 @@
   }
 
   audio.addEventListener("ended", nextTrack);
+  let coverSrc = "";
+  window.__rave = {
+    engine, fluid: fluidEl,
+    get title() { return started ? pTitle.textContent : ""; },
+    get artist() { return started ? pArtist.textContent : ""; },
+    get coverSrc() { return coverSrc; },
+    get on() { return soundOn; },
+    progress: () => (audio.duration ? audio.currentTime / audio.duration : 0)
+  };
   audio.addEventListener("error", () => {
     if (!audio.src) return;
     bad.add(order[pos_i]);
@@ -714,7 +724,7 @@
   new IntersectionObserver((e) => { raveVisible = e[0].isIntersecting; }, { rootMargin: "40% 0px" }).observe(rave);
 
   function frame(now) {
-    canvas.style.opacity = lastDk > 0 ? lastDk.toFixed(3) : "0";
+    canvas.style.opacity = !window.__carActive && lastDk > 0 ? lastDk.toFixed(3) : "0";
     const dt = lastT ? Math.min(0.1, (now - lastT) / 1000) : 0.016;
     lastT = now;
     updatePins();
@@ -724,7 +734,7 @@
       if (raveVisible) {
         const rr = rave.getBoundingClientRect();
         const span = rr.height - window.innerHeight;
-        drawLeds(rr, window.innerHeight, span > 0 ? clamp(-rr.top / span, 0, 1) : 0);
+        if (!window.__carActive) drawLeds(rr, window.innerHeight, span > 0 ? clamp(-rr.top / span, 0, 1) : 0);
         drawFluid(dt);
       }
       mBass.style.width = (engine.liveBass * 100).toFixed(1) + "%";

@@ -592,3 +592,61 @@ main, .contact { position: relative; z-index: 1; }
 
 /* keep the sheets either side of Rave Mode close, so the morph carries straight through */
 #f1 { margin-bottom: 4vh; }
+
+/* ---------- DWG 004 as a car cabin ---------- */
+#rave.has-car .sticky { background: #050507; }
+#car { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#rave:not(.has-car) #car { display: none; }
+.car-cap {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; z-index: 3;
+  font: 800 clamp(40px, 7.5vw, 112px)/1 var(--display); font-stretch: 125%; letter-spacing: -.02em;
+  color: #f2efe6; text-shadow: 0 6px 50px rgba(0, 0, 0, .7); white-space: nowrap; pointer-events: none; opacity: 0;
+}
+#rave:not(.has-car) .car-cap { display: none; }
+#rave.has-car .rave-inner {
+  position: absolute; inset: 0; z-index: 2; max-width: none; margin: 0;
+  padding: 80px var(--pad) 28px; justify-content: flex-start;
+  opacity: var(--hold, 0); transform: translateY(calc((1 - var(--hold, 0)) * 16px));
+}
+#rave.has-car:not(.holding) .rave-inner { visibility: hidden; }
+#rave.has-car .rave-inner > .sheet-head { max-width: 420px; grid-template-columns: auto 1fr; }
+#rave.has-car .rave-inner > .sheet-head .tag { grid-column: 1 / -1; text-align: left; }
+#rave.has-car .rave-grid { grid-template-columns: minmax(0, 420px); }
+#rave.has-car .copy p:not(.big) { font-size: 13.5px; }
+#rave.has-car .copy .big { font-size: clamp(19px, 1.6vw, 23px); }
+#rave.has-car .spec.on-dark { margin: 14px 0; }
+
+/* compact Rave Mode player inside the card */
+.car-player {
+  position: relative; overflow: hidden; margin-top: 16px; border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, .1); background: #030305;
+  display: grid; grid-template-columns: 56px minmax(0, 1fr) auto auto; gap: 10px 12px; align-items: center;
+  padding: 12px; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: #fff;
+}
+.car-player > :not(.rm-fluid) { position: relative; z-index: 1; }
+.car-player .rm-cover { width: 56px; border-radius: 8px; }
+.car-player .rm-art { border-radius: 8px; }
+.car-player .rm-title-wrap { justify-items: start; text-align: left; }
+.car-player .rm-title-wrap b { font-size: 14px; max-width: 100%; }
+.car-player .rm-title-wrap span { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.rm-skip {
+  width: 36px; height: 36px; border-radius: 50%; cursor: pointer; color: #fff; font-size: 13px;
+  background: rgba(10, 10, 15, .45); border: 1px solid rgba(255, 255, 255, .14);
+}
+.rm-skip:hover, .rm-skip:focus-visible { background: rgba(255, 255, 255, .18); outline: none; }
+.car-player .rm-vibe, .car-player .rm-meters { grid-column: 1 / -1; max-width: none; }
+.car-player #fluid { filter: blur(22px) saturate(2.4); }
+
+@media (max-width: 760px) {
+  #rave.has-car .rave-inner { padding: 64px 12px 12px; justify-content: flex-end; }
+  #rave.has-car .rave-inner > .sheet-head { display: none; }
+  #rave.has-car .rave-grid { grid-template-columns: 1fr; }
+  #rave.has-car .copy { padding: 14px; }
+  #rave.has-car .copy p:not(.big), #rave.has-car .copy .spec, #rave.has-car .copy .links { display: none; }
+  #rave.has-car .copy .big { font-size: 16px; margin-bottom: 0; }
+  .car-cap { font-size: 40px; }
+}
+
+@media (max-height: 880px) and (min-width: 761px) {
+  #rave.has-car .copy p:not(.big):not(.port-note), #rave.has-car .copy .spec { display: none; }
+}
