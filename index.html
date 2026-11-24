@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arsh Jain — systems, firmware, airframes</title>
+<meta name="description" content="Arsh Jain — CS (AI/ML) undergrad at UPES Dehradun. Embedded systems, real-time audio, telemetry pipelines, CAD and the occasional airframe.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500;600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="mark" href="#hero">A.JAIN<span>/DWG-SET 2026.11</span></a>
+  <nav>
+    <a href="#work">Work</a>
+    <a href="#rave">Rave Mode</a>
+    <a href="#off">Off the clock</a>
+    <a href="#contact">Contact</a>
+  </nav>
+  <button class="sound" id="soundBtn" aria-pressed="false" aria-label="Toggle sound">
+    <span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+    <span class="sound-label">SOUND OFF</span>
+  </button>
+</header>
+
+<div class="hud" id="hud" aria-hidden="true">
+  <div><b>SRC</b> DWG 004 · RAVE MODE</div>
+  <div><b>TRK</b> <span id="hudTrk">—</span></div>
+  <div><b>DST</b> <span id="hudDist">—</span></div>
+  <div><b>GAIN</b> <span id="hudGain">—</span></div>
+  <div><b>LPF</b> <span id="hudLpf">—</span></div>
+</div>
+
+<main>
+
+<!-- ============ HERO ============ -->
+<section id="hero" class="pin" style="--h:230vh">
+  <div class="sticky">
+    <div class="frame">
+      <div class="zones zones-top" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span></div>
+      <div class="zones zones-side" aria-hidden="true"><span>A</span><span>B</span><span>C</span><span>D</span></div>
+
+      <div class="hero-copy">
+        <p class="eyebrow">DWG 000 — GENERAL ARRANGEMENT</p>
+        <h1>Arsh<br>Jain<span class="dot">.</span></h1>
+        <p class="lede">I think in systems. Not in numbers so much as in how things work, and how they talk to each other.</p>
+        <p class="sub">CS undergrad (AI/ML) at UPES Dehradun. Firmware, real-time audio, telemetry pipelines, CAD, and the occasional airframe.</p>
+      </div>
+
+      <div class="hero-copy2">
+        <p class="eyebrow">EXPLODED VIEW</p>
+        <p class="lede">Four layers. Almost everything I build cuts through at least two of them.</p>
+      </div>
+
+      <div class="stack-wrap" aria-hidden="true">
+        <div class="stack">
+          <div class="plate p0"><em>STRUCTURES</em></div>
+          <div class="plate p1"><em>HARDWARE</em></div>
+          <div class="plate p2"><em>NETWORK</em></div>
+          <div class="plate p3"><em>SOFTWARE</em></div>
+        </div>
+        <ol class="callouts">
+          <li class="c0"><b>4</b><span><strong>Structures</strong><small>Fusion 360 · Shapr3D</small></span></li>
+          <li class="c1"><b>3</b><span><strong>Hardware</strong><small>ESP32 · Pi · WS2812B</small></span></li>
+          <li class="c2"><b>2</b><span><strong>Network</strong><small>UDP · WebSockets</small></span></li>
+          <li class="c3"><b>1</b><span><strong>Software</strong><small>Python · FastAPI · ML</small></span></li>
+        </ol>
+      </div>
+
+      <div class="titleblock">
+        <div><small>DRAWN</small>A. JAIN</div>
+        <div><small>SCALE</small>1:1</div>
+        <div><small>SHEET</small>01 / 11</div>
+        <div><small>REV</small>2026.11</div>
+        <div class="wide"><small>TITLE</small>PORTFOLIO — ASSEMBLY, EXPLODED VIEW</div>
+      </div>
+
+      <p class="scroll-hint">SCROLL TO EXPLODE ↓</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BUILDS INDEX ============ -->
+<section id="origin" class="pin" style="--h:300vh">
+  <div class="sticky">
+    <div class="origin-head">
+      <p class="eyebrow">DWG 00A — INDEX</p>
+      <h2>Things that were made in pure boredom.</h2>
+    </div>
+    <div class="track" id="originTrack">
+      <a class="o-card hot" href="#rave"><span class="o-n">DWG 004</span><h3>Rave Mode</h3><p>The room reacts to whatever's playing.</p><span class="o-tags">ESP32 · FFT · UDP · WLED</span></a>
+      <a class="o-card" href="#ambilight"><span class="o-n">DWG 005</span><h3>Ambilight</h3><p>The edges of the screen, mirrored onto the wall.</p><span class="o-tags">Raspberry Pi · Hyperion · ESP8266</span></a>
+      <a class="o-card" href="#f1"><span class="o-n">DWG 003</span><h3>F1 Overtakability</h3><p>Which circuits actually produce racing, and which just host it.</p><span class="o-tags">FastF1 · pandas · scikit-learn</span></a>
+      <a class="o-card" href="#rc"><span class="o-n">DWG 006</span><h3>RC Fixed-Wing</h3><p>1.5 m of foam, 4–5 flights, a lot of props.</p><span class="o-tags">Depron · brushless · servos</span></a>
+      <a class="o-card" href="#cad"><span class="o-n">DWG 007</span><h3>CMF Speaker, rebuilt</h3><p>A recently released speaker, recreated part by part in CAD.</p><span class="o-tags">Fusion 360 · Shapr3D</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WORK ============ -->
+<section id="work" class="work-head">
+  <p class="eyebrow">DRAWING SET — 7 SHEETS</p>
+  <h2>Work.</h2>
+</section>
+
+<!-- DWG 001 LectureLens -->
+<article class="sheet" id="lecturelens" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 001</span>
+    <h3>LectureLens</h3>
+    <span class="tag">Sopra Steria · SWE Intern · Jun–Jul 2026</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">A document-intelligence pipeline that pulls structured syllabus topics out of dense lecture PDFs.</p>
+      <p>EasyOCR and Gemini 1.5 Flash do the extraction. Behind them sits a two-tier cache: an O(1) SHA-256 hash for exact text, and a cosine-similarity fallback at ≥ 0.94 so whitespace and formatting noise doesn't trigger another LLM call.</p>
+      <p><b>The problem I spent the most time on:</b> subsets. One student uploads a 10-chapter PDF, another uploads just 5 of those chapters. The hashes don't match, but every answer for those 5 chapters already exists from the first lookup.</p>
+      <p>The cache only stores the LLM's structured response, not the PDF, so the cost per document stays tiny.</p>
+      <ul class="spec">
+        <li><span>Stack</span>FastAPI · SQLite · EasyOCR · Gemini 1.5 Flash · Vanilla JS</li>
+        <li><span>Also</span>Deterministic JSON schemas · topic normalisation · Khan Academy-style progress · time-decay leaderboard</li>
+      </ul>
+      <a class="link" href="https://github.com/arshhjain/LectureLens" target="_blank" rel="noopener">github.com/arshhjain/LectureLens ↗</a>
+    </div>
+    <figure class="terminal" aria-label="Pipeline trace">
+      <div class="term-bar"><i></i><i></i><i></i><span>lecturelens — pipeline trace</span></div>
+      <pre id="term"></pre>
+    </figure>
+  </div>
+</article>
+
+<!-- DWG 002 Turbine -->
+<article class="sheet" id="turbine" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 002</span>
+    <h3>Turbine Blade Defect Triage</h3>
+    <span class="tag">Deep Learning · Sem V · PyTorch</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">Triage for drone inspection photos of wind turbine blades: what kind of damage it is, and how soon someone needs to climb up there.</p>
+      <p>An ImageNet-pretrained ResNet50, fine-tuned end to end on 1,065 drone images across six defect classes, with CBAM attention and a separate ordinal head that predicts severity from L1 to L5.</p>
+      <p><b>The part that mattered most was the split.</b> Consecutive frames are near-duplicates of the same blade, so a random split quietly leaks test images into training. I grouped the frames into 361 inspection sequences, and no group crosses train, validation and test.</p>
+      <p>Honest results: deep features beat hand-crafted ones by a mile, but CBAM's edge over a plain ResNet50 is one image out of 159, which isn't statistically significant (McNemar p = 0.69). Every image in the dataset contains a defect, so it can't yet say a blade is healthy. It's scoped as triage of damage that's already been reported.</p>
+      <ul class="spec">
+        <li><span>Data</span>Figshare WT blade set · 1,065 images · 6 classes · 747 / 159 / 159 leak-free split</li>
+        <li><span>Severity</span>Learned head: MAE 0.346 levels, 71.1% exact, against 0.415 for the best class lookup. The labels come from my own proxy rule, not an industry standard.</li>
+      </ul>
+    </div>
+    <div class="stack-col">
+      <figure class="media photo-fixed">
+        <img alt="Grad-CAM heatmap over a cracked turbine blade" src="assets/media/turbine-gradcam.jpg" loading="lazy">
+        <figcaption>Grad-CAM, crack class (training-split image)</figcaption>
+      </figure>
+      <table class="revs results">
+        <thead><tr><th>Model (test, n = 159)</th><th>Acc</th><th>Macro-F1</th></tr></thead>
+        <tbody>
+          <tr><td>HSV + Sobel + SVM</td><td>35.9%</td><td>33.2%</td></tr>
+          <tr><td>ResNet50</td><td>93.7%</td><td>93.1%</td></tr>
+          <tr class="best"><td>+ CBAM</td><td>94.3%</td><td>93.8%</td></tr>
+          <tr><td>+ focal loss + severity heads</td><td>92.5%</td><td>91.6%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</article>
+
+<!-- DWG 003 F1 -->
+<article class="sheet" id="f1" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 003</span>
+    <h3>F1 Overtakability &amp; Drama Index</h3>
+    <span class="tag">Python · scikit-learn · pandas · FastF1</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">An ETL pipeline over 28 circuits and almost three decades of races, feeding a model that scores how overtakable a track is, and how dramatic its races get, from telemetry alone.</p>
+      <p><b>The surprising part was reverse-engineering how to count overtakes at all.</b> Regulations and cars change every few years, but every team is pushing as hard as it can within them. Normalise each era properly and that constant change largely cancels out, so seasons become comparable.</p>
+      <p>The current model is a confidence-weighted random forest on four telemetry features (longest straight, average speed, heavy braking zones and average speed lost under braking), predicting a Drama Score scaled from 0 to 1.</p>
+      <p>Honest numbers: MAE 0.128 on that scale, R² 0.17. Four features don't explain much of what makes a race dramatic yet, and the data is thin. Six more features are next.</p>
+    </div>
+    <figure class="timing">
+      <div class="t-row t-head"><span>POS</span><span>STAGE</span><span>SRC</span><span>GAP</span></div>
+      <div class="t-row"><span>P1</span><span>Ingest 1996–2017</span><span>Ergast / Jolpica</span><span class="purple">22 seasons</span></div>
+      <div class="t-row"><span>P2</span><span>Ingest 2018–2024</span><span>FastF1 telemetry</span><span class="green">7 seasons</span></div>
+      <div class="t-row"><span>P3</span><span>Unify → one CSV</span><span>pandas</span><span>28 circuits</span></div>
+      <div class="t-row"><span>P4</span><span>Overtake computation</span><span>lap / position deltas</span><span>+era norm</span></div>
+      <div class="t-row"><span>P5</span><span>Random forest, weighted</span><span>scikit-learn</span><span class="yellow">R² 0.17</span></div>
+      <div class="eras" aria-label="Regulation eras normalised across">
+        <div class="era-bar">
+          <span style="--a:0;--b:22" class="src-a"></span>
+          <span style="--a:22;--b:29" class="src-b"></span>
+        </div>
+        <div class="era-ticks">
+          <i style="--y:2">'98 grooved</i>
+          <i style="--y:13">'09 aero reset</i>
+          <i style="--y:15">'11 DRS</i>
+          <i style="--y:18">'14 hybrid</i>
+          <i style="--y:21">'17 wide</i>
+          <i style="--y:26">'22 ground effect</i>
+        </div>
+        <div class="era-ends"><span>1996</span><span>2024</span></div>
+      </div>
+    </figure>
+  </div>
+</article>
+
+<!-- DWG 004 RAVE MODE -->
+<section id="rave" class="pin dark" style="--h:300vh">
+  <div class="sticky">
+    <canvas id="leds" aria-hidden="true"></canvas>
+    <div class="rave-inner">
+      <header class="sheet-head on-dark">
+        <span class="dwg">DWG 004</span>
+        <h3>Rave Mode</h3>
+        <span class="tag">v2.1 · ESP32 · WLED · UDP · Python · FastAPI</span>
+      </header>
+      <div class="rave-grid">
+        <div class="copy">
+          <p class="big">Turns my room into an extension of whatever's playing.</p>
+          <p>It hooks Windows WASAPI loopback directly, so there are no virtual cables. Each frame is split into bass and treble, only the transient energy punching above a moving floor is kept, and auto-gain plus attack/decay envelopes make a quiet ambient track and a heavy drop both read right.</p>
+          <p>Bass blooms from the centre of each segment and treble flashes at its edges, coloured by a three-colour palette pulled from the album art and lerped between tracks. Frames go out over UDP at 50 Hz to WLED on an ESP32. The strip around this section is running a browser port of that engine.</p>
+          <ul class="spec on-dark">
+            <li><span>Rig</span>197 × WS2812B · 4 segments</li>
+            <li><span>Latency</span>~20–30 ms end-to-end</li>
+            <li><span>Ships as</span>Windows installer</li>
+          </ul>
+          <p class="links"><a class="link" href="https://github.com/arshhjain/RAVE-MODE" target="_blank" rel="noopener">GitHub ↗</a> <a class="link" href="https://drive.google.com/drive/folders/1nj2Y85VmDmHyBLojrzciqGqGfaEA986O?usp=sharing" target="_blank" rel="noopener">Demo videos ↗</a></p>
+        </div>
+        <div class="rm-window" id="rmWindow">
+          <div class="rm-fluid" aria-hidden="true"><canvas id="fluid"></canvas></div>
+          <div class="rm-titlebar">
+            <span class="rm-hb" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="rm-name">RAVE MODE 2.1</span>
+            <label class="rm-power" title="Sound on / off">
+              <input type="checkbox" id="pPlay" aria-label="Play">
+              <span></span>
+            </label>
+          </div>
+          <div class="rm-main">
+            <div class="rm-cover" id="pCover">
+              <img class="rm-art" id="pCoverImg" alt="">
+              <img class="rm-art rm-art-next" id="pCoverNext" alt="">
+            </div>
+            <div class="rm-title-wrap">
+              <b id="pTitle">Sound is off</b>
+              <span id="pArtist">Flip the switch · this section is the speaker</span>
+            </div>
+            <div class="rm-transport">
+              <button id="pNext" aria-label="Next track">Skip ⏭</button>
+            </div>
+            <div class="rm-vibe">
+              <input type="range" id="vibe" min="0" max="3" step="1" value="2" aria-label="Palette cone, cozy to rave">
+              <div class="rm-ticks"><span>Cozy</span><span id="vibeName">Accurate</span><span>Rave</span></div>
+            </div>
+            <div class="rm-meters" aria-hidden="true">
+              <i><b id="mBass"></b></i><i><b id="mTreb"></b></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DWG 005 Ambilight -->
+<article class="sheet" id="ambilight" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 005</span>
+    <h3>Screen-synced Ambilight</h3>
+    <span class="tag">Raspberry Pi · Hyperion · ESP8266 · UDP broadcast</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">Backlighting that mirrors the edges of the screen onto addressable LEDs around the TV, live.</p>
+      <p>I didn't capture the screen on the laptop. I split its HDMI output: one line goes to the TV, the other into a capture card on a Raspberry Pi running Hyperion. The Pi reads the frame palette and pushes zone colours to ESP8266 strips over connectionless UDP broadcast across the subnet.</p>
+      <table class="revs">
+        <thead><tr><th>REV</th><th>Change</th></tr></thead>
+        <tbody>
+          <tr><td>A</td><td>Hyperion on a Pi + HDMI splitter + capture card</td></tr>
+          <tr><td>B</td><td>Moved to Prismatik</td></tr>
+          <tr><td>C</td><td>SignalRGB (current)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <figure class="media" data-media>
+      <video muted loop playsinline preload="metadata" src="assets/media/ambilight.mp4"></video>
+      <svg class="schematic" viewBox="0 0 420 300" role="img" aria-label="Ambilight signal topology">
+        <g class="s-line">
+          <rect x="20" y="125" width="80" height="50"/><text x="60" y="155">LAPTOP</text>
+          <rect x="140" y="125" width="70" height="50"/><text x="175" y="148">HDMI</text><text x="175" y="162">SPLIT</text>
+          <rect x="260" y="30" width="140" height="90"/><text x="330" y="80">TV</text>
+          <rect x="260" y="190" width="60" height="40"/><text x="290" y="214">CAP</text>
+          <rect x="340" y="190" width="60" height="40"/><text x="370" y="214">Pi</text>
+          <path d="M100 150H140M210 140L250 90H260M210 160L250 210H260M320 210H340"/>
+          <path class="dash" d="M370 190V140M370 140H252V26H408V124"/>
+        </g>
+        <g class="s-dim"><text x="120" y="270">- - -  UDP → ESP8266 STRIPS</text></g>
+      </svg>
+    </figure>
+  </div>
+</article>
+
+<!-- DWG 006 RC -->
+<article class="sheet" id="rc" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 006</span>
+    <h3>RC Fixed-Wing</h3>
+    <span class="tag">Built in 8th grade · depron · brushless</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">A 1.5 m wingspan airframe from depron foam and structural spars, with brushless motor, ESC, LiPo power and micro-servos on the control surfaces.</p>
+      <p>It flew 4 or 5 times and crashed on most of them. Every crash meant another revision.</p>
+      <table class="revs">
+        <thead><tr><th>FIX</th><th>After the crashes</th></tr></thead>
+        <tbody>
+          <tr><td>01</td><td>Landing gear redesigned</td></tr>
+          <tr><td>02</td><td>Wing-to-fuselage mount reworked</td></tr>
+          <tr><td>03</td><td>CG moved, then moved again</td></tr>
+          <tr><td>04</td><td>Prop replaced (every single time)</td></tr>
+        </tbody>
+      </table>
+      <p class="note">It was amateur-level, and it's where the aerospace thread started. These days the airframe side is XFLR5 and Fusion 360.</p>
+    </div>
+    <figure class="media" data-media>
+      <img alt="RC fixed-wing aircraft" src="assets/media/rc-plane.jpg" loading="lazy">
+      <svg class="schematic" viewBox="0 0 420 300" role="img" aria-label="Planform of the RC aircraft, 1.5 m span">
+        <g class="s-line">
+          <path d="M200 40h20l4 230h-28z"/>
+          <path d="M30 110h360l-6 34H36z"/>
+          <path d="M150 238h120l-4 22H154z"/>
+          <circle cx="210" cy="36" r="4"/>
+          <path d="M184 30h52"/>
+        </g>
+        <g class="s-dim">
+          <path d="M30 92h360M30 86v12M390 86v12"/>
+          <text x="300" y="84">1500 mm SPAN</text>
+          <path class="cg" d="M196 132h28M210 118v28"/><text x="250" y="174">CG (rev 3)</text>
+        </g>
+      </svg>
+    </figure>
+  </div>
+</article>
+
+<!-- DWG 007 CAD: pinned 3D stage -->
+<section id="cad" class="pin cad-pin" style="--h:360vh">
+  <div class="sticky">
+    <div class="cad-frame">
+      <header class="sheet-head">
+        <span class="dwg">DWG 007</span>
+        <h3>CAD, exploded</h3>
+        <span class="tag">Fusion 360 · Shapr3D · live model, scroll to explode</span>
+      </header>
+      <div class="cad-tabs" role="tablist" aria-label="Choose a model">
+        <button role="tab" aria-selected="true" data-model="speaker"><b>007.01</b> CMF Speaker M</button>
+        <button role="tab" aria-selected="false" data-model="devkit"><b>007.02</b> Devkit projector package</button>
+      </div>
+      <div class="cad-stage" id="cadStage">
+        <canvas id="cadCanvas" aria-label="3D model of the selected CAD design"></canvas>
+        <div class="cad-labels" id="cadLabels" aria-hidden="true"></div>
+        <svg class="cad-leaders" id="cadLeaders" aria-hidden="true"></svg>
+        <p class="cad-status" id="cadStatus">Loading model…</p>
+        <div class="cad-fallback">
+          <img alt="CMF Speaker M recreated in Fusion 360" src="assets/media/cad-cmf-speaker.jpg" loading="lazy">
+          <img alt="Devkit projector package in Fusion 360" src="assets/media/cad-devkit-enclosure.jpg" loading="lazy">
+        </div>
+      </div>
+      <div class="cad-foot">
+        <ol class="cad-phases" aria-hidden="true">
+          <li data-phase="0">A · Line drawing</li>
+          <li data-phase="1">B · Materials</li>
+          <li data-phase="2">C · Exploded</li>
+        </ol>
+        <div class="cad-mid"><p class="cad-note" id="cadNote"></p><ol class="cad-legend" id="cadLegend"></ol></div>
+        <div class="titleblock cad-tb">
+          <div><small>PARTS</small><span id="cadParts">—</span></div>
+          <div><small>TRIS</small><span id="cadTris">—</span></div>
+          <div><small>UNITS</small>mm</div>
+          <div><small>DRAG</small>to rotate</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DWG 007A CAD log -->
+<article class="sheet" id="cad-log" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 007A</span>
+    <h3>The day series</h3>
+    <span class="tag">One everyday object, modelled from scratch</span>
+  </header>
+  <div class="sheet-body single">
+    <div class="cad-grid" id="cadGrid"></div>
+    <div class="register" id="register"></div>
+  </div>
+</article>
+
+<!-- ============ RECORD ============ -->
+<section id="record" class="block" data-reveal>
+  <p class="eyebrow">DWG 008 — RECORD</p>
+  <h2>On the record.</h2>
+  <div class="record-grid">
+    <article class="rec feature">
+      <figure class="media photo" data-media>
+        <img alt="Team holding the runner-up cheque at Code Hustle Hypervision" src="assets/media/hackathon-team.jpg" loading="lazy">
+      </figure>
+      <div>
+        <span class="rank">P2</span>
+        <h3>Code Hustle 10.0</h3>
+        <p>A 24-hour hackathon at UPES, organised by Hypervision. First runner-up as team Stuck Loop, with a port-scanning network security tool built against the clock. ₹25,000 prize.</p>
+      </div>
+    </article>
+    <article class="rec feature isc">
+      <div>
+        <span class="rank">LEAD</span>
+        <h3>Infinity Space Club, UPES</h3>
+        <p>Core technical member and workshop lead since 2024. Taught 40+ freshers OpenRocket stability modelling, helped run the club's water-rocket launch days, and worked on the UI layout for upesinfinity.com.</p>
+      </div>
+      <div class="isc-photos">
+        <figure class="media" data-media><img alt="Running an Infinity Space Club workshop" src="assets/media/isc-workshop.jpg" loading="lazy"></figure>
+        <figure class="media" data-media><img alt="Water-rocket launch on the UPES field" src="assets/media/isc-launch.jpg" loading="lazy"></figure>
+        <figure class="media" data-media><img alt="Infinity Space Club members with their water rockets" src="assets/media/isc-team.jpg" loading="lazy"></figure>
+      </div>
+    </article>
+    <article class="rec">
+      <span class="rank">P3 · P2</span>
+      <h3>IEEE UPES technical rounds</h3>
+      <p>3rd in Logic Craft (hardware circuit building), 2nd in the IEEE Technical Quiz.</p>
+    </article>
+    <article class="rec">
+      <span class="rank">IITB</span>
+      <h3>Techfest, IIT Bombay</h3>
+      <p>Hands-on embedded systems training.</p>
+    </article>
+  </div>
+</section>
+
+<!-- ============ BOM ============ -->
+<section id="bom" class="block" data-reveal>
+  <p class="eyebrow">DWG 009 — BILL OF MATERIALS</p>
+  <h2>What I build with.</h2>
+  <table class="bom">
+    <thead><tr><th>ITEM</th><th>SUBSYSTEM</th><th>PARTS</th></tr></thead>
+    <tbody>
+      <tr><td>01</td><td>Embedded &amp; IoT</td><td>ESP32 · ESP8266 · Arduino · Raspberry Pi · GPIO · PWM · ESCs · I²C · SPI · UART · Hyperion</td></tr>
+      <tr><td>02</td><td>Networking</td><td>UDP sockets · subnet broadcast · WebSockets · WLED protocol</td></tr>
+      <tr><td>03</td><td>CAD &amp; prototyping</td><td>Fusion 360 · Shapr3D · depron airframes · structural spars</td></tr>
+      <tr><td>04</td><td>Simulation &amp; aero</td><td>XFLR5 · OpenRocket</td></tr>
+      <tr><td>05</td><td>Languages &amp; backend</td><td>C · C++ · Python · SQL · FastAPI</td></tr>
+      <tr><td>06</td><td>ML &amp; data</td><td>scikit-learn · NumPy · pandas · FastF1 · EasyOCR</td></tr>
+      <tr><td>07</td><td>Education</td><td>B.Tech CSE (AI &amp; ML), UPES Dehradun, expected 2028 · CGPA 7.43</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ OFF THE CLOCK ============ -->
+<section id="off" class="block" data-reveal>
+  <p class="eyebrow">DWG 010 — OFF THE CLOCK</p>
+  <h2>Off the clock.</h2>
+  <div class="off-grid">
+    <article class="off">
+      <span class="o-n">STAGE</span>
+      <h3>Aks, the dramatics club</h3>
+      <p>Aks (अक्स) means mirror. I played Pakiya in <i>Vyarth</i>. It didn't do much for my engineering, but it did a lot for me: I used to be very quiet, and the stage taught me to speak up, loudly and freely.</p>
+    </article>
+    <article class="off">
+      <span class="o-n">FPV</span>
+      <h3>Uncrashed</h3>
+      <p>Learning freestyle in an FPV sim. Still a beginner, and I'd like to fly with a real FPV squad one day.</p>
+    </article>
+    <article class="off music">
+      <span class="o-n">AUDIO</span>
+      <h3>Old rock to brainrot, and everything in between.</h3>
+      <p>I think in vibes more than artists: bbno$, Wallows, Taylor Swift, Skrillex. If you turned the sound on, you heard one of them on your way past DWG 004.</p>
+    </article>
+    <article class="off sky">
+      <span class="o-n">SKY</span>
+      <h3>Night sky, on an iPhone</h3>
+      <p>Low-light and star shots. Nothing crazy, just looking up a lot.</p>
+      <div class="sky-strip" id="skyStrip"></div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ PRINCIPLE ============ -->
+<section id="principle" class="block principle" data-reveal>
+  <p class="eyebrow">NOTES</p>
+  <blockquote>
+    <p class="annotated">Function<span class="insert" aria-hidden="true"><span class="hand">not</span><svg viewBox="0 0 60 70" class="caret-svg"><path d="M30 4 C 26 22, 34 34, 30 48"/><path d="M14 66 L30 46 L46 66"/></svg></span> over form.</p>
+    <span class="sr-only">Function, not over form.</span>
+  </blockquote>
+  <p class="principle-body">Most things now lean too far one way, all form or all function. Car infotainment is the easy example: physical knobs swapped for glass that looks clean and gives you nothing back. I think haptics are the way through, giving you the feeling of feedback while keeping the design minimal. That's what I want to get good at: systems that are intuitive, actually useful, and still pleasant to look at.</p>
+</section>
+
+</main>
+
+<!-- ============ CONTACT ============ -->
+<footer id="contact" class="contact">
+  <p class="eyebrow">END OF SET</p>
+  <h2>Let's build something.</h2>
+  <div class="contact-grid">
+    <a href="mailto:arsh.11529@stu.upes.ac.in"><small>EMAIL</small>arsh.11529@stu.upes.ac.in</a>
+    <a href="tel:+918302600727"><small>PHONE</small>+91 83026 00727</a>
+    <a href="https://linkedin.com/in/arshhjain" target="_blank" rel="noopener"><small>LINKEDIN</small>in/arshhjain ↗</a>
+    <a href="https://github.com/arshhjain" target="_blank" rel="noopener"><small>GITHUB</small>arshhjain ↗</a>
+    <a href="assets/Arsh_Jain_CV.pdf" download><small>RÉSUMÉ</small>Download PDF ↓</a>
+  </div>
+  <div class="titleblock end">
+    <div><small>DRAWN</small>A. JAIN</div>
+    <div><small>LOCATION</small>DEHRADUN · BEAWAR</div>
+    <div><small>SHEET</small>11 / 11</div>
+    <div><small>REV</small>2026.11</div>
+  </div>
+</footer>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script src="js/main.js"></script>
+<script type="module" src="js/cad3d.js"></script>
+</body>
+</html>
