@@ -54,7 +54,7 @@
     box.appendChild(v);
     const cap = document.createElement("figcaption");
     const b = document.createElement("b");
-    b.textContent = `007.${String(i + 3).padStart(2, "0")}`;
+    b.textContent = `006.${String(i + 3).padStart(2, "0")}`;
     const t = document.createElement("span");
     t.textContent = item.title;
     cap.append(b, t);
@@ -144,7 +144,30 @@
   }
 
   /* ================= pinned scenes ================= */
-  const pins = [...document.querySelectorAll(".pin")];
+  const pins = [...document.querySelectorAll(".pin")].filter((el) => el.id !== "hero");
+
+  /* hero: tap to explode. The same tap is the visitor's first gesture, so it also arms the sound. */
+  const hero = document.getElementById("hero");
+  const explodeBtn = document.getElementById("explodeBtn");
+  let heroP = 0, heroAnim = null;
+  function animateHero(to) {
+    const from = heroP, t0 = performance.now(), dur = reduceMotion ? 1 : 1500;
+    cancelAnimationFrame(heroAnim);
+    const step = (now) => {
+      const u = clamp((now - t0) / dur, 0, 1), e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+      heroP = from + (to - from) * e;
+      hero.style.setProperty("--p", heroP.toFixed(4));
+      if (u < 1) heroAnim = requestAnimationFrame(step);
+    };
+    heroAnim = requestAnimationFrame(step);
+  }
+  explodeBtn.addEventListener("click", () => {
+    const open = explodeBtn.getAttribute("aria-pressed") !== "true";
+    explodeBtn.setAttribute("aria-pressed", String(open));
+    explodeBtn.querySelector("span").textContent = open ? "Put it back together" : "Tap to see what goes into my systems";
+    animateHero(open ? 1 : 0);
+    if (window.__rave && window.__rave.wake) window.__rave.wake();
+  });
   const originSection = document.getElementById("origin");
   const originTrack = document.getElementById("originTrack");
   const rave = document.getElementById("rave");
@@ -611,6 +634,15 @@
     if (worklet) worklet.port.postMessage({ type: "trackChange" });
   }
 
+  function prevTrack() {
+    if (!started) { setSound(true); return; }
+    if (audio.currentTime > 3) { audio.currentTime = 0; return; }
+    if (bad.size >= PLAYLIST.length) return;
+    do { pos_i = (pos_i - 1 + order.length) % order.length; } while (bad.has(order[pos_i]));
+    loadTrack(order[pos_i]);
+    if (soundOn) audio.play().catch(() => {});
+  }
+
   function nextTrack() {
     if (bad.size >= PLAYLIST.length) return;
     do { pos_i = (pos_i + 1) % order.length; } while (bad.has(order[pos_i]));
@@ -692,6 +724,8 @@
     soundBtn.setAttribute("aria-pressed", String(on));
     soundLabel.textContent = on ? "SOUND ON" : "SOUND OFF";
     pPlay.checked = on;
+    const tg = document.getElementById("pToggle");
+    if (tg) { tg.textContent = on ? "❚❚" : "▶"; tg.setAttribute("aria-label", on ? "Pause" : "Play"); }
     pPlay.setAttribute("aria-label", on ? "Pause" : "Play");
     document.body.classList.toggle("sound-on", on);
   }
@@ -706,7 +740,6 @@
     pPlay.checked = wantSound;
   }
   reflectIntent();
-  const tapHint = document.getElementById("tapHint");
   const firstGesture = (ev) => {
     if (soundBtn.contains(ev.target) || pPlay === ev.target || ev.target.id === "car") return;
     if (wantSound && !started) setSound(true);
@@ -715,6 +748,12 @@
   /* hooks for the in-car display */
   window.__rave.toggle = () => { wantSound = !soundOn; setSound(!soundOn); };
   window.__rave.wake = () => { if (wantSound && !started) setSound(true); };
+  window.__rave.prev = prevTrack;
+  const pToggle = document.getElementById("pToggle"), pPrev = document.getElementById("pPrev");
+  pToggle.addEventListener("click", () => window.__rave.toggle());
+  pPrev.addEventListener("click", prevTrack);
+  window.__rave.next = () => { if (!started) setSound(true); else nextTrack(); };
+  window.__rave.time = () => [audio.currentTime || 0, audio.duration || 0];
   Object.defineProperty(window.__rave, "want", { get: () => wantSound });
   pPlay.addEventListener("change", () => { wantSound = pPlay.checked; setSound(pPlay.checked); });
   pNext.addEventListener("click", () => { if (!started) setSound(true); else nextTrack(); });
@@ -745,7 +784,6 @@
   new IntersectionObserver((e) => { raveVisible = e[0].isIntersecting; }, { rootMargin: "40% 0px" }).observe(rave);
 
   function frame(now) {
-    if (tapHint) tapHint.classList.toggle("on", raveVisible && wantSound && !soundOn && raveReach() > 0.3);
     canvas.style.opacity = !window.__carActive && lastDk > 0 ? lastDk.toFixed(3) : "0";
     const dt = lastT ? Math.min(0.1, (now - lastT) / 1000) : 0.016;
     lastT = now;

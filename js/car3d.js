@@ -17,6 +17,10 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
   const canvas = document.getElementById("car");
   const capA = document.getElementById("carCapA");
   const capB = document.getElementById("carCapB");
+  const capC = document.getElementById("carCapC");
+  const capD = document.getElementById("carCapD");
+  const capE = document.getElementById("carCapE");
+  const capLines = [...capD.querySelectorAll("span")];
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const bus = () => window.__rave;
 
@@ -394,124 +398,89 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
   const coverCache = { src: "", img: null };
   function rgbCss(c, a = 1) { return `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`; }
   const hits = [];
-  const vibeEl = document.getElementById("vibe"), playEl = document.getElementById("pPlay"), nextEl = document.getElementById("pNext");
-  const NAMES = ["Cozy", "Lounge", "Accurate", "Rave"];
-  function drawScreen(now) {
+  const mmss = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+  function drawScreen() {
     const R = bus();
     const W = scr.width, H = scr.height;
     hits.length = 0;
     sx.fillStyle = "#020203";
     sx.fillRect(0, 0, W, H);
     const pal = R ? R.engine.cur : [[30, 20, 50], [255, 60, 170], [70, 200, 255]];
-    const bass = R ? R.engine.liveBass : 0, treble = R ? R.engine.liveTreble : 0;
-    const accent = rgbCss(pal[1]);
     const font = (w, px) => `${w} ${px}px 'Segoe UI', system-ui, -apple-system, sans-serif`;
+    const on = !!(R && R.on);
 
-    /* control panel (passenger side) */
-    const cx = 56;
-    sx.fillStyle = "rgba(255,255,255,.5)"; sx.font = font(700, 24);
-    sx.fillText("RAVE MODE  ·  CONTROL", cx, 66);
-    sx.fillStyle = "#fff"; sx.font = font(700, 46);
-    sx.fillText("Ambient light that plays", cx, 128);
-    sx.fillText("along with whatever's on.", cx, 180);
-    sx.fillStyle = "rgba(255,255,255,.62)"; sx.font = font(500, 25);
-    sx.fillText("197 LEDs · 4 zones · driven live by the engine", cx, 224);
-    /* power switch */
-    const on = !!(R && (R.on || (R.want && !R.title)));
-    sx.fillStyle = on ? "rgba(255,255,255,.28)" : "#333";
-    sx.beginPath(); sx.roundRect(cx, 262, 112, 58, 29); sx.fill();
-    sx.fillStyle = on ? "#fff" : "#666";
-    sx.beginPath(); sx.arc(on ? cx + 83 : cx + 29, 291, 23, 0, Math.PI * 2); sx.fill();
-    sx.fillStyle = "rgba(255,255,255,.75)"; sx.font = font(700, 22);
-    sx.fillText(on ? "SOUND ON" : "SOUND OFF", cx + 130, 299);
-    hits.push({ x: cx - 10, y: 250, w: 290, h: 84, act: () => R.toggle() });
-    /* skip */
-    const kx = cx + 330;
-    sx.fillStyle = "rgba(255,255,255,.14)";
-    sx.beginPath(); sx.arc(kx + 29, 291, 29, 0, Math.PI * 2); sx.fill();
-    sx.fillStyle = "#fff";
-    sx.beginPath(); sx.moveTo(kx + 16, 277); sx.lineTo(kx + 32, 291); sx.lineTo(kx + 16, 305); sx.closePath(); sx.fill();
-    sx.fillRect(kx + 35, 277, 6, 28);
-    sx.fillStyle = "rgba(255,255,255,.75)"; sx.font = font(700, 22);
-    sx.fillText("SKIP", kx + 72, 299);
-    hits.push({ x: kx - 10, y: 250, w: 160, h: 84, act: () => nextEl.click() });
-    /* vibe slider: Cozy → Rave */
-    const vx0 = cx + 14, vx1 = 740, vy = 372, val = +vibeEl.value;
-    sx.fillStyle = "rgba(255,255,255,.16)"; sx.fillRect(vx0, vy - 3, vx1 - vx0, 6);
-    for (let i = 0; i < 4; i++) {
-      const x = vx0 + (i / 3) * (vx1 - vx0);
-      sx.fillStyle = i === val ? "#fff" : "rgba(255,255,255,.45)";
-      sx.font = font(700, 20);
-      sx.textAlign = i === 0 ? "left" : i === 3 ? "right" : "center";
-      sx.fillText(NAMES[i].toUpperCase(), x, vy + 46);
-      sx.textAlign = "left";
-      hits.push({ x: x - 70, y: vy - 40, w: 140, h: 96, act: () => { vibeEl.value = String(i); vibeEl.dispatchEvent(new Event("input", { bubbles: true })); } });
-    }
-    const kxv = vx0 + (val / 3) * (vx1 - vx0);
-    sx.fillStyle = "#8ba5b8"; sx.beginPath(); sx.arc(kxv, vy, 16, 0, Math.PI * 2); sx.fill();
-    /* meters */
-    sx.fillStyle = "rgba(255,255,255,.12)"; sx.fillRect(vx0, 448, 330, 6); sx.fillRect(vx0 + 352, 448, 330, 6);
-    sx.fillStyle = accent; sx.fillRect(vx0, 448, 330 * bass, 6);
-    sx.fillStyle = rgbCss(pal[2]); sx.fillRect(vx0 + 352, 448, 330 * treble, 6);
-
-    /* phone projection (centre) */
-    const px = 840, pw = 790, py = 26, ph = H - 52;
+    /* centre: now playing */
+    const px = 780, pw = 860, py = 30, ph = H - 60;
     sx.save();
-    sx.beginPath(); sx.roundRect(px, py, pw, ph, 30); sx.clip();
-    if (R && R.fluid && R.fluid.width > 1) sx.drawImage(R.fluid, px, py, pw, ph);
-    sx.fillStyle = "rgba(0,0,0,.3)"; sx.fillRect(px, py, pw, ph);
-    sx.fillStyle = "rgba(10,10,14,.55)"; sx.fillRect(px, py, 116, ph);
-    const icons = [[255, 90, 90], pal[1], [120, 210, 140], [110, 160, 255]];
-    icons.forEach((c, i) => {
-      const iy = py + 34 + i * 104;
-      sx.fillStyle = rgbCss(c, 0.92);
-      sx.beginPath(); sx.roundRect(px + 26, iy, 64, 64, 17); sx.fill();
-      sx.fillStyle = "rgba(255,255,255,.92)";
-      sx.beginPath();
-      if (i === 0) { sx.moveTo(px + 48, iy + 18); sx.lineTo(px + 72, iy + 32); sx.lineTo(px + 48, iy + 46); }
-      else if (i === 1) { for (let k = 0; k < 4; k++) { const hgt = 10 + ((k * 7) % 22); sx.rect(px + 40 + k * 9, iy + 48 - hgt, 5, hgt); } }
-      else if (i === 2) sx.arc(px + 58, iy + 32, 14, 0, Math.PI * 2);
-      else { sx.rect(px + 44, iy + 22, 28, 4); sx.rect(px + 44, iy + 31, 28, 4); sx.rect(px + 44, iy + 40, 18, 4); }
-      sx.fill();
-    });
+    sx.beginPath(); sx.roundRect(px, py, pw, ph, 32); sx.clip();
+    sx.fillStyle = "#0c0c10"; sx.fillRect(px, py, pw, ph);
     const cover = R && R.coverSrc;
     if (cover && cover !== coverCache.src) { coverCache.src = cover; coverCache.img = new Image(); coverCache.img.src = cover; }
-    const cx0 = px + 150, cy0 = py + 40, cs = 290;
-    sx.fillStyle = rgbCss(pal[1], 0.5);
-    sx.beginPath(); sx.roundRect(cx0, cy0, cs, cs, 22); sx.fill();
-    if (coverCache.img && coverCache.img.complete && coverCache.img.naturalWidth) {
-      sx.save(); sx.beginPath(); sx.roundRect(cx0, cy0, cs, cs, 22); sx.clip();
-      sx.drawImage(coverCache.img, cx0, cy0, cs, cs); sx.restore();
+    const art = coverCache.img && coverCache.img.complete && coverCache.img.naturalWidth ? coverCache.img : null;
+    if (art) {
+      sx.globalAlpha = 0.35; sx.filter = "blur(40px) saturate(1.4)";
+      sx.drawImage(art, px - 80, py - 220, pw + 160, pw + 160);
+      sx.filter = "none"; sx.globalAlpha = 1;
+      sx.fillStyle = "rgba(6,6,9,.45)"; sx.fillRect(px, py, pw, ph);
     }
-    const tx = cx0 + cs + 34, tw = px + pw - tx - 30;
-    sx.fillStyle = "#fff"; sx.font = font(700, 44);
-    sx.fillText(fit((R && R.title) || "Rave Mode", tw), tx, 110);
-    sx.fillStyle = "rgba(255,255,255,.72)"; sx.font = font(600, 26);
-    sx.fillText(fit(((R && R.artist) || "flip the switch").toUpperCase(), tw), tx, 150);
-    const prog = R && R.progress ? R.progress() : 0;
-    sx.fillStyle = "rgba(255,255,255,.22)"; sx.fillRect(tx, 186, tw, 7);
-    sx.fillStyle = "#fff"; sx.fillRect(tx, 186, tw * prog, 7);
-    const by = 270, bx = tx + tw / 2 - 40;
-    sx.fillStyle = "rgba(255,255,255,.95)";
-    if (on) { sx.fillRect(bx, by - 26, 13, 52); sx.fillRect(bx + 24, by - 26, 13, 52); }
-    else { sx.beginPath(); sx.moveTo(bx, by - 26); sx.lineTo(bx + 40, by); sx.lineTo(bx, by + 26); sx.closePath(); sx.fill(); }
-    hits.push({ x: bx - 40, y: by - 50, w: 120, h: 100, act: () => R.toggle() });
-    const nx = bx + 100;
-    sx.beginPath(); sx.moveTo(nx, by - 22); sx.lineTo(nx + 30, by); sx.lineTo(nx, by + 22); sx.closePath(); sx.fill();
-    sx.fillRect(nx + 33, by - 22, 7, 44);
-    hits.push({ x: nx - 30, y: by - 50, w: 110, h: 100, act: () => nextEl.click() });
+    const cs = ph - 80, cx0 = px + 40, cy0 = py + 40;
+    sx.fillStyle = rgbCss(pal[1], 0.35);
+    sx.beginPath(); sx.roundRect(cx0, cy0, cs, cs, 20); sx.fill();
+    if (art) { sx.save(); sx.beginPath(); sx.roundRect(cx0, cy0, cs, cs, 20); sx.clip(); sx.drawImage(art, cx0, cy0, cs, cs); sx.restore(); }
+    const tx = cx0 + cs + 44, tw = px + pw - tx - 44;
+    sx.fillStyle = "#fff"; sx.font = font(700, 46);
+    sx.fillText(fit((R && R.title) || "Rave Mode", tw), tx, py + 100);
+    sx.fillStyle = "rgba(255,255,255,.66)"; sx.font = font(500, 28);
+    sx.fillText(fit((R && R.artist) || "Tap play", tw), tx, py + 144);
+    const [cur, dur] = R && R.time ? R.time() : [0, 0];
+    const prog = dur ? cur / dur : 0;
+    sx.fillStyle = "rgba(255,255,255,.18)"; sx.beginPath(); sx.roundRect(tx, py + 186, tw, 6, 3); sx.fill();
+    sx.fillStyle = "#fff"; sx.beginPath(); sx.roundRect(tx, py + 186, Math.max(6, tw * prog), 6, 3); sx.fill();
+    sx.fillStyle = "rgba(255,255,255,.5)"; sx.font = font(500, 20);
+    sx.fillText(mmss(cur), tx, py + 222);
+    sx.textAlign = "right"; sx.fillText(dur ? mmss(dur) : "--:--", tx + tw, py + 222); sx.textAlign = "left";
+    /* previous · play/pause · next */
+    const by = py + 310, mid = tx + tw / 2;
+    sx.fillStyle = "#fff";
+    const tri = (x, dir, h) => { sx.beginPath(); sx.moveTo(x, by - h); sx.lineTo(x + dir * h * 1.3, by); sx.lineTo(x, by + h); sx.closePath(); sx.fill(); };
+    const px0 = mid - 170;
+    sx.fillRect(px0 - 4, by - 22, 7, 44); tri(px0 + 38, -1, 22);
+    hits.push({ x: px0 - 40, y: by - 55, w: 110, h: 110, act: () => R.prev() });
+    sx.beginPath(); sx.arc(mid, by, 50, 0, Math.PI * 2); sx.fillStyle = "rgba(255,255,255,.95)"; sx.fill();
+    sx.fillStyle = "#0c0c10";
+    if (on) { sx.fillRect(mid - 17, by - 22, 12, 44); sx.fillRect(mid + 5, by - 22, 12, 44); }
+    else { sx.beginPath(); sx.moveTo(mid - 14, by - 24); sx.lineTo(mid + 24, by); sx.lineTo(mid - 14, by + 24); sx.closePath(); sx.fill(); }
+    hits.push({ x: mid - 60, y: by - 60, w: 120, h: 120, act: () => R.toggle() });
+    sx.fillStyle = "#fff";
+    const nx0 = mid + 132;
+    tri(nx0, 1, 22); sx.fillRect(nx0 + 30, by - 22, 7, 44);
+    hits.push({ x: nx0 - 30, y: by - 55, w: 110, h: 110, act: () => R.next() });
     sx.restore();
 
-    /* cluster in front of the driver */
-    const qx = 1720;
+    /* driver side: a normal cluster, speed and power dials */
+    const dial = (cx, cy, r, label, value, unit, frac, ticks) => {
+      const a0 = Math.PI * 0.75, a1 = Math.PI * 2.25;
+      sx.lineCap = "round";
+      sx.strokeStyle = "rgba(255,255,255,.12)"; sx.lineWidth = 10;
+      sx.beginPath(); sx.arc(cx, cy, r, a0, a1); sx.stroke();
+      sx.strokeStyle = "#fff"; sx.lineWidth = 10;
+      if (frac > 0.002) { sx.beginPath(); sx.arc(cx, cy, r, a0, a0 + (a1 - a0) * frac); sx.stroke(); }
+      sx.fillStyle = "rgba(255,255,255,.55)"; sx.font = font(500, 18); sx.textAlign = "center";
+      ticks.forEach((t, i) => {
+        const a = a0 + (a1 - a0) * (i / (ticks.length - 1));
+        sx.fillText(t, cx + Math.cos(a) * (r - 38), cy + Math.sin(a) * (r - 38) + 6);
+      });
+      sx.fillStyle = "#fff"; sx.font = font(300, 86); sx.fillText(value, cx, cy + 22);
+      sx.fillStyle = "rgba(255,255,255,.55)"; sx.font = font(600, 20); sx.fillText(unit, cx, cy + 58);
+      sx.fillText(label, cx, cy + r + 4);
+      sx.textAlign = "left"; sx.lineCap = "butt";
+    };
+    dial(1880, 236, 170, "", "0", "km/h", 0, ["0", "60", "120", "180", "240"]);
+    dial(2250, 236, 140, "", "P", "READY", 0, ["0", "", "50", "", "100"]);
     const d = new Date();
-    sx.fillStyle = "#fff"; sx.font = font(300, 140);
-    sx.fillText(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`, qx, 210);
-    sx.fillStyle = "rgba(255,255,255,.6)"; sx.font = font(600, 34);
-    sx.fillText("P   R   N   D", qx + 8, 290);
-    sx.fillStyle = accent; sx.fillRect(qx + 8, 302, 28, 5);
-    sx.fillStyle = "rgba(255,255,255,.45)"; sx.font = font(600, 24);
-    sx.fillText(`BASS ${(bass * 100) | 0}   TREBLE ${(treble * 100) | 0}`, qx + 8, 372);
+    sx.fillStyle = "rgba(255,255,255,.7)"; sx.font = font(600, 22); sx.textAlign = "center";
+    sx.fillText(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}   ·   22°C   ·   412 km`, 2065, 470);
+    sx.textAlign = "left";
     scrTex.needsUpdate = true;
   }
 
@@ -530,7 +499,7 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
   }
   canvas.addEventListener("click", (ev) => {
     const h = hitAt(ev);
-    if (h) { h.act(); drawScreen(); } else if (bus() && bus().wake) bus().wake();
+    if (h) { h.act(); setTimeout(drawScreen, 60); } else if (bus() && bus().wake) bus().wake();
   });
   canvas.addEventListener("pointermove", (ev) => { canvas.style.cursor = hitAt(ev) ? "pointer" : ""; });
 
@@ -598,12 +567,18 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
     const dk = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--dk")) || 0;
     scene.background.copy(PAPER).lerp(NIGHT, dk);
     scene.fog.color.copy(scene.background);
-    const hold = smooth(0.43, 0.47, shown) * (1 - smooth(0.72, 0.76, shown));
+    const hold = smooth(0.49, 0.52, shown) * (1 - smooth(0.72, 0.76, shown));
     holdNow = hold;
     section.style.setProperty("--hold", hold.toFixed(3));
     section.classList.toggle("holding", hold > 0.02);
-    capA.style.opacity = smooth(0.0, 0.03, shown) * (1 - smooth(0.1, 0.14, shown));
-    capB.style.opacity = smooth(0.17, 0.21, shown) * (1 - smooth(0.3, 0.34, shown));
+    /* desk → car → what it is → where it belongs → presenting, then the car takes the stage */
+    const win = (a, b, c, d) => smooth(a, b, shown) * (1 - smooth(c, d, shown));
+    capA.style.opacity = win(0.0, 0.02, 0.07, 0.09);
+    capB.style.opacity = win(0.09, 0.11, 0.15, 0.17);
+    capC.style.opacity = win(0.17, 0.19, 0.24, 0.26);
+    capD.style.opacity = win(0.26, 0.27, 0.37, 0.39);
+    capLines.forEach((el, i) => el.classList.toggle("on", shown > 0.27 + i * 0.022));
+    capE.style.opacity = win(0.39, 0.41, 0.46, 0.49);
 
     updateLights();
     if ((frameN++ & 1) === 0) drawScreen(now);

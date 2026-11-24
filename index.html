@@ -31,7 +31,7 @@
 <main>
 
 <!-- ============ HERO ============ -->
-<section id="hero" class="pin" style="--h:230vh">
+<section id="hero" class="pin" style="--h:100vh">
   <div class="sticky">
     <div class="frame">
       <div class="zones zones-top" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span></div>
@@ -40,7 +40,7 @@
       <div class="hero-copy">
         <p class="eyebrow">DWG 000 — GENERAL ARRANGEMENT</p>
         <h1>Arsh<br>Jain<span class="dot">.</span></h1>
-        <p class="lede">I think in systems. Not in numbers so much as in how things work, and how they talk to each other.</p>
+        <p class="lede">I like to think in systems, not in numbers.</p>
         <p class="sub">CS undergrad (AI/ML) at UPES Dehradun. Firmware, real-time audio, telemetry pipelines, CAD, and the occasional airframe.</p>
       </div>
 
@@ -72,7 +72,7 @@
         <div class="wide"><small>TITLE</small>PORTFOLIO — ASSEMBLY, EXPLODED VIEW</div>
       </div>
 
-      <p class="scroll-hint">SCROLL TO EXPLODE ↓</p>
+      <button class="tap-explode" id="explodeBtn" aria-pressed="false"><i aria-hidden="true"></i><span>Tap to see what goes into my systems</span></button>
     </div>
   </div>
 </section>
@@ -88,8 +88,8 @@
       <a class="o-card hot" href="#rave"><span class="o-n">DWG 004</span><h3>Rave Mode</h3><p>The room reacts to whatever's playing.</p><span class="o-tags">ESP32 · FFT · UDP · WLED</span></a>
       <a class="o-card" href="#ambilight"><span class="o-n">DWG 005</span><h3>Ambilight</h3><p>The edges of the screen, mirrored onto the wall.</p><span class="o-tags">Raspberry Pi · Hyperion · ESP8266</span></a>
       <a class="o-card" href="#f1"><span class="o-n">DWG 003</span><h3>F1 Overtakability</h3><p>Which circuits actually produce racing, and which just host it.</p><span class="o-tags">FastF1 · pandas · scikit-learn</span></a>
-      <a class="o-card" href="#rc"><span class="o-n">DWG 006</span><h3>RC Fixed-Wing</h3><p>1.5 m of foam, 4–5 flights, a lot of props.</p><span class="o-tags">Depron · brushless · servos</span></a>
-      <a class="o-card" href="#cad"><span class="o-n">DWG 007</span><h3>CMF Speaker, rebuilt</h3><p>A recently released speaker, recreated part by part in CAD.</p><span class="o-tags">Fusion 360 · Shapr3D</span></a>
+      <a class="o-card" href="#rc"><span class="o-n">DWG 007</span><h3>RC Fixed-Wing</h3><p>1.5 m of foam, 4–5 flights, a lot of props.</p><span class="o-tags">Depron · brushless · servos</span></a>
+      <a class="o-card" href="#cad"><span class="o-n">DWG 006</span><h3>CMF Speaker, rebuilt</h3><p>A recently released speaker, recreated part by part in CAD.</p><span class="o-tags">Fusion 360 · Shapr3D</span></a>
     </div>
   </div>
 </section>
@@ -203,12 +203,14 @@
 </article>
 
 <!-- DWG 004 RAVE MODE: a night cabin, built for the thing it was made for -->
-<section id="rave" class="pin dark" style="--h:620vh">
+<section id="rave" class="pin dark" style="--h:720vh">
   <div class="sticky">
     <canvas id="car" aria-label="A car cabin at night, its ambient light lines driven by Rave Mode"></canvas>
     <p class="car-cap" id="carCapA" aria-hidden="true">Built for my desk.</p>
     <p class="car-cap" id="carCapB" aria-hidden="true">Made for a car.</p>
-    <p class="tap-hint" id="tapHint">Tap or click anywhere for sound</p>
+    <p class="car-cap car-cap-sm" id="carCapC">An album-aware, music-reactive ambient light engine. Built for cars and entertainment hubs.</p>
+    <p class="car-cap car-cap-list" id="carCapD"><span>Built for cars,</span><span>entertainment systems,</span><span>your desk,</span><span>and, if you're wild enough, even your kitchen.</span></p>
+    <p class="car-cap car-cap-present" id="carCapE"><small>Presenting</small>Rave Mode</p>
     <div class="rave-inner">
       <header class="sheet-head on-dark">
         <span class="dwg">DWG 004</span>
@@ -236,16 +238,16 @@
               <b id="pTitle">Sound is off</b>
               <span id="pArtist">Flip the switch</span>
             </div>
-            <label class="rm-power" title="Sound on / off">
-              <input type="checkbox" id="pPlay" aria-label="Play">
-              <span></span>
-            </label>
-            <button class="rm-skip" id="pNext" aria-label="Next track">⏭</button>
-            <div class="rm-vibe">
-              <input type="range" id="vibe" min="0" max="3" step="1" value="2" aria-label="Palette cone, cozy to rave">
-              <div class="rm-ticks"><span>Cozy</span><span id="vibeName">Accurate</span><span>Rave</span></div>
+            <div class="rm-transport-mini">
+              <button class="rm-skip" id="pPrev" aria-label="Previous track">⏮</button>
+              <button class="rm-skip rm-main-btn" id="pToggle" aria-label="Play">▶</button>
+              <button class="rm-skip" id="pNext" aria-label="Next track">⏭</button>
             </div>
-            <div class="rm-meters" aria-hidden="true"><i><b id="mBass"></b></i><i><b id="mTreb"></b></i></div>
+            <div class="rm-hidden">
+              <label><input type="checkbox" id="pPlay" aria-label="Sound on"> Sound</label>
+              <input type="range" id="vibe" min="0" max="3" step="1" value="2" aria-label="Palette cone, cozy to rave"><span id="vibeName">Accurate</span>
+              <i><b id="mBass"></b></i><i><b id="mTreb"></b></i>
+            </div>
           </div>
         </div>
       </div>
@@ -291,10 +293,64 @@
   </div>
 </article>
 
-<!-- DWG 006 RC -->
+<!-- DWG 006 CAD: pinned 3D stage -->
+<section id="cad" class="pin cad-pin" style="--h:360vh">
+  <div class="sticky">
+    <div class="cad-frame">
+      <header class="sheet-head">
+        <span class="dwg">DWG 006</span>
+        <h3>CAD, exploded</h3>
+        <span class="tag">Fusion 360 · Shapr3D · live model, scroll to explode</span>
+      </header>
+      <div class="cad-tabs" role="tablist" aria-label="Choose a model">
+        <button role="tab" aria-selected="true" data-model="speaker"><b>006.01</b> CMF Speaker M</button>
+        <button role="tab" aria-selected="false" data-model="devkit"><b>006.02</b> Devkit projector package</button>
+      </div>
+      <div class="cad-stage" id="cadStage">
+        <canvas id="cadCanvas" aria-label="3D model of the selected CAD design"></canvas>
+        <div class="cad-labels" id="cadLabels" aria-hidden="true"></div>
+        <svg class="cad-leaders" id="cadLeaders" aria-hidden="true"></svg>
+        <p class="cad-status" id="cadStatus">Loading model…</p>
+        <div class="cad-fallback">
+          <img alt="CMF Speaker M recreated in Fusion 360" src="assets/media/cad-cmf-speaker.jpg" loading="lazy">
+          <img alt="Devkit projector package in Fusion 360" src="assets/media/cad-devkit-enclosure.jpg" loading="lazy">
+        </div>
+      </div>
+      <div class="cad-foot">
+        <ol class="cad-phases" aria-hidden="true">
+          <li data-phase="0">A · Line drawing</li>
+          <li data-phase="1">B · Materials</li>
+          <li data-phase="2">C · Exploded</li>
+        </ol>
+        <div class="cad-mid"><p class="cad-note" id="cadNote"></p><ol class="cad-legend" id="cadLegend"></ol></div>
+        <div class="titleblock cad-tb">
+          <div><small>PARTS</small><span id="cadParts">—</span></div>
+          <div><small>TRIS</small><span id="cadTris">—</span></div>
+          <div><small>UNITS</small>mm</div>
+          <div><small>DRAG</small>to rotate</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DWG 006A CAD log -->
+<article class="sheet" id="cad-log" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 006A</span>
+    <h3>The day series</h3>
+    <span class="tag">One everyday object, modelled from scratch</span>
+  </header>
+  <div class="sheet-body single">
+    <div class="cad-grid" id="cadGrid"></div>
+    <div class="register" id="register"></div>
+  </div>
+</article>
+
+<!-- DWG 007 RC -->
 <article class="sheet" id="rc" data-reveal>
   <header class="sheet-head">
-    <span class="dwg">DWG 006</span>
+    <span class="dwg">DWG 007</span>
     <h3>RC Fixed-Wing</h3>
     <span class="tag">Built in 8th grade · depron · brushless</span>
   </header>
@@ -330,60 +386,6 @@
         </g>
       </svg>
     </figure>
-  </div>
-</article>
-
-<!-- DWG 007 CAD: pinned 3D stage -->
-<section id="cad" class="pin cad-pin" style="--h:360vh">
-  <div class="sticky">
-    <div class="cad-frame">
-      <header class="sheet-head">
-        <span class="dwg">DWG 007</span>
-        <h3>CAD, exploded</h3>
-        <span class="tag">Fusion 360 · Shapr3D · live model, scroll to explode</span>
-      </header>
-      <div class="cad-tabs" role="tablist" aria-label="Choose a model">
-        <button role="tab" aria-selected="true" data-model="speaker"><b>007.01</b> CMF Speaker M</button>
-        <button role="tab" aria-selected="false" data-model="devkit"><b>007.02</b> Devkit projector package</button>
-      </div>
-      <div class="cad-stage" id="cadStage">
-        <canvas id="cadCanvas" aria-label="3D model of the selected CAD design"></canvas>
-        <div class="cad-labels" id="cadLabels" aria-hidden="true"></div>
-        <svg class="cad-leaders" id="cadLeaders" aria-hidden="true"></svg>
-        <p class="cad-status" id="cadStatus">Loading model…</p>
-        <div class="cad-fallback">
-          <img alt="CMF Speaker M recreated in Fusion 360" src="assets/media/cad-cmf-speaker.jpg" loading="lazy">
-          <img alt="Devkit projector package in Fusion 360" src="assets/media/cad-devkit-enclosure.jpg" loading="lazy">
-        </div>
-      </div>
-      <div class="cad-foot">
-        <ol class="cad-phases" aria-hidden="true">
-          <li data-phase="0">A · Line drawing</li>
-          <li data-phase="1">B · Materials</li>
-          <li data-phase="2">C · Exploded</li>
-        </ol>
-        <div class="cad-mid"><p class="cad-note" id="cadNote"></p><ol class="cad-legend" id="cadLegend"></ol></div>
-        <div class="titleblock cad-tb">
-          <div><small>PARTS</small><span id="cadParts">—</span></div>
-          <div><small>TRIS</small><span id="cadTris">—</span></div>
-          <div><small>UNITS</small>mm</div>
-          <div><small>DRAG</small>to rotate</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- DWG 007A CAD log -->
-<article class="sheet" id="cad-log" data-reveal>
-  <header class="sheet-head">
-    <span class="dwg">DWG 007A</span>
-    <h3>The day series</h3>
-    <span class="tag">One everyday object, modelled from scratch</span>
-  </header>
-  <div class="sheet-body single">
-    <div class="cad-grid" id="cadGrid"></div>
-    <div class="register" id="register"></div>
   </div>
 </article>
 
