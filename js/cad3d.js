@@ -155,7 +155,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
       cache[keyName] = prepare(keyName, gltf);
       if (token === loadToken) show(cache[keyName]);
     }, (ev) => {
-      if (token === loadToken && ev.total) statusEl.textContent = `Loading model… ${Math.round(ev.loaded / ev.total * 100)}%`;
+      if (token === loadToken && ev.total) statusEl.textContent = `Loading model… ${Math.min(99, Math.round(ev.loaded / ev.total * 100))}%`;
     }, () => {
       if (token !== loadToken) return;
       stage.classList.add("no-webgl");
