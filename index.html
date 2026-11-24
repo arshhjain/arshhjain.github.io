@@ -26,14 +26,8 @@
   </button>
 </header>
 
-<div class="hud" id="hud" aria-hidden="true">
-  <div><b>SRC</b> DWG 004 · RAVE MODE</div>
-  <div><b>TRK</b> <span id="hudTrk">—</span></div>
-  <div><b>DST</b> <span id="hudDist">—</span></div>
-  <div><b>GAIN</b> <span id="hudGain">—</span></div>
-  <div><b>LPF</b> <span id="hudLpf">—</span></div>
-</div>
 
+<canvas id="leds" aria-hidden="true"></canvas>
 <main>
 
 <!-- ============ HERO ============ -->
@@ -209,9 +203,8 @@
 </article>
 
 <!-- DWG 004 RAVE MODE -->
-<section id="rave" class="pin dark" style="--h:300vh">
+<section id="rave" class="pin dark" style="--h:250vh">
   <div class="sticky">
-    <canvas id="leds" aria-hidden="true"></canvas>
     <div class="rave-inner">
       <header class="sheet-head on-dark">
         <span class="dwg">DWG 004</span>

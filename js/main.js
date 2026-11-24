@@ -156,6 +156,7 @@
   window.addEventListener("resize", measureTravel);
   if (document.fonts) document.fonts.ready.then(measureTravel);
 
+  let lastDk = -1;
   function updatePins() {
     const vh = window.innerHeight;
     for (const s of pins) {
@@ -164,7 +165,13 @@
       s.style.setProperty("--p", (span > 0 ? clamp(-r.top / span, 0, 1) : 0).toFixed(4));
     }
     const rr = rave.getBoundingClientRect();
-    document.body.classList.toggle("in-dark", rr.top < 40 && rr.bottom > 40);
+    /* --dk: paper → night as Rave Mode arrives, night → paper as it leaves */
+    const sm = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+    const dk = Math.min(sm(vh * 1.15, vh * 0.2, rr.top), sm(-vh * 0.05, vh * 0.8, rr.bottom));
+    if (Math.abs(dk - lastDk) > 0.002 || (dk === 0) !== (lastDk === 0) || (dk === 1) !== (lastDk === 1)) {
+      document.documentElement.style.setProperty("--dk", dk.toFixed(3));
+      lastDk = dk;
+    }
   }
 
   /* ================= Rave Mode engine (browser port of main.py) =================
@@ -429,51 +436,67 @@
     return [hsv2rgb([mid, 0.35, 0.40]), bass, treble];
   }
 
-  /* ================= the room: strip hidden behind the panels, washing the "wall" =================
-     Rendered at quarter resolution and blurred by CSS, the way a diffuse wall wash looks. */
+  /* ================= the room: the strip lives on the screen edges that border Rave Mode =================
+     Arriving from above, the section is exposed along the bottom of the screen, so light comes in from the
+     bottom, left and right edges. Leaving, it borders the top, so the light moves to the top, left and right.
+     While the section is pinned, the bottom glow crossfades to the top. Segment layout follows the strip:
+     seg 0 (73) + seg 2 (56) run along the horizontal edge, seg 1 (34) up the right, seg 3 (34) down the left.
+     Drawn at quarter resolution on a fixed canvas behind the page, blurred by CSS. */
   const canvas = document.getElementById("leds");
   const g = canvas.getContext("2d");
-  const ROOM_SCALE = 0.25;
-  let W = 0, H = 0, pos = [];
-  const raveGrid = rave.querySelector(".rave-grid");
-  function layoutLeds() {
-    W = canvas.clientWidth; H = canvas.clientHeight;
+  const ROOM_SCALE = 0.25, BLEED = 60;
+  let W = 0, H = 0;
+  const posB = new Array(CFG.n), posT = new Array(CFG.n);
+  function sizeRoom() {
+    W = window.innerWidth + BLEED * 2; H = window.innerHeight + BLEED * 2;
     canvas.width = Math.max(1, Math.round(W * ROOM_SCALE)); canvas.height = Math.max(1, Math.round(H * ROOM_SCALE));
-    const sr = canvas.getBoundingClientRect(), gr = raveGrid.getBoundingClientRect();
-    const inset = 14;
-    const x0 = gr.left - sr.left + inset, x1 = gr.right - sr.left - inset, y0 = gr.top - sr.top + inset, y1 = gr.bottom - sr.top - inset;
-    /* segments clockwise behind the panels: top 73, right 34, bottom 56, left 34 */
-    const edges = [[x0, y0, x1, y0], [x1, y0, x1, y1], [x1, y1, x0, y1], [x0, y1, x0, y0]];
-    pos = new Array(CFG.n);
-    CFG.segments.forEach(([st, en], s) => {
-      const [ax, ay, bx, by] = edges[s], L = en - st;
-      for (let j = 0; j < L; j++) { const t = (j + 0.5) / L; pos[st + j] = [ax + (bx - ax) * t, ay + (by - ay) * t]; }
-    });
   }
-  layoutLeds();
-  window.addEventListener("resize", layoutLeds);
-  new ResizeObserver(layoutLeds).observe(raveGrid);
+  sizeRoom();
+  window.addEventListener("resize", sizeRoom);
 
-  function drawLeds() {
+  const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+  function layoutRoom(r, vh) {
+    /* visible part of the section, in canvas coordinates (canvas origin is BLEED px above/left of the screen) */
+    const top = Math.max(0, r.top) + BLEED, bot = Math.min(vh, r.bottom) + BLEED;
+    const x0 = BLEED - 6, x1 = W - BLEED + 6;
+    const horiz = [[0, 73], [107, 163]], hLen = 73 + 56;
+    const place = (out, y) => {
+      let k = 0;
+      for (const [st, en] of horiz) for (let i = st; i < en; i++, k++) out[i] = [x0 + ((k + 0.5) / hLen) * (x1 - x0), y];
+      for (let i = 73; i < 107; i++) { const t = (i - 73 + 0.5) / 34; out[i] = [x1, bot + (top - bot) * t]; }
+      for (let i = 163; i < 197; i++) { const t = (i - 163 + 0.5) / 34; out[i] = [x0, top + (bot - top) * t]; }
+    };
+    place(posB, bot + 6);
+    place(posT, top - 6);
+  }
+
+  function drawLeds(r, vh, p) {
     const E = engine, k = ROOM_SCALE;
+    layoutRoom(r, vh);
+    /* which horizontal edge is lit: bottom on the way in, top on the way out */
+    const wTop = r.top > 0 ? 0 : r.bottom < vh ? 1 : smooth(0.45, 0.8, p);
     g.setTransform(k, 0, 0, k, 0, 0);
-    g.globalCompositeOperation = "source-over";
-    g.fillStyle = "#030305";
-    g.fillRect(0, 0, W, H);
+    g.clearRect(0, 0, W, H);
     g.globalCompositeOperation = "lighter";
-    const reach = Math.max(W, H) * 0.5;
-    for (let i = 0; i < CFG.n; i += 2) {
-      const r = clamp(E.rs[i] * 1.7, 0, 255), gg = clamp(E.gs[i] * 1.7, 0, 255), b = clamp(E.bs[i] * 1.7, 0, 255);
-      const lum = (r + gg + b) / 765;
-      if (lum < 0.003) continue;
-      const [x, y] = pos[i];
-      const rad = reach * (0.35 + Math.sqrt(lum) * 0.9);
+    const reach = Math.min(W, H) * 0.34;
+    const blob = (x, y, r0, gg, b, w) => {
+      const lum = (r0 + gg + b) / 765;
+      if (lum * w < 0.003) return;
+      const rad = reach * (0.45 + Math.sqrt(lum) * 0.75);
+      const a0 = (0.03 + lum * 0.2) * w, a1 = (0.01 + lum * 0.07) * w;
       const grd = g.createRadialGradient(x, y, 0, x, y, rad);
-      grd.addColorStop(0, `rgba(${r | 0},${gg | 0},${b | 0},${0.05 + lum * 0.34})`);
-      grd.addColorStop(0.45, `rgba(${r | 0},${gg | 0},${b | 0},${0.02 + lum * 0.12})`);
+      grd.addColorStop(0, `rgba(${r0 | 0},${gg | 0},${b | 0},${a0.toFixed(3)})`);
+      grd.addColorStop(0.45, `rgba(${r0 | 0},${gg | 0},${b | 0},${a1.toFixed(3)})`);
       grd.addColorStop(1, "rgba(0,0,0,0)");
       g.fillStyle = grd;
       g.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+    };
+    for (let i = 0; i < CFG.n; i += 2) {
+      const r0 = clamp(E.rs[i] * 1.5, 0, 255), gg = clamp(E.gs[i] * 1.5, 0, 255), b = clamp(E.bs[i] * 1.5, 0, 255);
+      const side = (i >= 73 && i < 107) || i >= 163;
+      if (side) { blob(posB[i][0], posB[i][1], r0, gg, b, 1); continue; }
+      if (wTop < 0.999) blob(posB[i][0], posB[i][1], r0, gg, b, 1 - wTop);
+      if (wTop > 0.001) blob(posT[i][0], posT[i][1], r0, gg, b, wTop);
     }
   }
 
@@ -520,11 +543,6 @@
   const soundBtn = document.getElementById("soundBtn");
   const soundLabel = soundBtn.querySelector(".sound-label");
   const soundBars = [...soundBtn.querySelectorAll(".sound-bars i")];
-  const hud = document.getElementById("hud");
-  const hudDist = document.getElementById("hudDist");
-  const hudGain = document.getElementById("hudGain");
-  const hudLpf = document.getElementById("hudLpf");
-  const hudTrk = document.getElementById("hudTrk");
   const pPlay = document.getElementById("pPlay");
   const pNext = document.getElementById("pNext");
   const pTitle = document.getElementById("pTitle");
@@ -579,7 +597,6 @@
     audio.src = t.src;
     pTitle.textContent = t.title;
     pArtist.textContent = t.artist;
-    hudTrk.textContent = `${t.title} — ${t.artist}`;
     candidates = null;
     if (t.cover) {
       const img = new Image();
@@ -608,7 +625,6 @@
     pTitle.textContent = "No track loaded";
     pArtist.textContent = "Audio files aren't in this build yet.";
     soundBtn.setAttribute("aria-pressed", "false");
-    hud.classList.remove("on");
   }
 
   audio.addEventListener("ended", nextTrack);
@@ -668,7 +684,6 @@
     pPlay.checked = on;
     pPlay.setAttribute("aria-label", on ? "Pause" : "Play");
     document.body.classList.toggle("sound-on", on);
-    hud.classList.toggle("on", on);
   }
   soundBtn.addEventListener("click", () => setSound(!soundOn));
   pPlay.addEventListener("change", () => setSound(pPlay.checked));
@@ -691,25 +706,27 @@
     if (ctx && soundOn) {
       gainNode.gain.setTargetAtTime(gain, ctx.currentTime, 0.12);
       lpf.frequency.setTargetAtTime(cutoff, ctx.currentTime, 0.12);
-      hud.classList.toggle("on", d > 0);
-      hudDist.textContent = d === 0 ? "IN SECTION" : `${d.toFixed(1)} screens ${below ? "↓" : "↑"}`;
-      hudGain.textContent = gain < 0.001 ? "−∞ dB" : `${(20 * Math.log10(gain)).toFixed(1)} dB`;
-      hudLpf.textContent = cutoff >= 1000 ? `${(cutoff / 1000).toFixed(1)} kHz` : `${Math.round(cutoff)} Hz`;
     }
   }
 
   /* ================= main loop ================= */
   let raveVisible = false;
-  new IntersectionObserver((e) => { raveVisible = e[0].isIntersecting; }, { rootMargin: "100px" }).observe(rave);
+  new IntersectionObserver((e) => { raveVisible = e[0].isIntersecting; }, { rootMargin: "40% 0px" }).observe(rave);
 
   function frame(now) {
+    canvas.style.opacity = lastDk > 0 ? lastDk.toFixed(3) : "0";
     const dt = lastT ? Math.min(0.1, (now - lastT) / 1000) : 0.016;
     lastT = now;
     updatePins();
     updateSpatial();
     if (raveVisible || soundOn) {
       if (!(soundOn && worklet)) engineStep(soundOn && analyser ? analyser : null);
-      if (raveVisible) { drawLeds(); drawFluid(dt); }
+      if (raveVisible) {
+        const rr = rave.getBoundingClientRect();
+        const span = rr.height - window.innerHeight;
+        drawLeds(rr, window.innerHeight, span > 0 ? clamp(-rr.top / span, 0, 1) : 0);
+        drawFluid(dt);
+      }
       mBass.style.width = (engine.liveBass * 100).toFixed(1) + "%";
       mTreb.style.width = (engine.liveTreble * 100).toFixed(1) + "%";
       const lv = [engine.liveBass, engine.liveTreble, (engine.liveBass + engine.liveTreble) / 2, engine.liveBass * 0.7];

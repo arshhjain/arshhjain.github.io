@@ -1,10 +1,12 @@
 :root {
-  --paper: #ebe8de;
-  --paper-2: #e2dfd3;
-  --ink: #17160f;
-  --ink-2: #4a483e;
-  --line: rgba(23, 22, 15, .16);
-  --line-2: rgba(23, 22, 15, .07);
+  /* --dk (0 → 1) is driven by scroll: the whole theme morphs from paper to night around Rave Mode */
+  --dk: 0;
+  --paper: color-mix(in srgb, #060608 calc(var(--dk) * 100%), #ebe8de);
+  --paper-2: color-mix(in srgb, #0e0e12 calc(var(--dk) * 100%), #e2dfd3);
+  --ink: color-mix(in srgb, #ece9e0 calc(var(--dk) * 100%), #17160f);
+  --ink-2: color-mix(in srgb, #a6a399 calc(var(--dk) * 100%), #4a483e);
+  --line: color-mix(in srgb, var(--ink) calc(16% - var(--dk) * 10%), transparent);
+  --line-2: color-mix(in srgb, var(--ink) calc(7% - var(--dk) * 4%), transparent);
   --accent: #ff4a1c;
   --night: #07070a;
   --night-line: rgba(255, 255, 255, .12);
@@ -58,7 +60,6 @@ h3 { font-size: clamp(26px, 3.4vw, 44px); font-weight: 750; }
   border-bottom: 1px solid var(--line);
   transition: background .4s, color .4s, border-color .4s;
 }
-body.in-dark .topbar { background: rgba(7, 7, 10, .72); color: #f2efe6; border-color: var(--night-line); }
 .mark { text-decoration: none; font-weight: 600; }
 .mark span { opacity: .5; margin-left: 8px; }
 .topbar nav { display: flex; gap: 18px; margin-left: auto; }
@@ -78,15 +79,6 @@ body.in-dark .topbar { background: rgba(7, 7, 10, .72); color: #f2efe6; border-c
   .sound { margin-left: auto; }
 }
 
-.hud {
-  position: fixed; right: var(--pad); bottom: 16px; z-index: 49;
-  font-family: var(--mono); font-size: 11px; line-height: 1.6; letter-spacing: .04em;
-  padding: 10px 12px; background: var(--ink); color: var(--paper);
-  opacity: 0; transform: translateY(8px); pointer-events: none;
-  transition: opacity .3s, transform .3s;
-}
-.hud.on { opacity: .92; transform: none; }
-.hud b { color: var(--accent); font-weight: 600; display: inline-block; width: 42px; }
 
 /* ---------- pinned scroll scenes ---------- */
 .pin { position: relative; height: var(--h); --p: 0; }
@@ -313,16 +305,19 @@ h1 .dot { color: var(--accent); }
 .cad-item figcaption b { color: var(--accent); }
 
 /* ---------- rave: the section is the room, the panels are the desk ---------- */
-.dark { background: #030305; color: #f2efe6; }
-.dark .sticky { background: #030305; }
-/* the wall wash: quarter-res canvas, blurred like light on a painted wall */
-#leds { position: absolute; inset: -60px; width: calc(100% + 120px); height: calc(100% + 120px); filter: blur(38px) saturate(1.9); }
+.dark { background: transparent; color: var(--ink); }
+.dark .sticky { background: transparent; }
+/* the room light: a fixed, quarter-res canvas behind the page, blurred like light on a painted wall.
+   It sits under every section, so there's no edge where Rave Mode starts or stops. */
+#leds {
+  position: fixed; inset: -60px; width: calc(100vw + 120px); height: calc(100vh + 120px);
+  z-index: 0; pointer-events: none; opacity: 0; filter: blur(34px) saturate(2.6);
+}
+main, .contact { position: relative; z-index: 1; }
 .rave-inner {
   position: relative; z-index: 2; height: 100%;
   padding: 92px calc(var(--pad) + 28px) 40px; max-width: 1400px; margin: 0 auto;
   display: flex; flex-direction: column; justify-content: center;
-  opacity: clamp(0, calc(var(--p) * 6), 1);
-  transform: translateY(calc((1 - clamp(0, var(--p) * 6, 1)) * 40px));
 }
 .rave-inner > .sheet-head { margin-bottom: 18px; text-shadow: 0 2px 18px rgba(0, 0, 0, .55); }
 .rave-inner > .sheet-head .tag { color: rgba(242, 239, 230, .85); }
@@ -330,8 +325,14 @@ h1 .dot { color: var(--accent); }
 .on-dark .dwg { background: #f2efe6; color: #030305; }
 .on-dark .tag { color: rgba(242, 239, 230, .6); }
 .rave-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(300px, .95fr); gap: clamp(20px, 3vw, 44px); align-items: stretch; }
-/* the "desk": solid, so the light reads as coming from behind it */
-.rave-grid .copy { background: #08080b; border: 1px solid rgba(255, 255, 255, .07); padding: clamp(18px, 2.2vw, 30px); box-shadow: 0 30px 60px rgba(0, 0, 0, .55); }
+/* the "desk": heavily tinted glass, a touch of the room light comes through */
+.rave-grid .copy {
+  background: linear-gradient(160deg, rgba(22, 22, 28, .86), rgba(8, 8, 11, .9));
+  backdrop-filter: blur(22px) saturate(1.5); -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, .09); border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), 0 30px 60px rgba(0, 0, 0, .5);
+  padding: clamp(18px, 2.2vw, 30px);
+}
 .rave-grid .copy p:not(.big) { color: rgba(242, 239, 230, .72); font-size: 15px; }
 .port-note { font-family: var(--mono); font-size: 12.5px !important; color: rgba(242, 239, 230, .55) !important; border-left: 2px solid var(--c2, #ff40aa); padding-left: 12px; }
 .spec.on-dark, .spec.on-dark li { border-color: rgba(255, 255, 255, .1); }
@@ -588,3 +589,6 @@ h1 .dot { color: var(--accent); }
   .cad-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; list-style: none; margin: 8px 0 0; padding: 0; font: 11px var(--mono); }
   .cad-legend b { color: var(--accent); margin-right: 4px; }
 }
+
+/* keep the sheets either side of Rave Mode close, so the morph carries straight through */
+#f1 { margin-bottom: 4vh; }
