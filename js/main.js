@@ -161,13 +161,18 @@
     };
     heroAnim = requestAnimationFrame(step);
   }
-  explodeBtn.addEventListener("click", () => {
-    const open = explodeBtn.getAttribute("aria-pressed") !== "true";
+  function toggleHero(force) {
+    const open = force !== undefined ? force : explodeBtn.getAttribute("aria-pressed") !== "true";
+    if ((explodeBtn.getAttribute("aria-pressed") === "true") === open) return;
     explodeBtn.setAttribute("aria-pressed", String(open));
-    explodeBtn.querySelector("span").textContent = open ? "Put it back together" : "Tap to see what goes into my systems";
     animateHero(open ? 1 : 0);
     if (window.__rave && window.__rave.wake) window.__rave.wake();
-  });
+  }
+  /* the stack toggles; anywhere else in the hero only opens it */
+  explodeBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleHero(); });
+  explodeBtn.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleHero(); } });
+  hero.addEventListener("click", (e) => { if (!e.target.closest("a, button")) toggleHero(true); });
+
   const originSection = document.getElementById("origin");
   const originTrack = document.getElementById("originTrack");
   const rave = document.getElementById("rave");
@@ -615,9 +620,40 @@
   }
   vibe.addEventListener("input", applyVibe);
 
+  /* ---- native frames: recorded from RAVE_MODE/main.py itself (see the .rmv files) ----
+     Header: "RMV1", fps u16, LED count u16, frame count u32; then zlib-deflated frames of
+     [r,g,b × n][bass, treble][palette 3×rgb], all uint8. Played back locked to the audio clock. */
+  let native = null;
+  async function loadNative(src) {
+    native = null;
+    if (!("DecompressionStream" in window)) return;
+    try {
+      const res = await fetch(src.replace(/\.mp3$/, ".rmv"));
+      if (!res.ok) return;
+      const buf = new Uint8Array(await res.arrayBuffer());
+      const dv = new DataView(buf.buffer);
+      if (String.fromCharCode(...buf.subarray(0, 4)) !== "RMV1") return;
+      const fps = dv.getUint16(4, true), n = dv.getUint16(6, true), total = dv.getUint32(8, true);
+      const stream = new Blob([buf.subarray(12)]).stream().pipeThrough(new DecompressionStream("deflate"));
+      const data = new Uint8Array(await new Response(stream).arrayBuffer());
+      if (audio.src.endsWith(src.replace(/^.*\//, ""))) native = { src, fps, n, total, rec: n * 3 + 11, data };
+    } catch (err) { native = null; }
+  }
+  function applyNative() {
+    if (!native || native.n !== CFG.n) return false;
+    const k = Math.min(native.total - 1, Math.max(0, Math.floor(audio.currentTime * native.fps)));
+    const o = k * native.rec, d = native.data;
+    for (let i = 0; i < native.n; i++) { engine.rs[i] = d[o + i * 3]; engine.gs[i] = d[o + i * 3 + 1]; engine.bs[i] = d[o + i * 3 + 2]; }
+    const q = o + native.n * 3;
+    engine.liveBass = d[q] / 255; engine.liveTreble = d[q + 1] / 255;
+    engine.cur = [[d[q + 2], d[q + 3], d[q + 4]], [d[q + 5], d[q + 6], d[q + 7]], [d[q + 8], d[q + 9], d[q + 10]]];
+    return true;
+  }
+
   function loadTrack(i) {
     const t = PLAYLIST[i];
     audio.src = t.src;
+    loadNative(t.src);
     pTitle.textContent = t.title;
     pArtist.textContent = t.artist;
     candidates = null;
@@ -696,6 +732,7 @@
       const sink = ctx.createGain(); sink.gain.value = 0;
       src.connect(worklet).connect(sink).connect(ctx.destination);
       worklet.port.onmessage = (e) => {
+        if (native && soundOn) return; /* native frames take priority */
         const m = e.data;
         engine.rs.set(m.rs); engine.gs.set(m.gs); engine.bs.set(m.bs);
         engine.liveBass = m.bass; engine.liveTreble = m.treble;
@@ -769,10 +806,21 @@
     return 1;
   }
   const ease = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+  /* entering: silent until the neighbouring sheet is mostly passed, then a fast sweep open.
+     leaving: the roll-off starts as the camera crosses the passenger window, tapers through the drop,
+     and reaches silence exactly when the theme has morphed back to paper (--dk = 0). */
   function updateSpatial() {
-    const x = raveReach();
-    const gain = ease(0.14, 0.5, x);
-    const cutoff = 20000 * Math.pow(260 / 20000, 1 - ease(0.14, 0.42, x));
+    const r = rave.getBoundingClientRect(), vh = window.innerHeight;
+    let level;
+    if (r.top > 0) level = ease(0.14, 0.5, raveReach());
+    else if (r.bottom >= vh) {
+      const cp = window.__carShown;
+      level = cp === undefined ? 1 : 1 - 0.55 * ease(0.885, 1.0, cp);
+    } else level = 0.45 * Math.max(0, lastDk);
+    const entering = r.top > 0;
+    const gain = entering ? level : Math.pow(level, 1.3);
+    const cutoff = entering ? 20000 * Math.pow(260 / 20000, 1 - ease(0.14, 0.42, raveReach()))
+                            : 20000 * Math.pow(260 / 20000, 1 - level);
     if (ctx && soundOn) {
       gainNode.gain.setTargetAtTime(gain, ctx.currentTime, 0.08);
       lpf.frequency.setTargetAtTime(cutoff, ctx.currentTime, 0.06);
@@ -790,7 +838,8 @@
     updatePins();
     updateSpatial();
     if (raveVisible || soundOn) {
-      if (!(soundOn && worklet)) engineStep(soundOn && analyser ? analyser : null);
+      const usedNative = soundOn && applyNative();
+      if (!usedNative && !(soundOn && worklet)) engineStep(soundOn && analyser ? analyser : null);
       if (raveVisible) {
         const rr = rave.getBoundingClientRect();
         const span = rr.height - window.innerHeight;

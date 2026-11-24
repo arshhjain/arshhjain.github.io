@@ -20,7 +20,9 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
   const capC = document.getElementById("carCapC");
   const capD = document.getElementById("carCapD");
   const capE = document.getElementById("carCapE");
-  const capLines = [...capD.querySelectorAll("span")];
+  const capChunks = [...capC.querySelectorAll(".chunk")];
+  const capWords = [...capD.querySelectorAll(".cd-slot i")];
+  const capKitchen = capD.querySelector(".cd-kitchen");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const bus = () => window.__rave;
 
@@ -105,25 +107,38 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
   /* dashboard: lower body, upper cowl, glass display, knee panel, wood band */
   box(1.62, 0.3, 0.46, M.trim, 0, 0.8, -0.8, 0.06);
   box(1.62, 0.07, 0.4, M.leather, 0, 0.975, -0.84, 0.03);
-  const glass = box(1.42, 0.3, 0.035, M.glass, 0, 1.06, -0.66, 0.018, deg(-9));
   box(1.6, 0.26, 0.22, M.trim, 0, 0.55, -0.66, 0.05);
   box(1.56, 0.035, 0.02, M.wood, 0, 0.86, -0.565, 0.008);
   /* slim vents */
   const ventM = new THREE.MeshStandardMaterial({ color: "#3a3b3f", roughness: 0.55, metalness: 0.6 });
   for (const vx of [-0.5, -0.18, 0.18, 0.5]) box(0.2, 0.026, 0.018, ventM, vx, 0.915, -0.566, 0.008);
 
-  /* screens: one emissive canvas across the glass (passenger | projection | cluster) */
+  /* centre screen: a modest panel set into a housing that grows out of the cowl */
+  box(0.56, 0.26, 0.09, M.trim, 0, 1.025, -0.695, 0.045, deg(-12));
+  const glass = box(0.5, 0.21, 0.02, M.glass, 0, 1.03, -0.652, 0.012, deg(-12));
   const scr = document.createElement("canvas");
-  scr.width = 2420; scr.height = 500;
+  scr.width = 1200; scr.height = 504;
   const sx = scr.getContext("2d");
   const scrTex = new THREE.CanvasTexture(scr);
   scrTex.colorSpace = THREE.SRGBColorSpace;
   scrTex.anisotropy = 4;
   /* kept below the bloom threshold so the display stays crisp */
-  const screen = new THREE.Mesh(new THREE.PlaneGeometry(1.38, 0.285), new THREE.MeshBasicMaterial({ map: scrTex, toneMapped: false, color: new THREE.Color(0.6, 0.6, 0.6) }));
-  screen.position.set(0, 0, 0.0185);
+  const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.48, 0.2), new THREE.MeshBasicMaterial({ map: scrTex, toneMapped: false, color: new THREE.Color(0.6, 0.6, 0.6) }));
+  screen.position.set(0, 0, 0.0105);
   glass.add(screen);
-  if (!RHD) screen.scale.x = -1;
+
+  /* driver's cluster in its own hooded binnacle behind the wheel */
+  box(0.42, 0.18, 0.13, M.trim, S * 0.37, 0.995, -0.665, 0.045, deg(-10));
+  box(0.44, 0.03, 0.17, M.leather, S * 0.37, 1.09, -0.64, 0.015);
+  const cglass = box(0.35, 0.13, 0.02, M.glass, S * 0.37, 0.995, -0.6, 0.01, deg(-10));
+  const clu = document.createElement("canvas");
+  clu.width = 1000; clu.height = 372;
+  const cx = clu.getContext("2d");
+  const cluTex = new THREE.CanvasTexture(clu);
+  cluTex.colorSpace = THREE.SRGBColorSpace;
+  const cluster = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.1265), new THREE.MeshBasicMaterial({ map: cluTex, toneMapped: false, color: new THREE.Color(0.6, 0.6, 0.6) }));
+  cluster.position.set(0, 0, 0.0105);
+  cglass.add(cluster);
 
   /* centre console + armrest + wood inlay */
   box(0.28, 0.42, 1.0, M.trim, 0, 0.36, -0.2, 0.05);
@@ -399,89 +414,81 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
   function rgbCss(c, a = 1) { return `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`; }
   const hits = [];
   const mmss = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+  const font = (w, px) => `${w} ${px}px 'Segoe UI', system-ui, -apple-system, sans-serif`;
   function drawScreen() {
     const R = bus();
     const W = scr.width, H = scr.height;
     hits.length = 0;
-    sx.fillStyle = "#020203";
-    sx.fillRect(0, 0, W, H);
     const pal = R ? R.engine.cur : [[30, 20, 50], [255, 60, 170], [70, 200, 255]];
-    const font = (w, px) => `${w} ${px}px 'Segoe UI', system-ui, -apple-system, sans-serif`;
     const on = !!(R && R.on);
-
-    /* centre: now playing */
-    const px = 780, pw = 860, py = 30, ph = H - 60;
-    sx.save();
-    sx.beginPath(); sx.roundRect(px, py, pw, ph, 32); sx.clip();
-    sx.fillStyle = "#0c0c10"; sx.fillRect(px, py, pw, ph);
+    sx.fillStyle = "#0c0c10"; sx.fillRect(0, 0, W, H);
     const cover = R && R.coverSrc;
     if (cover && cover !== coverCache.src) { coverCache.src = cover; coverCache.img = new Image(); coverCache.img.src = cover; }
     const art = coverCache.img && coverCache.img.complete && coverCache.img.naturalWidth ? coverCache.img : null;
     if (art) {
       sx.globalAlpha = 0.35; sx.filter = "blur(40px) saturate(1.4)";
-      sx.drawImage(art, px - 80, py - 220, pw + 160, pw + 160);
+      sx.drawImage(art, -100, -300, W + 200, W + 200);
       sx.filter = "none"; sx.globalAlpha = 1;
-      sx.fillStyle = "rgba(6,6,9,.45)"; sx.fillRect(px, py, pw, ph);
+      sx.fillStyle = "rgba(6,6,9,.45)"; sx.fillRect(0, 0, W, H);
     }
-    const cs = ph - 80, cx0 = px + 40, cy0 = py + 40;
+    const cs = H - 80, cx0 = 40, cy0 = 40;
     sx.fillStyle = rgbCss(pal[1], 0.35);
-    sx.beginPath(); sx.roundRect(cx0, cy0, cs, cs, 20); sx.fill();
-    if (art) { sx.save(); sx.beginPath(); sx.roundRect(cx0, cy0, cs, cs, 20); sx.clip(); sx.drawImage(art, cx0, cy0, cs, cs); sx.restore(); }
-    const tx = cx0 + cs + 44, tw = px + pw - tx - 44;
-    sx.fillStyle = "#fff"; sx.font = font(700, 46);
-    sx.fillText(fit((R && R.title) || "Rave Mode", tw), tx, py + 100);
-    sx.fillStyle = "rgba(255,255,255,.66)"; sx.font = font(500, 28);
-    sx.fillText(fit((R && R.artist) || "Tap play", tw), tx, py + 144);
+    sx.beginPath(); sx.roundRect(cx0, cy0, cs, cs, 22); sx.fill();
+    if (art) { sx.save(); sx.beginPath(); sx.roundRect(cx0, cy0, cs, cs, 22); sx.clip(); sx.drawImage(art, cx0, cy0, cs, cs); sx.restore(); }
+    const tx = cx0 + cs + 44, tw = W - tx - 44;
+    sx.fillStyle = "#fff"; sx.font = font(700, 50);
+    sx.fillText(fit((R && R.title) || "Rave Mode", tw), tx, 112);
+    sx.fillStyle = "rgba(255,255,255,.66)"; sx.font = font(500, 30);
+    sx.fillText(fit((R && R.artist) || "Tap play", tw), tx, 158);
     const [cur, dur] = R && R.time ? R.time() : [0, 0];
     const prog = dur ? cur / dur : 0;
-    sx.fillStyle = "rgba(255,255,255,.18)"; sx.beginPath(); sx.roundRect(tx, py + 186, tw, 6, 3); sx.fill();
-    sx.fillStyle = "#fff"; sx.beginPath(); sx.roundRect(tx, py + 186, Math.max(6, tw * prog), 6, 3); sx.fill();
-    sx.fillStyle = "rgba(255,255,255,.5)"; sx.font = font(500, 20);
-    sx.fillText(mmss(cur), tx, py + 222);
-    sx.textAlign = "right"; sx.fillText(dur ? mmss(dur) : "--:--", tx + tw, py + 222); sx.textAlign = "left";
+    sx.fillStyle = "rgba(255,255,255,.18)"; sx.beginPath(); sx.roundRect(tx, 204, tw, 7, 3.5); sx.fill();
+    sx.fillStyle = "#fff"; sx.beginPath(); sx.roundRect(tx, 204, Math.max(7, tw * prog), 7, 3.5); sx.fill();
+    sx.fillStyle = "rgba(255,255,255,.5)"; sx.font = font(500, 22);
+    sx.fillText(mmss(cur), tx, 244);
+    sx.textAlign = "right"; sx.fillText(dur ? mmss(dur) : "--:--", tx + tw, 244); sx.textAlign = "left";
     /* previous · play/pause · next */
-    const by = py + 310, mid = tx + tw / 2;
+    const by = 370, mid = tx + tw / 2;
     sx.fillStyle = "#fff";
     const tri = (x, dir, h) => { sx.beginPath(); sx.moveTo(x, by - h); sx.lineTo(x + dir * h * 1.3, by); sx.lineTo(x, by + h); sx.closePath(); sx.fill(); };
-    const px0 = mid - 170;
-    sx.fillRect(px0 - 4, by - 22, 7, 44); tri(px0 + 38, -1, 22);
-    hits.push({ x: px0 - 40, y: by - 55, w: 110, h: 110, act: () => R.prev() });
-    sx.beginPath(); sx.arc(mid, by, 50, 0, Math.PI * 2); sx.fillStyle = "rgba(255,255,255,.95)"; sx.fill();
+    const px0 = mid - 180;
+    sx.fillRect(px0 - 4, by - 24, 8, 48); tri(px0 + 42, -1, 24);
+    hits.push({ x: px0 - 40, y: by - 60, w: 120, h: 120, act: () => R.prev() });
+    sx.beginPath(); sx.arc(mid, by, 56, 0, Math.PI * 2); sx.fillStyle = "rgba(255,255,255,.95)"; sx.fill();
     sx.fillStyle = "#0c0c10";
-    if (on) { sx.fillRect(mid - 17, by - 22, 12, 44); sx.fillRect(mid + 5, by - 22, 12, 44); }
-    else { sx.beginPath(); sx.moveTo(mid - 14, by - 24); sx.lineTo(mid + 24, by); sx.lineTo(mid - 14, by + 24); sx.closePath(); sx.fill(); }
-    hits.push({ x: mid - 60, y: by - 60, w: 120, h: 120, act: () => R.toggle() });
+    if (on) { sx.fillRect(mid - 19, by - 24, 13, 48); sx.fillRect(mid + 6, by - 24, 13, 48); }
+    else { sx.beginPath(); sx.moveTo(mid - 15, by - 26); sx.lineTo(mid + 27, by); sx.lineTo(mid - 15, by + 26); sx.closePath(); sx.fill(); }
+    hits.push({ x: mid - 66, y: by - 66, w: 132, h: 132, act: () => R.toggle() });
     sx.fillStyle = "#fff";
-    const nx0 = mid + 132;
-    tri(nx0, 1, 22); sx.fillRect(nx0 + 30, by - 22, 7, 44);
-    hits.push({ x: nx0 - 30, y: by - 55, w: 110, h: 110, act: () => R.next() });
-    sx.restore();
-
-    /* driver side: a normal cluster, speed and power dials */
-    const dial = (cx, cy, r, label, value, unit, frac, ticks) => {
-      const a0 = Math.PI * 0.75, a1 = Math.PI * 2.25;
-      sx.lineCap = "round";
-      sx.strokeStyle = "rgba(255,255,255,.12)"; sx.lineWidth = 10;
-      sx.beginPath(); sx.arc(cx, cy, r, a0, a1); sx.stroke();
-      sx.strokeStyle = "#fff"; sx.lineWidth = 10;
-      if (frac > 0.002) { sx.beginPath(); sx.arc(cx, cy, r, a0, a0 + (a1 - a0) * frac); sx.stroke(); }
-      sx.fillStyle = "rgba(255,255,255,.55)"; sx.font = font(500, 18); sx.textAlign = "center";
-      ticks.forEach((t, i) => {
-        const a = a0 + (a1 - a0) * (i / (ticks.length - 1));
-        sx.fillText(t, cx + Math.cos(a) * (r - 38), cy + Math.sin(a) * (r - 38) + 6);
-      });
-      sx.fillStyle = "#fff"; sx.font = font(300, 86); sx.fillText(value, cx, cy + 22);
-      sx.fillStyle = "rgba(255,255,255,.55)"; sx.font = font(600, 20); sx.fillText(unit, cx, cy + 58);
-      sx.fillText(label, cx, cy + r + 4);
-      sx.textAlign = "left"; sx.lineCap = "butt";
-    };
-    dial(1880, 236, 170, "", "0", "km/h", 0, ["0", "60", "120", "180", "240"]);
-    dial(2250, 236, 140, "", "P", "READY", 0, ["0", "", "50", "", "100"]);
-    const d = new Date();
-    sx.fillStyle = "rgba(255,255,255,.7)"; sx.font = font(600, 22); sx.textAlign = "center";
-    sx.fillText(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}   ·   22°C   ·   412 km`, 2065, 470);
-    sx.textAlign = "left";
+    const nx0 = mid + 140;
+    tri(nx0, 1, 24); sx.fillRect(nx0 + 33, by - 24, 8, 48);
+    hits.push({ x: nx0 - 30, y: by - 60, w: 120, h: 120, act: () => R.next() });
     scrTex.needsUpdate = true;
+  }
+
+  /* the cluster: a normal pair of dials, sized for the binnacle */
+  function drawCluster() {
+    const W = clu.width, H = clu.height;
+    cx.fillStyle = "#050507"; cx.fillRect(0, 0, W, H);
+    const dial = (x, y, r, value, unit, ticks) => {
+      const a0 = Math.PI * 0.75, a1 = Math.PI * 2.25;
+      cx.lineCap = "round"; cx.strokeStyle = "rgba(255,255,255,.16)"; cx.lineWidth = 7;
+      cx.beginPath(); cx.arc(x, y, r, a0, a1); cx.stroke();
+      cx.fillStyle = "rgba(255,255,255,.5)"; cx.font = font(500, 17); cx.textAlign = "center";
+      ticks.forEach((t, i) => { const a = a0 + (a1 - a0) * (i / (ticks.length - 1)); cx.fillText(t, x + Math.cos(a) * (r - 28), y + Math.sin(a) * (r - 28) + 6); });
+      cx.fillStyle = "#fff"; cx.font = font(300, 64); cx.fillText(value, x, y + 18);
+      cx.fillStyle = "rgba(255,255,255,.5)"; cx.font = font(600, 17); cx.fillText(unit, x, y + 46);
+      cx.textAlign = "left"; cx.lineCap = "butt";
+    };
+    dial(250, 178, 140, "0", "km/h", ["0", "60", "120", "180", "240"]);
+    dial(750, 178, 140, "P", "READY", ["0", "", "50", "", "100"]);
+    const d = new Date();
+    cx.fillStyle = "rgba(255,255,255,.7)"; cx.font = font(600, 22); cx.textAlign = "center";
+    cx.fillText(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`, 500, 60);
+    cx.fillStyle = "rgba(255,255,255,.45)"; cx.font = font(500, 18);
+    cx.fillText("22°C  ·  412 km", 500, 352);
+    cx.textAlign = "left";
+    cluTex.needsUpdate = true;
   }
 
   /* clicks on the display → the same controls as the hidden HTML player */
@@ -559,6 +566,7 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
     if (!visible) return;
     const target = reduceMotion ? 0.58 : progress();
     shown += (target - shown) * (1 - Math.exp(-dt * 9));
+    window.__carShown = shown;
     const P = pose(shown);
     camera.position.set(P.x, P.y, P.z);
     camera.rotation.set(THREE.MathUtils.degToRad(P.pitch), THREE.MathUtils.degToRad(P.yaw), 0);
@@ -573,15 +581,21 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
     section.classList.toggle("holding", hold > 0.02);
     /* desk → car → what it is → where it belongs → presenting, then the car takes the stage */
     const win = (a, b, c, d) => smooth(a, b, shown) * (1 - smooth(c, d, shown));
-    capA.style.opacity = win(0.0, 0.02, 0.07, 0.09);
-    capB.style.opacity = win(0.09, 0.11, 0.15, 0.17);
-    capC.style.opacity = win(0.17, 0.19, 0.24, 0.26);
-    capD.style.opacity = win(0.26, 0.27, 0.37, 0.39);
-    capLines.forEach((el, i) => el.classList.toggle("on", shown > 0.27 + i * 0.022));
+    capA.style.opacity = win(0.0, 0.02, 0.055, 0.07);
+    capB.style.opacity = win(0.07, 0.085, 0.115, 0.13);
+    capC.style.opacity = win(0.13, 0.14, 0.205, 0.22);
+    capChunks[0].classList.toggle("on", shown > 0.135);
+    capChunks[1].classList.toggle("on", shown > 0.165);
+    capD.style.opacity = win(0.22, 0.23, 0.375, 0.39);
+    const w = shown < 0.255 ? 0 : shown < 0.29 ? 1 : 2;
+    capWords.forEach((el, i) => el.classList.toggle("on", i === w));
+    capD.classList.toggle("wild", shown > 0.325);
+    capKitchen.classList.toggle("on", shown > 0.35);
     capE.style.opacity = win(0.39, 0.41, 0.46, 0.49);
 
     updateLights();
-    if ((frameN++ & 1) === 0) drawScreen(now);
+    if ((frameN++ & 1) === 0) drawScreen();
+    if (frameN % 30 === 1) drawCluster();
     composer.render();
   }
   requestAnimationFrame(frame);

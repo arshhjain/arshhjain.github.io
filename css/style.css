@@ -670,28 +670,11 @@ main, .contact { position: relative; z-index: 1; }
 #rave.has-car .rave-inner .sheet-head, #rave.has-car .rave-inner .car-links, #rave.has-car .rave-inner .copy { pointer-events: auto; }
 
 
-/* hero: tap to explode */
-.tap-explode {
-  position: absolute; left: clamp(20px, 4vw, 56px); bottom: 22px; z-index: 3;
-  display: inline-flex; align-items: center; gap: 12px; cursor: pointer;
-  font: 600 13px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--paper);
-  background: var(--ink); border: 0; padding: 14px 20px 14px 16px; min-height: 48px;
-  box-shadow: 6px 6px 0 var(--accent); transition: transform .2s, box-shadow .2s;
-}
-.tap-explode:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0 var(--accent); }
-.tap-explode:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
-.tap-explode i { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 var(--accent); animation: tapPulse 1.6s ease-out infinite; }
-.tap-explode[aria-pressed="true"] i { animation: none; }
-@keyframes tapPulse { 0% { box-shadow: 0 0 0 0 rgba(255, 74, 28, .7); } 100% { box-shadow: 0 0 0 14px rgba(255, 74, 28, 0); } }
-@media (max-width: 860px) { .tap-explode { bottom: auto; top: 18px; left: 16px; right: 16px; justify-content: center; font-size: 11px; } }
-@media (prefers-reduced-motion: reduce) { .tap-explode i { animation: none; } }
 
 /* caption cascade on the way in */
 .car-cap-sm { font-size: clamp(24px, 3.2vw, 46px); white-space: normal; max-width: 22ch; text-align: center; line-height: 1.12; }
 .car-cap-list { display: grid; gap: .15em; font-size: clamp(26px, 3.6vw, 54px); white-space: normal; max-width: 24ch; text-align: center; line-height: 1.08; }
-.car-cap-list span { opacity: 0; transform: translateY(14px); transition: opacity .5s, transform .5s; }
-.car-cap-list span.on { opacity: 1; transform: none; }
-.car-cap-list span:last-child { color: var(--accent); }
+
 .car-cap-present { display: grid; justify-items: center; gap: 10px; font-size: clamp(56px, 10vw, 150px); }
 .car-cap-present small { font: 600 clamp(12px, 1vw, 15px) var(--mono); letter-spacing: .34em; text-transform: uppercase; color: rgba(242, 239, 230, .75); }
 
@@ -703,3 +686,37 @@ main, .contact { position: relative; z-index: 1; }
 .car-cap { text-shadow: 0 2px 6px rgba(0, 0, 0, .55), 0 6px 40px rgba(0, 0, 0, .85), 0 0 90px rgba(0, 0, 0, .6); }
 .car-cap-present small { text-shadow: 0 2px 10px rgba(0, 0, 0, .8); }
 @media (max-width: 860px) { #hero .hero-copy { top: 84px; } }
+
+/* hero: a handwritten note pointing at the stack; tap the stack (or anywhere in the hero) to explode */
+#hero .sticky { cursor: pointer; }
+.stack-wrap { cursor: pointer; outline: none; }
+.stack-wrap:focus-visible .plate.p3 { outline: 2px solid var(--accent); outline-offset: 6px; }
+.annot {
+  position: absolute; left: 34%; bottom: 96%; margin: 0; z-index: 3; pointer-events: none;
+  font: 700 clamp(22px, 2vw, 30px)/1 "Caveat", "Segoe Print", cursive; color: var(--accent);
+  transform: rotate(-4deg); white-space: nowrap;
+  opacity: calc(1 - var(--p) * 4); transition: opacity .2s;
+}
+.annot svg { position: absolute; left: -46px; top: 30%; width: 60px; height: 96px; overflow: visible; }
+.annot path { fill: none; stroke: var(--accent); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 860px) {
+  .annot { left: 44%; bottom: 84%; font-size: 22px; transform: rotate(-3deg); }
+  .annot svg { left: -38px; top: 30%; width: 46px; height: 72px; }
+}
+
+/* chunks and swaps */
+#carCapC .chunk { opacity: 0; transition: opacity .45s; }
+#carCapC .chunk.on { opacity: 1; }
+#carCapC .chunk + .chunk { display: block; }
+.car-cap-list { display: grid; gap: .12em; justify-items: center; max-width: none; }
+.cd-row { display: grid; justify-items: center; }
+.cd-line1, .cd-wild { grid-area: 1 / 1; transition: opacity .45s, transform .45s; white-space: nowrap; }
+.cd-wild { opacity: 0; transform: translateY(12px); }
+.car-cap-list.wild .cd-line1 { opacity: 0; transform: translateY(-12px); }
+.car-cap-list.wild .cd-wild { opacity: 1; transform: none; }
+.cd-slot { display: inline-grid; justify-items: start; }
+.cd-slot i { grid-area: 1 / 1; font-style: normal; color: var(--accent); opacity: 0; transform: translateY(.35em); transition: opacity .35s, transform .35s; }
+.cd-slot i.on { opacity: 1; transform: none; }
+.cd-kitchen { color: var(--accent); opacity: 0; transform: translateY(12px); transition: opacity .45s, transform .45s; }
+.cd-kitchen.on { opacity: 1; transform: none; }
+@media (max-width: 760px) { .cd-line1, .cd-wild { white-space: normal; text-align: center; } }

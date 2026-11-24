@@ -49,7 +49,10 @@
         <p class="lede">Four layers. Almost everything I build cuts through at least two of them.</p>
       </div>
 
-      <div class="stack-wrap" aria-hidden="true">
+      <div class="stack-wrap" id="explodeBtn" role="button" tabindex="0" aria-pressed="false" aria-label="Explode the stack to see what goes into my systems">
+        <p class="annot" aria-hidden="true"><span>tap to see what goes<br>into my systems</span>
+          <svg viewBox="0 0 60 96"><path d="M42 6 C 14 14, 8 46, 26 86"/><path d="M14 74 L 26 88 L 34 70"/></svg>
+        </p>
         <div class="stack">
           <div class="plate p0"><em>STRUCTURES</em></div>
           <div class="plate p1"><em>HARDWARE</em></div>
@@ -72,7 +75,7 @@
         <div class="wide"><small>TITLE</small>PORTFOLIO — ASSEMBLY, EXPLODED VIEW</div>
       </div>
 
-      <button class="tap-explode" id="explodeBtn" aria-pressed="false"><i aria-hidden="true"></i><span>Tap to see what goes into my systems</span></button>
+      
     </div>
   </div>
 </section>
@@ -208,8 +211,14 @@
     <canvas id="car" aria-label="A car cabin at night, its ambient light lines driven by Rave Mode"></canvas>
     <p class="car-cap" id="carCapA" aria-hidden="true">Built for my desk.</p>
     <p class="car-cap" id="carCapB" aria-hidden="true">Made for a car.</p>
-    <p class="car-cap car-cap-sm" id="carCapC">An album-aware, music-reactive ambient light engine. Built for cars and entertainment hubs.</p>
-    <p class="car-cap car-cap-list" id="carCapD"><span>Built for cars,</span><span>entertainment systems,</span><span>your desk,</span><span>and, if you're wild enough, even your kitchen.</span></p>
+    <p class="car-cap car-cap-sm" id="carCapC"><span class="chunk">An album-aware</span> <span class="chunk">music-reactive light engine.</span></p>
+    <p class="car-cap car-cap-list" id="carCapD">
+      <span class="cd-row">
+        <span class="cd-line1"><span>Built for</span> <span class="cd-slot"><i>cars,</i><i>entertainment systems,</i><i>your desk,</i></span></span>
+        <span class="cd-wild">And if you're wild enough,</span>
+      </span>
+      <span class="cd-kitchen">even your kitchen.</span>
+    </p>
     <p class="car-cap car-cap-present" id="carCapE"><small>Presenting</small>Rave Mode</p>
     <div class="rave-inner">
       <header class="sheet-head on-dark">
