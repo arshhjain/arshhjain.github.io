@@ -162,10 +162,10 @@
   }
   function scrollToY(y) {
     cancelAnimationFrame(scrollAnim);
-    const from = window.scrollY, t0 = performance.now(), dur = reduceMotion ? 1 : 1400;
+    const from = window.scrollY, t0 = performance.now(), dur = reduceMotion ? 1 : 1100;
     const step = (now) => {
-      const u = clamp((now - t0) / dur, 0, 1), e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
-      window.scrollTo(0, from + (y - from) * e);
+      const u = clamp((now - t0) / dur, 0, 1), e = 1 - Math.pow(1 - u, 4);
+      window.scrollTo({ top: from + (y - from) * e, behavior: "instant" });
       if (u < 1) scrollAnim = requestAnimationFrame(step);
     };
     scrollAnim = requestAnimationFrame(step);
@@ -748,7 +748,7 @@
     /* the engine hears the raw signal; the visitor hears it through distance */
     src.connect(lpf).connect(gainNode).connect(ctx.destination);
     try {
-      await ctx.audioWorklet.addModule("js/rave-worklet.js?v=2611250325");
+      await ctx.audioWorklet.addModule("js/rave-worklet.js?v=2611250331");
       worklet = new AudioWorkletNode(ctx, "rave-engine", {
         numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1],
         processorOptions: { cfg: { ...CFG, palette: engine.target } }
