@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Arsh Jain — systems, firmware, airframes</title>
-<meta name="description" content="Arsh Jain — CS (AI/ML) undergrad at UPES Dehradun. Embedded systems, real-time audio, telemetry pipelines, CAD and the occasional airframe.">
+<title>Arsh Jain — systems, firmware, CAD</title>
+<meta name="description" content="Arsh Jain — CS (AI/ML) undergrad at UPES Dehradun. Embedded systems, real-time audio, telemetry pipelines and CAD.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500;600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=2611250240">
+<link rel="stylesheet" href="css/style.css?v=2611250315">
 </head>
 <body>
 
@@ -31,7 +31,7 @@
 <main>
 
 <!-- ============ HERO ============ -->
-<section id="hero" class="pin" style="--h:100vh">
+<section id="hero" class="pin" style="--h:210vh">
   <div class="sticky">
     <div class="frame">
       <div class="zones zones-top" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span></div>
@@ -41,7 +41,7 @@
         <p class="eyebrow">DWG 000 — GENERAL ARRANGEMENT</p>
         <h1>Arsh<br>Jain<span class="dot">.</span></h1>
         <p class="lede">I like to think in systems, not in numbers.</p>
-        <p class="sub">CS undergrad (AI/ML) at UPES Dehradun. Firmware, real-time audio, telemetry pipelines, CAD, and the occasional airframe.</p>
+        <p class="sub">CS undergrad (AI/ML) at UPES Dehradun. Firmware, real-time audio, telemetry pipelines and CAD.</p>
       </div>
 
       <div class="hero-copy2">
@@ -70,7 +70,7 @@
       <div class="titleblock">
         <div><small>DRAWN</small>A. JAIN</div>
         <div><small>SCALE</small>1:1</div>
-        <div><small>SHEET</small>01 / 11</div>
+        <div><small>SHEET</small>01 / 10</div>
         <div><small>REV</small>2026.11</div>
         <div class="wide"><small>TITLE</small>PORTFOLIO — ASSEMBLY, EXPLODED VIEW</div>
       </div>
@@ -81,7 +81,7 @@
 </section>
 
 <!-- ============ BUILDS INDEX ============ -->
-<section id="origin" class="pin" style="--h:300vh">
+<section id="origin" class="pin">
   <div class="sticky">
     <div class="origin-head">
       <p class="eyebrow">DWG 00A — INDEX</p>
@@ -91,8 +91,7 @@
       <a class="o-card hot" href="#rave"><span class="o-n">DWG 004</span><h3>Rave Mode</h3><p>The room reacts to whatever's playing.</p><span class="o-tags">ESP32 · FFT · UDP · WLED</span></a>
       <a class="o-card" href="#ambilight"><span class="o-n">DWG 005</span><h3>Ambilight</h3><p>The edges of the screen, mirrored onto the wall.</p><span class="o-tags">Raspberry Pi · Hyperion · ESP8266</span></a>
       <a class="o-card" href="#f1"><span class="o-n">DWG 003</span><h3>F1 Overtakability</h3><p>Which circuits actually produce racing, and which just host it.</p><span class="o-tags">FastF1 · pandas · scikit-learn</span></a>
-      <a class="o-card" href="#rc"><span class="o-n">DWG 007</span><h3>RC Fixed-Wing</h3><p>1.5 m of foam, 4–5 flights, a lot of props.</p><span class="o-tags">Depron · brushless · servos</span></a>
-      <a class="o-card" href="#cad"><span class="o-n">DWG 006</span><h3>CMF Speaker, rebuilt</h3><p>A recently released speaker, recreated part by part in CAD.</p><span class="o-tags">Fusion 360 · Shapr3D</span></a>
+      <a class="o-card" href="#cad"><span class="o-n">DWG 006</span><h3>CAD models</h3><p>Real products, recreated part by part.</p><span class="o-tags">Fusion 360 · Shapr3D</span></a>
     </div>
   </div>
 </section>
@@ -303,17 +302,17 @@
 </article>
 
 <!-- DWG 006 CAD: pinned 3D stage -->
-<section id="cad" class="pin cad-pin" style="--h:360vh">
+<section id="cad" class="pin cad-pin" style="--h:620vh">
   <div class="sticky">
     <div class="cad-frame">
       <header class="sheet-head">
         <span class="dwg">DWG 006</span>
-        <h3>CAD, exploded</h3>
-        <span class="tag">Fusion 360 · Shapr3D · live model, scroll to explode</span>
+        <h3>CAD</h3>
+        <span class="tag">Good products deserve good designs.</span>
       </header>
       <div class="cad-tabs" role="tablist" aria-label="Choose a model">
         <button role="tab" aria-selected="true" data-model="speaker"><b>006.01</b> CMF Speaker M</button>
-        <button role="tab" aria-selected="false" data-model="devkit"><b>006.02</b> Devkit projector package</button>
+        <button role="tab" aria-selected="false" data-model="devkit"><b>006.02</b> NVIDIA devkit package</button>
       </div>
       <div class="cad-stage" id="cadStage">
         <canvas id="cadCanvas" aria-label="3D model of the selected CAD design"></canvas>
@@ -322,7 +321,7 @@
         <p class="cad-status" id="cadStatus">Loading model…</p>
         <div class="cad-fallback">
           <img alt="CMF Speaker M recreated in Fusion 360" src="assets/media/cad-cmf-speaker.jpg" loading="lazy">
-          <img alt="Devkit projector package in Fusion 360" src="assets/media/cad-devkit-enclosure.jpg" loading="lazy">
+          <img alt="NVIDIA devkit package in Fusion 360" src="assets/media/cad-devkit-enclosure.jpg" loading="lazy">
         </div>
       </div>
       <div class="cad-foot">
@@ -356,51 +355,9 @@
   </div>
 </article>
 
-<!-- DWG 007 RC -->
-<article class="sheet" id="rc" data-reveal>
-  <header class="sheet-head">
-    <span class="dwg">DWG 007</span>
-    <h3>RC Fixed-Wing</h3>
-    <span class="tag">Built in 8th grade · depron · brushless</span>
-  </header>
-  <div class="sheet-body">
-    <div class="copy">
-      <p class="big">A 1.5 m wingspan airframe from depron foam and structural spars, with brushless motor, ESC, LiPo power and micro-servos on the control surfaces.</p>
-      <p>It flew 4 or 5 times and crashed on most of them. Every crash meant another revision.</p>
-      <table class="revs">
-        <thead><tr><th>FIX</th><th>After the crashes</th></tr></thead>
-        <tbody>
-          <tr><td>01</td><td>Landing gear redesigned</td></tr>
-          <tr><td>02</td><td>Wing-to-fuselage mount reworked</td></tr>
-          <tr><td>03</td><td>CG moved, then moved again</td></tr>
-          <tr><td>04</td><td>Prop replaced (every single time)</td></tr>
-        </tbody>
-      </table>
-      <p class="note">It was amateur-level, and it's where the aerospace thread started. These days the airframe side is XFLR5 and Fusion 360.</p>
-    </div>
-    <figure class="media" data-media>
-      <img alt="RC fixed-wing aircraft" src="assets/media/rc-plane.jpg" loading="lazy">
-      <svg class="schematic" viewBox="0 0 420 300" role="img" aria-label="Planform of the RC aircraft, 1.5 m span">
-        <g class="s-line">
-          <path d="M200 40h20l4 230h-28z"/>
-          <path d="M30 110h360l-6 34H36z"/>
-          <path d="M150 238h120l-4 22H154z"/>
-          <circle cx="210" cy="36" r="4"/>
-          <path d="M184 30h52"/>
-        </g>
-        <g class="s-dim">
-          <path d="M30 92h360M30 86v12M390 86v12"/>
-          <text x="300" y="84">1500 mm SPAN</text>
-          <path class="cg" d="M196 132h28M210 118v28"/><text x="250" y="174">CG (rev 3)</text>
-        </g>
-      </svg>
-    </figure>
-  </div>
-</article>
-
 <!-- ============ RECORD ============ -->
 <section id="record" class="block" data-reveal>
-  <p class="eyebrow">DWG 008 — RECORD</p>
+  <p class="eyebrow">DWG 007 — RECORD</p>
   <h2>On the record.</h2>
   <div class="record-grid">
     <article class="rec feature">
@@ -410,7 +367,8 @@
       <div>
         <span class="rank">P2</span>
         <h3>Code Hustle 10.0</h3>
-        <p>A 24-hour hackathon at UPES, organised by Hypervision. First runner-up as team Stuck Loop, with a port-scanning network security tool built against the clock. ₹25,000 prize.</p>
+        <p>A 24-hour hackathon at UPES, organised by Hypervision. First runner-up as team Stuck Loop, with a port-scanning network security tool built against the clock.</p>
+        <span class="prize">₹25,000 PRIZE · 24 HOURS</span>
       </div>
     </article>
     <article class="rec feature isc">
@@ -440,25 +398,24 @@
 
 <!-- ============ BOM ============ -->
 <section id="bom" class="block" data-reveal>
-  <p class="eyebrow">DWG 009 — BILL OF MATERIALS</p>
+  <p class="eyebrow">DWG 008 — BILL OF MATERIALS</p>
   <h2>What I build with.</h2>
   <table class="bom">
     <thead><tr><th>ITEM</th><th>SUBSYSTEM</th><th>PARTS</th></tr></thead>
     <tbody>
-      <tr><td>01</td><td>Embedded &amp; IoT</td><td>ESP32 · ESP8266 · Arduino · Raspberry Pi · GPIO · PWM · ESCs · I²C · SPI · UART · Hyperion</td></tr>
-      <tr><td>02</td><td>Networking</td><td>UDP sockets · subnet broadcast · WebSockets · WLED protocol</td></tr>
-      <tr><td>03</td><td>CAD &amp; prototyping</td><td>Fusion 360 · Shapr3D · depron airframes · structural spars</td></tr>
+      <tr><td>01</td><td>Embedded</td><td>ESP32 · ESP8266 · Arduino · Raspberry Pi · I²C · SPI · UART</td></tr>
+      <tr><td>02</td><td>Networking &amp; streaming</td><td>UDP · WebSockets · WLED protocol · Hyperion</td></tr>
+      <tr><td>03</td><td>CAD</td><td>Fusion 360 · Shapr3D</td></tr>
       <tr><td>04</td><td>Simulation &amp; aero</td><td>XFLR5 · OpenRocket</td></tr>
-      <tr><td>05</td><td>Languages &amp; backend</td><td>C · C++ · Python · SQL · FastAPI</td></tr>
-      <tr><td>06</td><td>ML &amp; data</td><td>scikit-learn · NumPy · pandas · FastF1 · EasyOCR</td></tr>
-      <tr><td>07</td><td>Education</td><td>B.Tech CSE (AI &amp; ML), UPES Dehradun, expected 2028 · CGPA 7.43</td></tr>
+      <tr><td>05</td><td>Languages &amp; backend</td><td>C · C++ · Python · SQL · FastAPI · SQLite</td></tr>
+      <tr><td>06</td><td>ML &amp; data</td><td>scikit-learn · NumPy · pandas · FastF1</td></tr>
     </tbody>
   </table>
 </section>
 
 <!-- ============ OFF THE CLOCK ============ -->
 <section id="off" class="block" data-reveal>
-  <p class="eyebrow">DWG 010 — OFF THE CLOCK</p>
+  <p class="eyebrow">DWG 009 — OFF THE CLOCK</p>
   <h2>Off the clock.</h2>
   <div class="off-grid">
     <article class="off">
@@ -489,8 +446,8 @@
 <section id="principle" class="block principle" data-reveal>
   <p class="eyebrow">NOTES</p>
   <blockquote>
-    <p class="annotated">Function<span class="insert" aria-hidden="true"><span class="hand">not</span><svg viewBox="0 0 60 70" class="caret-svg"><path d="M30 4 C 26 22, 34 34, 30 48"/><path d="M14 66 L30 46 L46 66"/></svg></span> over form.</p>
-    <span class="sr-only">Function, not over form.</span>
+    <p class="annotated">Form<span class="insert" aria-hidden="true"><span class="hand">not</span><svg viewBox="0 0 60 70" class="caret-svg"><path d="M30 4 C 26 22, 34 34, 30 48"/><path d="M14 66 L30 46 L46 66"/></svg></span> over function.</p>
+    <span class="sr-only">Form, not over function.</span>
   </blockquote>
   <p class="principle-body">Most things now lean too far one way, all form or all function. Car infotainment is the easy example: physical knobs swapped for glass that looks clean and gives you nothing back. I think haptics are the way through, giving you the feeling of feedback while keeping the design minimal. That's what I want to get good at: systems that are intuitive, actually useful, and still pleasant to look at.</p>
 </section>
@@ -511,7 +468,7 @@
   <div class="titleblock end">
     <div><small>DRAWN</small>A. JAIN</div>
     <div><small>LOCATION</small>DEHRADUN · BEAWAR</div>
-    <div><small>SHEET</small>11 / 11</div>
+    <div><small>SHEET</small>10 / 10</div>
     <div><small>REV</small>2026.11</div>
   </div>
 </footer>
@@ -522,8 +479,8 @@
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
 } }
 </script>
-<script src="js/main.js?v=2611250240"></script>
-<script type="module" src="js/cad3d.js?v=2611250240"></script>
-<script type="module" src="js/car3d.js?v=2611250240"></script>
+<script src="js/main.js?v=2611250315"></script>
+<script type="module" src="js/cad3d.js?v=2611250315"></script>
+<script type="module" src="js/car3d.js?v=2611250315"></script>
 </body>
 </html>

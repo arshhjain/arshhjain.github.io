@@ -676,7 +676,7 @@ main, .contact { position: relative; z-index: 1; }
 .car-cap-list { display: grid; gap: .15em; font-size: clamp(26px, 3.6vw, 54px); white-space: normal; max-width: 24ch; text-align: center; line-height: 1.08; }
 
 .car-cap-present { display: grid; justify-items: center; gap: 10px; font-size: clamp(56px, 10vw, 150px); }
-.car-cap-present small { font: 600 clamp(12px, 1vw, 15px) var(--mono); letter-spacing: .34em; text-transform: uppercase; color: rgba(242, 239, 230, .75); }
+.car-cap-present small { font: 700 clamp(15px, 1.45vw, 22px) var(--mono); letter-spacing: .3em; text-transform: uppercase; color: #f4f1e8; }
 
 .rm-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 .car-player { grid-template-columns: 56px minmax(0, 1fr) auto; }
@@ -721,3 +721,34 @@ main, .contact { position: relative; z-index: 1; }
 .cd-kitchen { color: var(--accent); opacity: 0; transform: translateY(12px); transition: opacity .45s, transform .45s; }
 .cd-kitchen.on { opacity: 1; transform: none; }
 @media (max-width: 760px) { .cd-line1, .cd-wild { white-space: normal; text-align: center; } }
+
+/* hero gate: nothing scrolls until the first tap */
+html { scrollbar-gutter: stable; }
+html.hero-locked, html.hero-locked body { overflow: hidden; }
+.annot.nudge { animation: nudge .6s ease; }
+@keyframes nudge { 0%, 100% { translate: 0 0; } 20% { translate: -6px 3px; } 45% { translate: 5px -2px; } 70% { translate: -3px 1px; } }
+
+/* index carousel: on desktop the cards scale with the screen and the pin is shorter, so the slide reads as motion */
+#origin { --h: 300vh; }
+@media (min-width: 901px) {
+  #origin { --h: 200vh; }
+  .o-card { width: clamp(340px, 34vw, 600px); min-height: clamp(250px, 24vw, 400px); padding: clamp(22px, 2vw, 34px); }
+  .o-card h3 { font-size: clamp(28px, 2.6vw, 44px); }
+  .o-card p { font-size: clamp(15px, 1.15vw, 19px); }
+  .track { gap: clamp(20px, 2vw, 32px); }
+}
+
+/* record: real hierarchy, and photos that stay inside their card */
+.record-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rec.feature h3 { font-size: clamp(30px, 3.2vw, 50px); line-height: 1.02; margin: 20px 0 14px; letter-spacing: -.01em; }
+.rec.feature p { font-size: clamp(16px, 1.25vw, 19px); line-height: 1.55; max-width: 52ch; }
+.rec.feature:not(.isc) { grid-template-columns: minmax(0, .55fr) minmax(0, 1fr); gap: clamp(28px, 4vw, 64px); }
+.rec.feature:not(.isc) .media { max-height: 460px; }
+.rec .prize { display: block; margin-top: 18px; font: 600 13px var(--mono); letter-spacing: .08em; color: var(--ink); }
+.rec.isc { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); }
+.isc-photos { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.3fr) minmax(0, .8fr); min-width: 0; }
+.isc-photos .media { min-width: 0; overflow: hidden; }
+.isc-photos .media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+@media (max-width: 900px) { .record-grid { grid-template-columns: 1fr; } }
+.rec.isc .isc-photos .media { aspect-ratio: auto; height: 260px; }
+@media (max-width: 900px) { .rec.isc .isc-photos .media { height: 180px; } }

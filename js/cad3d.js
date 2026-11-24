@@ -31,8 +31,9 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
     },
     devkit: {
       file: "assets/models/devkit.gltf.json",
-      note: "An enclosure packaged around an NVIDIA Jetson dev kit with its 40 mm fan, an Intel RealSense D415 depth camera, an iPhone 17 Pro Max, a 3S LiPo pack and an XT60 → USB 5 V converter, between a mount plate and top and bottom covers.",
+      note: "An enclosure packaged around an NVIDIA Jetson dev kit with its 40 mm fan, an Intel RealSense D415 depth camera, a phone that records telemetry and adds network, barometer and accelerometer readouts, a 3S LiPo pack and an XT60 → USB 5 V converter, between a mount plate and top and bottom covers.",
       edgeAngle: 35,
+      rename: { "iPhone 17 Pro Max": "Phone" },
       explode: {
         "Top cover": [0, 170, 0], "Jetson dev kit": [0, 105, 35], "LiPo pack": [0, 65, -70], "XT60 → USB 5 V": [0, 40, -25],
         "Intel D415 depth camera": [-130, 25, 0], "iPhone 17 Pro Max": [120, -10, 40], "Mount plate": [0, -35, 0], "Bottom cover": [0, -85, 0]
@@ -97,7 +98,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
     root.children.forEach((grp) => {
       const box = new THREE.Box3().setFromObject(grp);
       const name = grp.name.replace(/_/g, " ").replace(/\s+/g, " ").trim();
-      const entry = { name, group: grp, center: box.getCenter(new THREE.Vector3()), offset: new THREE.Vector3(...(cfg.explode[name] || [0, 0, 0])), mats: [] };
+      const entry = { name: (cfg.rename && cfg.rename[name]) || name, group: grp, center: box.getCenter(new THREE.Vector3()), offset: new THREE.Vector3(...(cfg.explode[name] || [0, 0, 0])), mats: [] };
       grp.traverse((o) => {
         if (!o.isMesh) return;
         tris += o.geometry.index ? o.geometry.index.count / 3 : o.geometry.attributes.position.count / 3;
@@ -218,8 +219,10 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
     requestAnimationFrame(frame);
     if (!visible || !current) return;
     const p = progress();
-    const fill = smooth(0.16, 0.38, p);
-    const ex = smooth(0.44, 0.82, p);
+    const fill = smooth(0.08, 0.2, p);
+    const ex = smooth(0.24, 0.42, p);
+    /* detent: exploded and held; scrolling here spins the model a full turn while the camera eases in */
+    const spin = smooth(0.46, 0.9, p);
     shown += ((ex > 0.55 ? 1 : 0) - shown) * 0.15;
 
     phaseEls.forEach((el, i) => el.classList.toggle("on", i === (ex > 0.05 ? 2 : fill > 0.05 ? 1 : 0)));
@@ -235,9 +238,9 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
     }
     shadow.material.opacity = 1 - ex * 0.6;
 
-    dist = distA + (distE - distA) * ex;
+    dist = (distA + (distE - distA) * ex) * (1 - 0.22 * Math.sin(Math.PI * spin));
     const drift = reduceMotion ? 0 : t * 0.00008;
-    const yaw = -0.75 + p * 1.1 + drift + yawUser;
+    const yaw = -0.75 + smooth(0, 0.44, p) * 0.6 + spin * Math.PI * 2 + drift + yawUser;
     const pitch = 0.32 + pitchUser - ex * 0.06;
     camera.position.set(
       target.x + dist * Math.cos(pitch) * Math.sin(yaw),

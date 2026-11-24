@@ -144,33 +144,56 @@
   }
 
   /* ================= pinned scenes ================= */
-  const pins = [...document.querySelectorAll(".pin")].filter((el) => el.id !== "hero");
+  const pins = [...document.querySelectorAll(".pin")];
 
-  /* hero: tap to explode. The same tap is the visitor's first gesture, so it also arms the sound. */
+  /* hero: the page stays put until the first tap. That tap explodes the stack (and arms the sound);
+     after it, the explode is just scroll, so scrolling back up collapses it. A tap toggles either way. */
   const hero = document.getElementById("hero");
   const explodeBtn = document.getElementById("explodeBtn");
-  let heroP = 0, heroAnim = null;
-  function animateHero(to) {
-    const from = heroP, t0 = performance.now(), dur = reduceMotion ? 1 : 1500;
-    cancelAnimationFrame(heroAnim);
+  const root = document.documentElement;
+  let heroLocked = !location.hash && window.scrollY < 4;
+  let scrollAnim = null;
+  if (heroLocked) root.classList.add("hero-locked");
+  const heroSpan = () => hero.offsetHeight - window.innerHeight;
+  function unlockHero() {
+    if (!heroLocked) return;
+    heroLocked = false;
+    root.classList.remove("hero-locked");
+  }
+  function scrollToY(y) {
+    cancelAnimationFrame(scrollAnim);
+    const from = window.scrollY, t0 = performance.now(), dur = reduceMotion ? 1 : 1400;
     const step = (now) => {
       const u = clamp((now - t0) / dur, 0, 1), e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
-      heroP = from + (to - from) * e;
-      hero.style.setProperty("--p", heroP.toFixed(4));
-      if (u < 1) heroAnim = requestAnimationFrame(step);
+      window.scrollTo(0, from + (y - from) * e);
+      if (u < 1) scrollAnim = requestAnimationFrame(step);
     };
-    heroAnim = requestAnimationFrame(step);
+    scrollAnim = requestAnimationFrame(step);
   }
+  const stopScrollAnim = () => cancelAnimationFrame(scrollAnim);
+  window.addEventListener("wheel", stopScrollAnim, { passive: true });
+  window.addEventListener("touchstart", stopScrollAnim, { passive: true });
   function toggleHero(force) {
-    const open = force !== undefined ? force : explodeBtn.getAttribute("aria-pressed") !== "true";
-    if ((explodeBtn.getAttribute("aria-pressed") === "true") === open) return;
-    explodeBtn.setAttribute("aria-pressed", String(open));
-    animateHero(open ? 1 : 0);
+    const wasLocked = heroLocked;
+    unlockHero();
+    const p = parseFloat(hero.style.getPropertyValue("--p")) || 0;
+    const open = wasLocked ? true : force !== undefined ? force : p < 0.5;
+    if (!wasLocked && force === true && p >= 0.5) return;
+    scrollToY(open ? heroSpan() : 0);
     if (window.__rave && window.__rave.wake) window.__rave.wake();
   }
-  /* the stack toggles; anywhere else in the hero only opens it */
+  /* trying to scroll before tapping gives the note a nudge instead */
+  const annot = hero.querySelector(".annot");
+  const nudge = () => { if (!heroLocked || !annot) return; annot.classList.remove("nudge"); void annot.offsetWidth; annot.classList.add("nudge"); };
+  window.addEventListener("wheel", (e) => { if (heroLocked) { e.preventDefault(); nudge(); } }, { passive: false });
+  window.addEventListener("touchmove", (e) => { if (heroLocked) { e.preventDefault(); nudge(); } }, { passive: false });
+  window.addEventListener("keydown", (e) => {
+    if (heroLocked && ["ArrowDown", "PageDown", "End", " "].includes(e.key) && !e.target.closest("button, a, input")) { e.preventDefault(); toggleHero(true); }
+  });
+  /* the nav and in-page links always work */
+  document.addEventListener("click", (e) => { const a = e.target.closest('a[href^="#"]'); if (a) unlockHero(); }, true);
   explodeBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleHero(); });
-  explodeBtn.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleHero(); } });
+  explodeBtn.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); toggleHero(); } });
   hero.addEventListener("click", (e) => { if (!e.target.closest("a, button")) toggleHero(true); });
 
   const originSection = document.getElementById("origin");
@@ -192,6 +215,7 @@
       const span = r.height - vh;
       s.style.setProperty("--p", (span > 0 ? clamp(-r.top / span, 0, 1) : 0).toFixed(4));
     }
+    explodeBtn.setAttribute("aria-pressed", String((parseFloat(hero.style.getPropertyValue("--p")) || 0) > 0.5));
     const rr = rave.getBoundingClientRect();
     /* --dk: paper → night as Rave Mode arrives, night → paper as it leaves */
     const sm = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
@@ -724,7 +748,7 @@
     /* the engine hears the raw signal; the visitor hears it through distance */
     src.connect(lpf).connect(gainNode).connect(ctx.destination);
     try {
-      await ctx.audioWorklet.addModule("js/rave-worklet.js?v=2611250240");
+      await ctx.audioWorklet.addModule("js/rave-worklet.js?v=2611250315");
       worklet = new AudioWorkletNode(ctx, "rave-engine", {
         numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1],
         processorOptions: { cfg: { ...CFG, palette: engine.target } }

@@ -116,8 +116,9 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
   for (const vx of [-0.5, -0.18, 0.18, 0.5]) box(0.2, 0.026, 0.018, ventM, vx, 0.915, -0.566, 0.008);
 
   /* centre screen: a modest panel set into a housing that grows out of the cowl */
-  box(0.42, 0.05, 0.13, M.leather, 0, 1.0, -0.7, 0.025, deg(-6));
-  const glass = box(0.39, 0.165, 0.012, M.glass, 0, 1.025, -0.648, 0.006, deg(-14));
+  /* stands just proud of the cowl's front edge, clear of the dash body, on a short foot into the cowl */
+  box(0.12, 0.04, 0.06, M.trim, 0, 0.972, -0.648, 0.01);
+  const glass = box(0.39, 0.165, 0.012, M.glass, 0, 1.052, -0.618, 0.006, deg(-14));
   const scr = document.createElement("canvas");
   scr.width = 1200; scr.height = 504;
   const sx = scr.getContext("2d");
@@ -130,16 +131,18 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
   glass.add(screen);
 
   /* driver's cluster in its own hooded binnacle behind the wheel */
-  box(0.38, 0.15, 0.1, M.trim, S * 0.37, 0.975, -0.66, 0.04, deg(-8));
-  box(0.4, 0.025, 0.14, M.leather, S * 0.37, 1.055, -0.64, 0.012);
-  const cglass = box(0.33, 0.12, 0.012, M.glass, S * 0.37, 0.975, -0.607, 0.006, deg(-8));
+  /* gauge pod sitting on the steering column, seen through the top of the wheel */
+  box(0.07, 0.07, 0.1, M.trim, S * 0.37, 0.905, -0.47, 0.02);
+  box(0.27, 0.105, 0.06, M.trim, S * 0.37, 0.965, -0.5, 0.03, deg(-16));
+  box(0.28, 0.018, 0.08, M.leather, S * 0.37, 1.022, -0.495, 0.008, deg(-16));
+  const cglass = box(0.24, 0.09, 0.01, M.glass, S * 0.37, 0.965, -0.468, 0.005, deg(-16));
   const clu = document.createElement("canvas");
   clu.width = 1000; clu.height = 372;
   const cx = clu.getContext("2d");
   const cluTex = new THREE.CanvasTexture(clu);
   cluTex.colorSpace = THREE.SRGBColorSpace;
-  const cluster = new THREE.Mesh(new THREE.PlaneGeometry(0.32, 0.119), new THREE.MeshBasicMaterial({ map: cluTex, toneMapped: false, color: new THREE.Color(0.6, 0.6, 0.6) }));
-  cluster.position.set(0, 0, 0.0065);
+  const cluster = new THREE.Mesh(new THREE.PlaneGeometry(0.232, 0.0863), new THREE.MeshBasicMaterial({ map: cluTex, toneMapped: false, color: new THREE.Color(0.6, 0.6, 0.6) }));
+  cluster.position.set(0, 0, 0.0055);
   cglass.add(cluster);
 
   /* centre console + armrest + wood inlay */
