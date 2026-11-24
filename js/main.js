@@ -695,27 +695,48 @@
     pPlay.setAttribute("aria-label", on ? "Pause" : "Play");
     document.body.classList.toggle("sound-on", on);
   }
-  soundBtn.addEventListener("click", () => setSound(!soundOn));
-  pPlay.addEventListener("change", () => setSound(pPlay.checked));
+  let wantSound = true;
+  soundBtn.addEventListener("click", () => {
+    if (!started) { wantSound = !wantSound; if (wantSound) setSound(true); else reflectIntent(); return; }
+    wantSound = !soundOn; setSound(!soundOn);
+  });
+  function reflectIntent() {
+    soundBtn.setAttribute("aria-pressed", String(wantSound));
+    soundLabel.textContent = wantSound ? "SOUND ON" : "SOUND OFF";
+    pPlay.checked = wantSound;
+  }
+  reflectIntent();
+  const tapHint = document.getElementById("tapHint");
+  const firstGesture = (ev) => {
+    if (soundBtn.contains(ev.target) || pPlay === ev.target || ev.target.id === "car") return;
+    if (wantSound && !started) setSound(true);
+  };
+  for (const t of ["pointerdown", "keydown", "touchend"]) window.addEventListener(t, firstGesture, { capture: true, passive: true });
+  /* hooks for the in-car display */
+  window.__rave.toggle = () => { wantSound = !soundOn; setSound(!soundOn); };
+  window.__rave.wake = () => { if (wantSound && !started) setSound(true); };
+  Object.defineProperty(window.__rave, "want", { get: () => wantSound });
+  pPlay.addEventListener("change", () => { wantSound = pPlay.checked; setSound(pPlay.checked); });
   pNext.addEventListener("click", () => { if (!started) setSound(true); else nextTrack(); });
   if (PLAYLIST.length < 2) pNext.title = "Add more tracks to the playlist to shuffle";
 
-  function raveDistance() {
-    const r = rave.getBoundingClientRect(), c = window.innerHeight / 2;
-    let px = 0;
-    if (c < r.top) px = r.top - c; else if (c > r.bottom) px = c - r.bottom;
-    return { d: px / window.innerHeight, below: c < r.top };
+  /* x: how far into Rave Mode you are. 0 = the section edge is at the far edge of the screen,
+     1 = the section fills it. Silence until the neighbouring sheet (F1 above, Ambilight below) is
+     mostly behind you, then a fast low-pass sweep from "through the wall" to fully open. */
+  function raveReach() {
+    const r = rave.getBoundingClientRect(), vh = window.innerHeight;
+    if (r.top > 0) return (vh - r.top) / vh;
+    if (r.bottom < vh) return r.bottom / vh;
+    return 1;
   }
-
+  const ease = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
   function updateSpatial() {
-    const { d, below } = raveDistance();
-    const near = clamp(1 - d / 2.6, 0, 1);
-    const gain = near * near;
-    const wall = clamp(d / 1.3, 0, 1);
-    const cutoff = 20000 * Math.pow(350 / 20000, wall);
+    const x = raveReach();
+    const gain = ease(0.14, 0.5, x);
+    const cutoff = 20000 * Math.pow(260 / 20000, 1 - ease(0.14, 0.42, x));
     if (ctx && soundOn) {
-      gainNode.gain.setTargetAtTime(gain, ctx.currentTime, 0.12);
-      lpf.frequency.setTargetAtTime(cutoff, ctx.currentTime, 0.12);
+      gainNode.gain.setTargetAtTime(gain, ctx.currentTime, 0.08);
+      lpf.frequency.setTargetAtTime(cutoff, ctx.currentTime, 0.06);
     }
   }
 
@@ -724,6 +745,7 @@
   new IntersectionObserver((e) => { raveVisible = e[0].isIntersecting; }, { rootMargin: "40% 0px" }).observe(rave);
 
   function frame(now) {
+    if (tapHint) tapHint.classList.toggle("on", raveVisible && wantSound && !soundOn && raveReach() > 0.3);
     canvas.style.opacity = !window.__carActive && lastDk > 0 ? lastDk.toFixed(3) : "0";
     const dt = lastT ? Math.min(0.1, (now - lastT) / 1000) : 0.016;
     lastT = now;

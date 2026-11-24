@@ -668,3 +668,12 @@ main, .contact { position: relative; z-index: 1; }
 #ambilight { margin-top: 16.67vh; }
 #rave.has-car .rave-inner { pointer-events: none; }
 #rave.has-car .rave-inner .sheet-head, #rave.has-car .rave-inner .car-links, #rave.has-car .rave-inner .copy { pointer-events: auto; }
+
+.tap-hint {
+  position: absolute; left: 50%; bottom: 7vh; transform: translate(-50%, 8px); z-index: 4; margin: 0;
+  font: 600 12px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: #f2efe6;
+  padding: 10px 16px; border-radius: 30px; background: rgba(10, 10, 14, .55); border: 1px solid rgba(255, 255, 255, .16);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  opacity: 0; pointer-events: none; transition: opacity .4s, transform .4s;
+}
+.tap-hint.on { opacity: 1; transform: translate(-50%, 0); }

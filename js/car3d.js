@@ -42,15 +42,41 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
   camera.rotation.order = "YXZ";
 
   /* ---------------- materials ---------------- */
+  /* diamond quilting with stitch lines, as a colour map and a bump map */
+  function quiltTexture(cells = 6) {
+    const c = document.createElement("canvas"); c.width = c.height = 512;
+    const g = c.getContext("2d"), step = 512 / cells;
+    g.fillStyle = "#808080"; g.fillRect(0, 0, 512, 512);
+    for (let i = -cells; i <= cells * 2; i++) {
+      for (const dir of [1, -1]) {
+        g.strokeStyle = "rgba(0,0,0,.55)"; g.lineWidth = 7;
+        g.beginPath(); g.moveTo(i * step, 0); g.lineTo(i * step + dir * 512, 512); g.stroke();
+        g.strokeStyle = "rgba(255,255,255,.35)"; g.lineWidth = 2; g.setLineDash([7, 6]);
+        g.beginPath(); g.moveTo(i * step + 6, 0); g.lineTo(i * step + 6 + dir * 512, 512); g.stroke();
+        g.setLineDash([]);
+      }
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    return t;
+  }
+  const quiltBump = quiltTexture();
+  const quiltCol = quiltTexture(); quiltCol.colorSpace = THREE.SRGBColorSpace;
+  const quilted = (rx, ry) => {
+    const b = quiltBump.clone(); b.needsUpdate = true; b.repeat.set(rx, ry);
+    return new THREE.MeshStandardMaterial({ color: "#d8d0c2", roughness: 0.62, bumpMap: b, bumpScale: 2.2 });
+  };
   const M = {
     leather: new THREE.MeshStandardMaterial({ color: "#1b1816", roughness: 0.72 }),
+    cream: new THREE.MeshStandardMaterial({ color: "#cfc6b6", roughness: 0.6 }),
     insert: new THREE.MeshStandardMaterial({ color: "#2c2622", roughness: 0.82 }),
+    grille: new THREE.MeshStandardMaterial({ color: "#6d6f73", roughness: 0.4, metalness: 0.85 }),
     trim: new THREE.MeshStandardMaterial({ color: "#131316", roughness: 0.55 }),
     metal: new THREE.MeshStandardMaterial({ color: "#8d8f94", roughness: 0.28, metalness: 0.9 }),
     wood: new THREE.MeshStandardMaterial({ color: "#2a1d16", roughness: 0.35, metalness: 0.1 }),
     glass: new THREE.MeshStandardMaterial({ color: "#060608", roughness: 0.12, metalness: 0.4 }),
     carpet: new THREE.MeshStandardMaterial({ color: "#0b0b0c", roughness: 1 }),
-    headliner: new THREE.MeshStandardMaterial({ color: "#1f1e1c", roughness: 0.95 }),
+    headliner: new THREE.MeshStandardMaterial({ color: "#3a3937", roughness: 0.95 }),
     paint: new THREE.MeshStandardMaterial({ color: "#0e1116", roughness: 0.3, metalness: 0.75 }),
     tyre: new THREE.MeshStandardMaterial({ color: "#0a0a0a", roughness: 0.9 })
   };
@@ -124,27 +150,36 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
   car.add(column);
 
   /* seats */
-  function seat(x, z, w = 0.52) {
-    box(w, 0.14, 0.52, M.leather, x, 0.42, z, 0.06);
-    box(w * 0.62, 0.02, 0.4, M.insert, x, 0.495, z - 0.02, 0.01);
-    const back = box(w, 0.7, 0.15, M.leather, x, 0.82, z + 0.28, 0.07, deg(-12));
-    box(w * 0.6, 0.5, 0.02, M.insert, x, 0.8, z + 0.2, 0.01, deg(-12));
-    box(0.3, 0.2, 0.11, M.leather, x, 1.24, z + 0.38, 0.05, deg(-8));
-    box(0.07, 0.5, 0.18, M.leather, x - w / 2 + 0.035, 0.78, z + 0.27, 0.035, deg(-12));
-    box(0.07, 0.5, 0.18, M.leather, x + w / 2 - 0.035, 0.78, z + 0.27, 0.035, deg(-12));
+  const seatQuilt = quilted(1.6, 1.6), backQuilt = quilted(1.6, 2.2);
+  function seat(x, z, w = 0.54) {
+    box(w, 0.15, 0.54, M.cream, x, 0.42, z, 0.07);
+    box(w * 0.6, 0.025, 0.42, seatQuilt, x, 0.5, z - 0.02, 0.012);
+    box(0.09, 0.08, 0.5, M.cream, x - w / 2 + 0.045, 0.52, z, 0.04);
+    box(0.09, 0.08, 0.5, M.cream, x + w / 2 - 0.045, 0.52, z, 0.04);
+    const back = box(w, 0.72, 0.16, M.cream, x, 0.83, z + 0.29, 0.075, deg(-12));
+    box(w * 0.58, 0.52, 0.02, backQuilt, x, 0.82, z + 0.205, 0.01, deg(-12));
+    box(0.1, 0.56, 0.2, M.cream, x - w / 2 + 0.05, 0.8, z + 0.26, 0.05, deg(-12));
+    box(0.1, 0.56, 0.2, M.cream, x + w / 2 - 0.05, 0.8, z + 0.26, 0.05, deg(-12));
+    box(0.3, 0.2, 0.12, M.cream, x, 1.25, z + 0.38, 0.06, deg(-8));
+    box(0.24, 0.12, 0.05, M.leather, x, 1.24, z + 0.32, 0.025, deg(-8));
     return back;
   }
   seat(-0.37, 0.05);
   seat(0.37, 0.05);
-  box(1.42, 0.14, 0.52, M.leather, 0, 0.42, 1.0, 0.06);
-  box(1.42, 0.62, 0.16, M.leather, 0, 0.8, 1.3, 0.07, deg(-10));
+  box(1.42, 0.15, 0.52, M.cream, 0, 0.42, 1.0, 0.06);
+  box(1.42, 0.64, 0.16, M.cream, 0, 0.8, 1.3, 0.07, deg(-10));
+  box(1.2, 0.46, 0.02, quilted(4, 1.8), 0, 0.8, 1.215, 0.01, deg(-10));
 
   /* doors (inner panel, armrest, outer skin) and the window frame */
   const doorZ0 = -0.92, doorZ1 = 1.4;
   for (const side of [-1, 1]) {
     box(0.08, 0.86, doorZ1 - doorZ0, M.trim, side * 0.82, 0.57, (doorZ0 + doorZ1) / 2, 0.03);
-    box(0.1, 0.05, 1.0, M.leather, side * 0.77, 0.72, -0.05, 0.025);
-    box(0.012, 0.3, 1.2, M.wood, side * 0.778, 0.86, 0.1, 0.004);
+    box(0.11, 0.05, 0.95, M.cream, side * 0.765, 0.72, -0.02, 0.025);
+    box(0.012, 0.26, 1.5, quilted(4, 0.8), side * 0.779, 0.98 - 0.13 - 0.07, 0.15, 0.004);
+    box(0.06, 0.1, 0.7, M.trim, side * 0.775, 0.36, -0.12, 0.02);
+    const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.01, 40), M.grille);
+    sp.rotation.z = Math.PI / 2; sp.position.set(side * 0.776, 0.5, -0.62); car.add(sp);
+    box(0.03, 0.025, 0.16, M.metal, side * 0.74, 0.755, -0.3, 0.008);
     box(0.03, 0.9, doorZ1 - doorZ0 + 0.2, M.paint, side * 0.9, 0.55, (doorZ0 + doorZ1) / 2, 0.012);
     box(0.06, 0.03, 2.5, M.paint, side * 0.86, 1.43, 0.3, 0.015);
     box(0.07, 0.46, 0.1, M.paint, side * 0.84, 1.2, 0.62, 0.02);
@@ -152,6 +187,11 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
     aP.position.z = -0.72;
     box(0.07, 0.46, 0.1, M.paint, side * 0.84, 1.2, 1.42, 0.02);
   }
+
+  /* rear-view mirror and door mirrors */
+  box(0.26, 0.07, 0.025, M.trim, 0, 1.33, -0.42, 0.02);
+  box(0.02, 0.07, 0.02, M.trim, 0, 1.39, -0.4, 0.008);
+  for (const side of [-1, 1]) box(0.08, 0.13, 0.2, M.paint, side * 1.0, 1.05, -0.78, 0.04, 0, side * 0.3);
 
   /* outside: road, a few wheels under the sills for the fall, city bokeh */
   const roadTex = (() => {
@@ -260,6 +300,12 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
   lightLine([[0.142, 0.585, -0.66], [0.142, 0.585, 0.38]], range(135, 163), 0.0038);
   lightLine([[-D * 0.776, 0.905, -0.66], [-D * 0.774, 0.92, 0.0], [-D * 0.774, 0.915, 0.72], [-D * 0.776, 0.9, 1.25]], range(163, 197));
 
+  /* roof rails echo the door zones; door-pocket lines too */
+  lightLine([[D * 0.7, 1.42, -0.3], [D * 0.71, 1.425, 0.5], [D * 0.7, 1.42, 1.2]], range(73, 107), 0.004);
+  lightLine([[-D * 0.7, 1.42, -0.3], [-D * 0.71, 1.425, 0.5], [-D * 0.7, 1.42, 1.2]], range(163, 197), 0.004);
+  lightLine([[D * 0.742, 0.415, -0.46], [D * 0.742, 0.415, 0.22]], range(73, 107), 0.0035);
+  lightLine([[-D * 0.742, 0.415, -0.46], [-D * 0.742, 0.415, 0.22]], range(163, 197), 0.0035);
+
   /* the four zones again, as seams in the passenger-side dash face */
   /* each one runs the full width of the dash, following its contour: cowl seam, wood band, knee seam */
   [[0, 73, 0.948, -0.62], [73, 107, 0.877, -0.567], [107, 163, 0.842, -0.567], [163, 197, 0.68, -0.552]].forEach(([a, b, y, z]) => {
@@ -272,8 +318,11 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
     { light: new THREE.PointLight(0xffffff, 0, 1.8, 1.6), at: [D * 0.62, 0.95, 0.15], idx: range(73, 107), k: 1.2 },
     { light: new THREE.PointLight(0xffffff, 0, 1.8, 1.6), at: [-D * 0.62, 0.95, 0.15], idx: range(163, 197), k: 1.2 },
     { light: new THREE.PointLight(0xffffff, 0, 1.4, 1.8), at: [0, 0.68, -0.1], idx: range(107, 163), k: 0.9 },
-    { light: new THREE.PointLight(0xffffff, 0, 1.2, 1.8), at: [-0.4, 0.2, -0.55], idx: range(107, 163), k: 0.8 },
-    { light: new THREE.PointLight(0xffffff, 0, 1.2, 1.8), at: [0.4, 0.2, -0.55], idx: range(107, 163), k: 0.8 }
+    { light: new THREE.PointLight(0xffffff, 0, 1.4, 1.5), at: [-0.4, 0.22, -0.55], idx: range(107, 163), k: 1.6 },
+    { light: new THREE.PointLight(0xffffff, 0, 1.4, 1.5), at: [0.4, 0.22, -0.55], idx: range(107, 163), k: 1.6 },
+    { light: new THREE.PointLight(0xffffff, 0, 0.9, 1.6), at: [-0.17, 0.62, 0.0], idx: range(107, 135), k: 1.0 },
+    { light: new THREE.PointLight(0xffffff, 0, 0.9, 1.6), at: [0.17, 0.62, 0.0], idx: range(135, 163), k: 1.0 },
+    { light: new THREE.PointLight(0xffffff, 0, 1.6, 1.5), at: [D * 0.0, 1.35, 0.4], idx: range(73, 107).concat(range(163, 197)), k: 0.7 }
   ];
   spill.forEach((s) => { s.light.position.set(...s.at); car.add(s.light); });
   spill.push({ light: new THREE.PointLight(0xffffff, 0, 4.5, 1.4), at: [-D * 1.25, 0.6, 0.1], idx: range(163, 197), k: 3.2 });
@@ -316,10 +365,10 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
     [0.15, [0.70, 1.17, 0.06], -90, 0],
     [0.24, [0.38, 1.15, 0.08], -92, -2],
     [0.32, [0.16, 1.14, 0.06], -45, -6],
-    [0.40, [0.01, 1.13, 0.03], -5, -9],
-    [0.45, [0.0, 1.12, 0.02], 0, -9],
-    [0.72, [0.0, 1.12, 0.02], 0, -9],
-    [0.79, [-0.2, 1.14, 0.04], 45, -5],
+    [0.40, [0.01, 1.18, 0.14], -5, -12],
+    [0.45, [0.0, 1.21, 0.2], 0, -14],
+    [0.72, [0.0, 1.21, 0.2], 0, -14],
+    [0.79, [-0.2, 1.16, 0.08], 45, -6],
     [0.85, [-0.45, 1.17, 0.06], 88, -2],
     [0.91, [-0.92, 1.18, 0.06], 90, -10],
     [0.96, [-1.45, 0.95, 0.1], 90, -38],
@@ -368,14 +417,14 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
     sx.fillStyle = "rgba(255,255,255,.62)"; sx.font = font(500, 25);
     sx.fillText("197 LEDs · 4 zones · driven live by the engine", cx, 224);
     /* power switch */
-    const on = !!(R && R.on);
+    const on = !!(R && (R.on || (R.want && !R.title)));
     sx.fillStyle = on ? "rgba(255,255,255,.28)" : "#333";
     sx.beginPath(); sx.roundRect(cx, 262, 112, 58, 29); sx.fill();
     sx.fillStyle = on ? "#fff" : "#666";
     sx.beginPath(); sx.arc(on ? cx + 83 : cx + 29, 291, 23, 0, Math.PI * 2); sx.fill();
     sx.fillStyle = "rgba(255,255,255,.75)"; sx.font = font(700, 22);
     sx.fillText(on ? "SOUND ON" : "SOUND OFF", cx + 130, 299);
-    hits.push({ x: cx - 10, y: 250, w: 290, h: 84, act: () => playEl.click() });
+    hits.push({ x: cx - 10, y: 250, w: 290, h: 84, act: () => R.toggle() });
     /* skip */
     const kx = cx + 330;
     sx.fillStyle = "rgba(255,255,255,.14)";
@@ -446,7 +495,7 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
     sx.fillStyle = "rgba(255,255,255,.95)";
     if (on) { sx.fillRect(bx, by - 26, 13, 52); sx.fillRect(bx + 24, by - 26, 13, 52); }
     else { sx.beginPath(); sx.moveTo(bx, by - 26); sx.lineTo(bx + 40, by); sx.lineTo(bx, by + 26); sx.closePath(); sx.fill(); }
-    hits.push({ x: bx - 40, y: by - 50, w: 120, h: 100, act: () => playEl.click() });
+    hits.push({ x: bx - 40, y: by - 50, w: 120, h: 100, act: () => R.toggle() });
     const nx = bx + 100;
     sx.beginPath(); sx.moveTo(nx, by - 22); sx.lineTo(nx + 30, by); sx.lineTo(nx, by + 22); sx.closePath(); sx.fill();
     sx.fillRect(nx + 33, by - 22, 7, 44);
@@ -479,7 +528,10 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
     const x = u * scr.width, y = (1 - it.uv.y) * scr.height;
     return hits.find((h) => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) || null;
   }
-  canvas.addEventListener("click", (ev) => { const h = hitAt(ev); if (h) { h.act(); drawScreen(); } });
+  canvas.addEventListener("click", (ev) => {
+    const h = hitAt(ev);
+    if (h) { h.act(); drawScreen(); } else if (bus() && bus().wake) bus().wake();
+  });
   canvas.addEventListener("pointermove", (ev) => { canvas.style.cursor = hitAt(ev) ? "pointer" : ""; });
 
   function fit(text, max) {
