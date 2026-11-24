@@ -529,16 +529,35 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 
   /* ---------------- drive the lights from the engine ---------------- */
   const tmpC = new THREE.Color();
+  /* LED values are sRGB PWM. Vertex colours and light colours are linear, so they have to be decoded first,
+     otherwise every colour gets lifted toward grey. A little extra saturation makes up for what the LEDs'
+     own diffusion adds in the real strip. */
+  const SAT = 1.45, LIN = new Float32Array(256);
+  for (let i = 0; i < 256; i++) { const c = i / 255; LIN[i] = c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+  const ledLin = new Float32Array(197 * 3);
+  function saturate(r, g, b, out, o) {
+    const l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    let rr = l + (r - l) * SAT, gg = l + (g - l) * SAT, bb = l + (b - l) * SAT;
+    const lo = Math.min(rr, gg, bb);
+    if (lo < 0) { rr -= lo; gg -= lo; bb -= lo; }
+    const hi = Math.max(rr, gg, bb), keep = Math.max(r, g, b);
+    const k = hi > 0 ? keep / hi : 0;
+    out[o] = LIN[Math.min(255, Math.round(rr * k))];
+    out[o + 1] = LIN[Math.min(255, Math.round(gg * k))];
+    out[o + 2] = LIN[Math.min(255, Math.round(bb * k))];
+  }
+  const tmpLin = new Float32Array(3);
   function updateLights() {
     const R = bus();
     if (!R) return;
     const E = R.engine;
-    const boost = 1.35; /* LED values are 0-255 PWM; lines are emissive and bloom above 1.0 */
+    const boost = 1.9; /* linear, so this is gentler than it looks; lines still cross the bloom threshold on hits */
+    for (let i = 0; i < 197; i++) saturate(E.rs[i], E.gs[i], E.bs[i], ledLin, i * 3);
     for (const z of zones) {
       const rings = z.segs + 1, per = z.radial + 1, n = z.idx.length;
       for (let r = 0; r < rings; r++) {
-        const li = z.idx[Math.min(n - 1, Math.floor((r / z.segs) * n))];
-        const cr0 = (E.rs[li] / 255) * boost, cg = (E.gs[li] / 255) * boost, cb = (E.bs[li] / 255) * boost;
+        const li = z.idx[Math.min(n - 1, Math.floor((r / z.segs) * n))] * 3;
+        const cr0 = ledLin[li] * boost, cg = ledLin[li + 1] * boost, cb = ledLin[li + 2] * boost;
         for (let k = 0; k < per; k++) { const o = (r * per + k) * 3; z.colors[o] = cr0; z.colors[o + 1] = cg; z.colors[o + 2] = cb; }
       }
       z.geo.attributes.color.needsUpdate = true;
@@ -546,15 +565,17 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
     for (const s of spill) {
       let r0 = 0, g0 = 0, b0 = 0;
       for (const i of s.idx) { r0 += E.rs[i]; g0 += E.gs[i]; b0 += E.bs[i]; }
-      const n = s.idx.length * 255;
+      const n = s.idx.length;
       r0 /= n; g0 /= n; b0 /= n;
-      const lum = Math.max(r0, g0, b0);
-      tmpC.setRGB(r0 / (lum || 1), g0 / (lum || 1), b0 / (lum || 1));
-      s.light.color.copy(tmpC);
+      const lum = Math.max(r0, g0, b0) / 255;
+      saturate(r0, g0, b0, tmpLin, 0);
+      const m = Math.max(tmpLin[0], tmpLin[1], tmpLin[2]) || 1;
+      s.light.color.setRGB(tmpLin[0] / m, tmpLin[1] / m, tmpLin[2] / m);
       s.light.intensity = lum * s.k * 0.9;
     }
     const p = E.cur[1];
-    screenLight.color.setRGB(p[0] / 255, p[1] / 255, p[2] / 255);
+    saturate(p[0], p[1], p[2], tmpLin, 0);
+    screenLight.color.setRGB(tmpLin[0], tmpLin[1], tmpLin[2]);
   }
 
   /* ---------------- scroll + render loop ---------------- */
