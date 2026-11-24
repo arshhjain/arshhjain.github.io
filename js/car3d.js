@@ -21,7 +21,9 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
   const capD = document.getElementById("carCapD");
   const capE = document.getElementById("carCapE");
   const capChunks = [...capC.querySelectorAll(".chunk")];
-  const capWords = [...capD.querySelectorAll(".cd-slot i")];
+  const capSlot = capD.querySelector(".cd-slot"), capReel = capD.querySelector(".cd-reel");
+  const capWords = [...capD.querySelectorAll(".cd-reel i")];
+  let capW = -1;
   const capKitchen = capD.querySelector(".cd-kitchen");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const bus = () => window.__rave;
@@ -100,7 +102,7 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 
   /* floor, roof, firewall, rear */
   box(1.7, 0.04, 2.7, M.carpet, 0, 0.1, 0.25, 0.01);
-  box(1.72, 0.04, 2.0, M.headliner, 0, 1.45, 0.45, 0.02);
+  box(1.72, 0.04, 2.0, M.headliner, 0, 1.37, 0.45, 0.02);
   box(1.66, 0.6, 0.05, M.trim, 0, 0.42, -1.02, 0.02);
   box(1.66, 0.75, 0.06, M.trim, 0, 0.95, 1.5, 0.03);
 
@@ -114,8 +116,8 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
   for (const vx of [-0.5, -0.18, 0.18, 0.5]) box(0.2, 0.026, 0.018, ventM, vx, 0.915, -0.566, 0.008);
 
   /* centre screen: a modest panel set into a housing that grows out of the cowl */
-  box(0.56, 0.26, 0.09, M.trim, 0, 1.025, -0.695, 0.045, deg(-12));
-  const glass = box(0.5, 0.21, 0.02, M.glass, 0, 1.03, -0.652, 0.012, deg(-12));
+  box(0.42, 0.05, 0.13, M.leather, 0, 1.0, -0.7, 0.025, deg(-6));
+  const glass = box(0.39, 0.165, 0.012, M.glass, 0, 1.025, -0.648, 0.006, deg(-14));
   const scr = document.createElement("canvas");
   scr.width = 1200; scr.height = 504;
   const sx = scr.getContext("2d");
@@ -123,21 +125,21 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
   scrTex.colorSpace = THREE.SRGBColorSpace;
   scrTex.anisotropy = 4;
   /* kept below the bloom threshold so the display stays crisp */
-  const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.48, 0.2), new THREE.MeshBasicMaterial({ map: scrTex, toneMapped: false, color: new THREE.Color(0.6, 0.6, 0.6) }));
-  screen.position.set(0, 0, 0.0105);
+  const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.375, 0.1575), new THREE.MeshBasicMaterial({ map: scrTex, toneMapped: false, color: new THREE.Color(0.6, 0.6, 0.6) }));
+  screen.position.set(0, 0, 0.0065);
   glass.add(screen);
 
   /* driver's cluster in its own hooded binnacle behind the wheel */
-  box(0.42, 0.18, 0.13, M.trim, S * 0.37, 0.995, -0.665, 0.045, deg(-10));
-  box(0.44, 0.03, 0.17, M.leather, S * 0.37, 1.09, -0.64, 0.015);
-  const cglass = box(0.35, 0.13, 0.02, M.glass, S * 0.37, 0.995, -0.6, 0.01, deg(-10));
+  box(0.38, 0.15, 0.1, M.trim, S * 0.37, 0.975, -0.66, 0.04, deg(-8));
+  box(0.4, 0.025, 0.14, M.leather, S * 0.37, 1.055, -0.64, 0.012);
+  const cglass = box(0.33, 0.12, 0.012, M.glass, S * 0.37, 0.975, -0.607, 0.006, deg(-8));
   const clu = document.createElement("canvas");
   clu.width = 1000; clu.height = 372;
   const cx = clu.getContext("2d");
   const cluTex = new THREE.CanvasTexture(clu);
   cluTex.colorSpace = THREE.SRGBColorSpace;
-  const cluster = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.1265), new THREE.MeshBasicMaterial({ map: cluTex, toneMapped: false, color: new THREE.Color(0.6, 0.6, 0.6) }));
-  cluster.position.set(0, 0, 0.0105);
+  const cluster = new THREE.Mesh(new THREE.PlaneGeometry(0.32, 0.119), new THREE.MeshBasicMaterial({ map: cluTex, toneMapped: false, color: new THREE.Color(0.6, 0.6, 0.6) }));
+  cluster.position.set(0, 0, 0.0065);
   cglass.add(cluster);
 
   /* centre console + armrest + wood inlay */
@@ -200,16 +202,16 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
     sp.rotation.z = Math.PI / 2; sp.position.set(side * 0.776, 0.5, -0.62); car.add(sp);
     box(0.03, 0.025, 0.16, M.metal, side * 0.74, 0.755, -0.3, 0.008);
     box(0.03, 0.9, doorZ1 - doorZ0 + 0.2, M.paint, side * 0.9, 0.55, (doorZ0 + doorZ1) / 2, 0.012);
-    box(0.06, 0.03, 2.5, M.paint, side * 0.86, 1.43, 0.3, 0.015);
-    box(0.07, 0.46, 0.1, M.paint, side * 0.84, 1.2, 0.62, 0.02);
-    const aP = box(0.07, 0.62, 0.08, M.paint, side * 0.83, 1.2, -0.68, 0.02, deg(-48));
+    box(0.06, 0.03, 2.5, M.paint, side * 0.86, 1.35, 0.3, 0.015);
+    box(0.07, 0.4, 0.1, M.paint, side * 0.84, 1.16, 0.62, 0.02);
+    const aP = box(0.07, 0.54, 0.08, M.paint, side * 0.83, 1.16, -0.68, 0.02, deg(-48));
     aP.position.z = -0.72;
-    box(0.07, 0.46, 0.1, M.paint, side * 0.84, 1.2, 1.42, 0.02);
+    box(0.07, 0.4, 0.1, M.paint, side * 0.84, 1.16, 1.42, 0.02);
   }
 
   /* rear-view mirror and door mirrors */
-  box(0.26, 0.07, 0.025, M.trim, 0, 1.33, -0.42, 0.02);
-  box(0.02, 0.07, 0.02, M.trim, 0, 1.39, -0.4, 0.008);
+  box(0.26, 0.07, 0.025, M.trim, 0, 1.26, -0.42, 0.02);
+  box(0.02, 0.06, 0.02, M.trim, 0, 1.32, -0.4, 0.008);
   for (const side of [-1, 1]) box(0.08, 0.13, 0.2, M.paint, side * 1.0, 1.05, -0.78, 0.04, 0, side * 0.3);
 
   /* outside: road, a few wheels under the sills for the fall, city bokeh */
@@ -320,8 +322,8 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
   lightLine([[-D * 0.776, 0.905, -0.66], [-D * 0.774, 0.92, 0.0], [-D * 0.774, 0.915, 0.72], [-D * 0.776, 0.9, 1.25]], range(163, 197));
 
   /* roof rails echo the door zones; door-pocket lines too */
-  lightLine([[D * 0.7, 1.42, -0.3], [D * 0.71, 1.425, 0.5], [D * 0.7, 1.42, 1.2]], range(73, 107), 0.004);
-  lightLine([[-D * 0.7, 1.42, -0.3], [-D * 0.71, 1.425, 0.5], [-D * 0.7, 1.42, 1.2]], range(163, 197), 0.004);
+  lightLine([[D * 0.7, 1.345, -0.3], [D * 0.71, 1.35, 0.5], [D * 0.7, 1.345, 1.2]], range(73, 107), 0.004);
+  lightLine([[-D * 0.7, 1.345, -0.3], [-D * 0.71, 1.35, 0.5], [-D * 0.7, 1.345, 1.2]], range(163, 197), 0.004);
   lightLine([[D * 0.742, 0.415, -0.46], [D * 0.742, 0.415, 0.22]], range(73, 107), 0.0035);
   lightLine([[-D * 0.742, 0.415, -0.46], [-D * 0.742, 0.415, 0.22]], range(163, 197), 0.0035);
 
@@ -341,7 +343,7 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
     { light: new THREE.PointLight(0xffffff, 0, 1.4, 1.5), at: [0.4, 0.22, -0.55], idx: range(107, 163), k: 1.6 },
     { light: new THREE.PointLight(0xffffff, 0, 0.9, 1.6), at: [-0.17, 0.62, 0.0], idx: range(107, 135), k: 1.0 },
     { light: new THREE.PointLight(0xffffff, 0, 0.9, 1.6), at: [0.17, 0.62, 0.0], idx: range(135, 163), k: 1.0 },
-    { light: new THREE.PointLight(0xffffff, 0, 1.6, 1.5), at: [D * 0.0, 1.35, 0.4], idx: range(73, 107).concat(range(163, 197)), k: 0.7 }
+    { light: new THREE.PointLight(0xffffff, 0, 1.6, 1.5), at: [D * 0.0, 1.28, 0.4], idx: range(73, 107).concat(range(163, 197)), k: 0.7 }
   ];
   spill.forEach((s) => { s.light.position.set(...s.at); car.add(s.light); });
   spill.push({ light: new THREE.PointLight(0xffffff, 0, 4.5, 1.4), at: [-D * 1.25, 0.6, 0.1], idx: range(163, 197), k: 3.2 });
@@ -358,10 +360,11 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
   /* ---------------- post: bloom on the light lines ---------------- */
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.8, 0.45, 0.62);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.38, 0.3, 0.72);
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
 
+  let baseFov = 76, holdFov = 0;
   function resize() {
     const w = canvas.clientWidth, h = canvas.clientHeight;
     if (!w || !h) return;
@@ -369,7 +372,8 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
     composer.setSize(w, h);
     bloom.resolution.set(w * (mobile ? 0.35 : 0.5), h * (mobile ? 0.35 : 0.5));
     camera.aspect = w / h;
-    camera.fov = w / h < 0.8 ? 96 : w / h < 1.2 ? 84 : 74;
+    baseFov = w / h < 0.8 ? 96 : w / h < 1.2 ? 86 : 76;
+    camera.fov = baseFov + 14 * holdFov;
     camera.updateProjectionMatrix();
   }
   new ResizeObserver(resize).observe(canvas);
@@ -384,10 +388,10 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
     [0.15, [0.70, 1.17, 0.06], -90, 0],
     [0.24, [0.38, 1.15, 0.08], -92, -2],
     [0.32, [0.16, 1.14, 0.06], -45, -6],
-    [0.40, [0.01, 1.18, 0.14], -5, -12],
-    [0.45, [0.0, 1.21, 0.2], 0, -14],
-    [0.72, [0.0, 1.21, 0.2], 0, -14],
-    [0.79, [-0.2, 1.16, 0.08], 45, -6],
+    [0.40, [0.01, 1.12, 0.2], -5, -5],
+    [0.45, [0.0, 1.1, 0.26], 0, -3],
+    [0.72, [0.0, 1.1, 0.26], 0, -3],
+    [0.79, [-0.2, 1.13, 0.08], 45, -4],
     [0.85, [-0.45, 1.17, 0.06], 88, -2],
     [0.91, [-0.92, 1.18, 0.06], 90, -10],
     [0.96, [-1.45, 0.95, 0.1], 90, -38],
@@ -476,6 +480,9 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
       cx.beginPath(); cx.arc(x, y, r, a0, a1); cx.stroke();
       cx.fillStyle = "rgba(255,255,255,.5)"; cx.font = font(500, 17); cx.textAlign = "center";
       ticks.forEach((t, i) => { const a = a0 + (a1 - a0) * (i / (ticks.length - 1)); cx.fillText(t, x + Math.cos(a) * (r - 28), y + Math.sin(a) * (r - 28) + 6); });
+      const an = a0 + 0.04;
+      cx.strokeStyle = "#ff5a2a"; cx.lineWidth = 5; cx.lineCap = "round";
+      cx.beginPath(); cx.moveTo(x + Math.cos(an) * 36, y + Math.sin(an) * 36); cx.lineTo(x + Math.cos(an) * (r - 12), y + Math.sin(an) * (r - 12)); cx.stroke();
       cx.fillStyle = "#fff"; cx.font = font(300, 64); cx.fillText(value, x, y + 18);
       cx.fillStyle = "rgba(255,255,255,.5)"; cx.font = font(600, 17); cx.fillText(unit, x, y + 46);
       cx.textAlign = "left"; cx.lineCap = "butt";
@@ -523,7 +530,7 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
     const R = bus();
     if (!R) return;
     const E = R.engine;
-    const boost = 2.1; /* LED values are 0-255 PWM; lines are emissive and bloom above 1.0 */
+    const boost = 1.35; /* LED values are 0-255 PWM; lines are emissive and bloom above 1.0 */
     for (const z of zones) {
       const rings = z.segs + 1, per = z.radial + 1, n = z.idx.length;
       for (let r = 0; r < rings; r++) {
@@ -581,17 +588,19 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
     section.classList.toggle("holding", hold > 0.02);
     /* desk → car → what it is → where it belongs → presenting, then the car takes the stage */
     const win = (a, b, c, d) => smooth(a, b, shown) * (1 - smooth(c, d, shown));
-    capA.style.opacity = win(0.0, 0.02, 0.055, 0.07);
-    capB.style.opacity = win(0.07, 0.085, 0.115, 0.13);
-    capC.style.opacity = win(0.13, 0.14, 0.205, 0.22);
-    capChunks[0].classList.toggle("on", shown > 0.135);
-    capChunks[1].classList.toggle("on", shown > 0.165);
-    capD.style.opacity = win(0.22, 0.23, 0.375, 0.39);
-    const w = shown < 0.255 ? 0 : shown < 0.29 ? 1 : 2;
-    capWords.forEach((el, i) => el.classList.toggle("on", i === w));
-    capD.classList.toggle("wild", shown > 0.325);
-    capKitchen.classList.toggle("on", shown > 0.35);
-    capE.style.opacity = win(0.39, 0.41, 0.46, 0.49);
+    capA.style.opacity = win(0.0, 0.012, 0.035, 0.045);
+    capB.style.opacity = win(0.045, 0.057, 0.08, 0.09);
+    capC.style.opacity = win(0.09, 0.1, 0.15, 0.16);
+    capChunks[0].classList.toggle("on", shown > 0.093);
+    capChunks[1].classList.toggle("on", shown > 0.118);
+    capD.style.opacity = win(0.16, 0.17, 0.355, 0.37);
+    const w = shown < 0.205 ? 0 : shown < 0.245 ? 1 : 2;
+    if (w !== capW) { capW = w; capReel.style.transform = `translateY(${-w * 1.12}em)`; capSlot.style.width = capWords[w].offsetWidth + "px"; }
+    capD.classList.toggle("wild", shown > 0.29);
+    capKitchen.classList.toggle("on", shown > 0.318);
+    capE.style.opacity = win(0.375, 0.39, 0.47, 0.5);
+    const hf = smooth(0.38, 0.45, shown) * (1 - smooth(0.72, 0.8, shown));
+    if (Math.abs(hf - holdFov) > 0.002) { holdFov = hf; camera.fov = baseFov + 14 * hf; camera.updateProjectionMatrix(); }
 
     updateLights();
     if ((frameN++ & 1) === 0) drawScreen();

@@ -195,7 +195,7 @@
     const rr = rave.getBoundingClientRect();
     /* --dk: paper → night as Rave Mode arrives, night → paper as it leaves */
     const sm = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
-    const dk = Math.min(sm(vh * 1.15, vh * 0.2, rr.top), sm(-vh * 0.05, vh * 0.8, rr.bottom));
+    const dk = Math.min(sm(vh * 0.95, vh * 0.15, rr.top), sm(-vh * 0.05, vh * 0.8, rr.bottom));
     if (Math.abs(dk - lastDk) > 0.002 || (dk === 0) !== (lastDk === 0) || (dk === 1) !== (lastDk === 1)) {
       document.documentElement.style.setProperty("--dk", dk.toFixed(3));
       lastDk = dk;
@@ -724,7 +724,7 @@
     /* the engine hears the raw signal; the visitor hears it through distance */
     src.connect(lpf).connect(gainNode).connect(ctx.destination);
     try {
-      await ctx.audioWorklet.addModule("js/rave-worklet.js");
+      await ctx.audioWorklet.addModule("js/rave-worklet.js?v=2611250240");
       worklet = new AudioWorkletNode(ctx, "rave-engine", {
         numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1],
         processorOptions: { cfg: { ...CFG, palette: engine.target } }
@@ -811,19 +811,24 @@
      and reaches silence exactly when the theme has morphed back to paper (--dk = 0). */
   function updateSpatial() {
     const r = rave.getBoundingClientRect(), vh = window.innerHeight;
-    let level;
-    if (r.top > 0) level = ease(0.14, 0.5, raveReach());
-    else if (r.bottom >= vh) {
-      const cp = window.__carShown;
-      level = cp === undefined ? 1 : 1 - 0.55 * ease(0.885, 1.0, cp);
-    } else level = 0.45 * Math.max(0, lastDk);
-    const entering = r.top > 0;
-    const gain = entering ? level : Math.pow(level, 1.3);
-    const cutoff = entering ? 20000 * Math.pow(260 / 20000, 1 - ease(0.14, 0.42, raveReach()))
-                            : 20000 * Math.pow(260 / 20000, 1 - level);
+    let gain, cutoff;
+    if (r.top > 0) {
+      const x = raveReach();
+      gain = ease(0.14, 0.5, x);
+      cutoff = 20000 * Math.pow(260 / 20000, 1 - ease(0.14, 0.42, x));
+    } else {
+      /* one continuous exit: half of it while climbing out of the passenger window and dropping to the road,
+         the other half across the morph back to paper; silent exactly when --dk reaches 0 */
+      const cp = window.__carShown === undefined ? 0 : window.__carShown;
+      const inCar = ease(0.84, 1.0, cp);
+      const morph = r.bottom >= vh ? 0 : 1 - Math.max(0, lastDk);
+      const e = Math.min(1, 0.5 * inCar + 0.5 * morph);
+      gain = Math.pow(1 - e, 1.7);
+      cutoff = 20000 * Math.pow(220 / 20000, Math.pow(e, 0.75));
+    }
     if (ctx && soundOn) {
-      gainNode.gain.setTargetAtTime(gain, ctx.currentTime, 0.08);
-      lpf.frequency.setTargetAtTime(cutoff, ctx.currentTime, 0.06);
+      gainNode.gain.setTargetAtTime(gain, ctx.currentTime, 0.12);
+      lpf.frequency.setTargetAtTime(cutoff, ctx.currentTime, 0.1);
     }
   }
 
