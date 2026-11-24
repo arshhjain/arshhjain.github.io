@@ -650,3 +650,21 @@ main, .contact { position: relative; z-index: 1; }
 @media (max-height: 880px) and (min-width: 761px) {
   #rave.has-car .copy p:not(.big):not(.port-note), #rave.has-car .copy .spec { display: none; }
 }
+
+/* round 3: cabin edges dissolve into the page; controls live on the car's display */
+#rave.has-car .sticky { background: transparent; }
+#car {
+  -webkit-mask-image: linear-gradient(transparent 0, #000 14vh, #000 calc(100% - 14vh), transparent 100%);
+  mask-image: linear-gradient(transparent 0, #000 14vh, #000 calc(100% - 14vh), transparent 100%);
+}
+#rave.has-car .car-links { margin: 10px 0 0; text-shadow: 0 2px 14px rgba(0, 0, 0, .6); }
+@media (min-width: 761px) {
+  /* the card's content and player now live on the in-car display; the HTML stays for keyboard and screen readers */
+  #rave.has-car .rave-grid {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+}
+@media (max-width: 760px) { #rave.has-car .car-links { display: none; } }
+#ambilight { margin-top: 16.67vh; }
+#rave.has-car .rave-inner { pointer-events: none; }
+#rave.has-car .rave-inner .sheet-head, #rave.has-car .rave-inner .car-links, #rave.has-car .rave-inner .copy { pointer-events: auto; }
