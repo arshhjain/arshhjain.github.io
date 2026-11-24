@@ -748,7 +748,7 @@
     /* the engine hears the raw signal; the visitor hears it through distance */
     src.connect(lpf).connect(gainNode).connect(ctx.destination);
     try {
-      await ctx.audioWorklet.addModule("js/rave-worklet.js?v=2611250331");
+      await ctx.audioWorklet.addModule("js/rave-worklet.js?v=2611250336");
       worklet = new AudioWorkletNode(ctx, "rave-engine", {
         numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1],
         processorOptions: { cfg: { ...CFG, palette: engine.target } }
