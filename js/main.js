@@ -8,6 +8,10 @@
 
   /* Shuffled in the Rave Mode section. cover is optional: its palette drives the LEDs. */
   const PLAYLIST = [
+    { src: "assets/audio/seven-nation-army.mp3", title: "Seven Nation Army", artist: "The White Stripes", cover: "assets/audio/seven-nation-army.jpg" },
+    { src: "assets/audio/father-stretch-my-hands.mp3", title: "Father Stretch My Hands Pt. 1", artist: "Kanye West", cover: "assets/audio/father-stretch-my-hands.jpg" },
+    { src: "assets/audio/flower-in-a-hurricane.mp3", title: "Flower In A Hurricane", artist: "Justice ft. Tame Impala, SZA, King Gizzard & the Lizard Wizard", cover: "assets/audio/flower-in-a-hurricane.jpg" },
+    { src: "assets/audio/stolen-dance.mp3", title: "Stolen Dance", artist: "Milky Chance", cover: "assets/audio/stolen-dance.jpg" },
     { src: "assets/audio/willow.mp3", title: "willow", artist: "Taylor Swift", cover: "assets/audio/willow.jpg" }
   ];
 
@@ -171,11 +175,15 @@
     segments: [[0, 73], [73, 107], [107, 163], [163, 197]],
     sensitivity: 0.485, bassIntensity: 0.199, trebleIntensity: 0.835, trebleSens: 1.607,
     responsiveness: 0.035, noiseGate: 0.008, bassWidth: 117.1, trebleWidth: 98.5, trebleZone: 12,
-    attackGamma: 1.38, decayGamma: 0.8, brightness: 0.14, saturation: 1
+    attackGamma: 1.38, decayGamma: 0.8, brightness: 0.06, saturation: 1, temporalSmoothing: 0.15
   };
   const STEPS = 187.5 / 60;
   const per = (a) => 1 - Math.pow(1 - clamp(a, 0, 1), STEPS);
-  const KB = 1800, KT = 2600; /* WebAudio's 1/N-normalised magnitudes → numpy rfft scale */
+  /* WebAudio reports Blackman-windowed magnitudes divided by N; main.py uses raw numpy rfft magnitudes
+     (Hann-windowed 1024-sample buffer for bass, an unwindowed 256-sample chunk for treble).
+     These factors put both back on main.py's scale so its tuning constants keep their meaning. */
+  const BASS_N = 1024, TREB_N = 256;
+  const KB = (BASS_N / 4) / 0.21, KT = (TREB_N / 2) / 0.21;
 
   function rgb2hsv([r, g, b]) {
     r /= 255; g /= 255; b /= 255;
@@ -248,37 +256,35 @@
     liveBass: 0, liveTreble: 0
   };
 
-  let fbuf = null, tbuf = null, bIdx = [], tIdx = [], bW = null, tW = null;
-  function prepareBins(sampleRate, fftSize) {
-    const binHz = sampleRate / fftSize, bins = fftSize / 2;
-    fbuf = new Float32Array(bins); tbuf = new Float32Array(fftSize);
+  let bbuf = null, fbufT = null, tbuf = null, bIdx = [], tIdx = [], bW = null, tW = null;
+  function prepareBins(sampleRate) {
+    const bHz = sampleRate / BASS_N, tHz = sampleRate / TREB_N;
+    bbuf = new Float32Array(BASS_N / 2); fbufT = new Float32Array(TREB_N / 2); tbuf = new Float32Array(TREB_N);
     bIdx = []; tIdx = [];
-    for (let k = 1; k < bins; k++) {
-      const f = k * binHz;
-      if (f < 250) bIdx.push(k);
-      else if (f > 2200 && f < 16000) tIdx.push(k);
-    }
-    bW = Float32Array.from(bIdx, (k) => 0.5 + Math.exp(-((k * binHz - 50) ** 2) / (2 * 60 ** 2)));
-    tW = Float32Array.from(tIdx, (k) => 0.8 + 0.6 * clamp((k * binHz - 2200) / 8000, 0, 1));
+    for (let k = 1; k < BASS_N / 2; k++) if (k * bHz < 250) bIdx.push(k);
+    for (let k = 1; k < TREB_N / 2; k++) if (k * tHz > 2200) tIdx.push(k);
+    bW = Float32Array.from(bIdx, (k) => 0.5 + Math.exp(-((k * bHz - 50) ** 2) / (2 * 60 ** 2)));
+    tW = Float32Array.from(tIdx, (k) => 0.8 + 0.6 * clamp((k * tHz - 2200) / 8000, 0, 1));
     engine.tBinsFloor = new Float32Array(tIdx.length);
     engine.prevT = new Float32Array(tIdx.length);
     engine.bassEnv = new Float32Array(bIdx.length);
   }
 
-  function engineStep(analyser) {
+  function engineStep(an) {
     const E = engine;
     let rawB = 0, rawT = 0;
-    if (analyser) {
-      analyser.getFloatTimeDomainData(tbuf);
+    if (an) {
+      an.treb.getFloatTimeDomainData(tbuf);
       let sq = 0;
       for (let i = 0; i < tbuf.length; i++) sq += tbuf[i] * tbuf[i];
       const gated = Math.sqrt(sq / tbuf.length) < CFG.noiseGate;
-      analyser.getFloatFrequencyData(fbuf);
+      an.treb.getFloatFrequencyData(fbufT);
+      an.bass.getFloatFrequencyData(bbuf);
       if (!gated) {
         /* treble: spectral flux floor tracking + crest-factor transient gate */
         let bandE = 0;
         const tm = new Float32Array(tIdx.length);
-        for (let j = 0; j < tIdx.length; j++) { tm[j] = Math.pow(10, fbuf[tIdx[j]] / 20) * KT; bandE += tm[j]; }
+        for (let j = 0; j < tIdx.length; j++) { tm[j] = Math.pow(10, fbufT[tIdx[j]] / 20) * KT; bandE += tm[j]; }
         if (E.tFloor === 0) { E.tFloor = bandE; E.tBinsFloor.set(tm); E.prevT.set(tm); }
         E.prevT.set(tm);
         E.tFloor = bandE > E.tFloor ? E.tFloor + (bandE - E.tFloor) * per(0.08) : E.tFloor + (bandE - E.tFloor) * per(0.15);
@@ -297,7 +303,7 @@
         /* bass: transient energy above a moving average envelope */
         let tb = 0;
         for (let j = 0; j < bIdx.length; j++) {
-          const m = Math.pow(10, fbuf[bIdx[j]] / 20) * KB;
+          const m = Math.pow(10, bbuf[bIdx[j]] / 20) * KB;
           E.bassEnv[j] += (m - E.bassEnv[j]) * per(0.08);
           tb += Math.max(0, m - E.bassEnv[j]) * bW[j];
         }
@@ -564,7 +570,7 @@
   }
   function applyVibe() {
     vibeName.textContent = CONE_NAMES[+vibe.value];
-    if (candidates) { engine.target = resolvePalette(candidates, +vibe.value); setPaletteVars(engine.target); }
+    if (candidates) { engine.target = resolvePalette(candidates, +vibe.value); setPaletteVars(engine.target); sendPalette(engine.target); }
   }
   vibe.addEventListener("input", applyVibe);
 
@@ -584,6 +590,7 @@
       img.src = t.cover;
     }
     engine.agc.onTrackChange();
+    if (worklet) worklet.port.postMessage({ type: "trackChange" });
   }
 
   function nextTrack() {
@@ -611,22 +618,46 @@
     if (bad.size >= PLAYLIST.length) noTrack(); else nextTrack();
   });
 
-  function buildGraph() {
+  /* the engine runs on the audio thread (js/rave-worklet.js), chunk by chunk like main.py;
+     browsers without AudioWorklet fall back to the per-frame analyser port above */
+  let worklet = null;
+  function sendPalette(p) { if (worklet) worklet.port.postMessage({ type: "palette", palette: p }); }
+  async function buildGraph() {
     ctx = new (window.AudioContext || window.webkitAudioContext)();
     const src = ctx.createMediaElementSource(audio);
     lpf = ctx.createBiquadFilter(); lpf.type = "lowpass"; lpf.Q.value = 0.7; lpf.frequency.value = 350;
     gainNode = ctx.createGain(); gainNode.gain.value = 0;
-    analyser = ctx.createAnalyser(); analyser.fftSize = 2048; analyser.smoothingTimeConstant = 0;
-    prepareBins(ctx.sampleRate, analyser.fftSize);
     /* the engine hears the raw signal; the visitor hears it through distance */
-    src.connect(analyser);
     src.connect(lpf).connect(gainNode).connect(ctx.destination);
+    try {
+      await ctx.audioWorklet.addModule("js/rave-worklet.js");
+      worklet = new AudioWorkletNode(ctx, "rave-engine", {
+        numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1],
+        processorOptions: { cfg: { ...CFG, palette: engine.target } }
+      });
+      const sink = ctx.createGain(); sink.gain.value = 0;
+      src.connect(worklet).connect(sink).connect(ctx.destination);
+      worklet.port.onmessage = (e) => {
+        const m = e.data;
+        engine.rs.set(m.rs); engine.gs.set(m.gs); engine.bs.set(m.bs);
+        engine.liveBass = m.bass; engine.liveTreble = m.treble;
+        engine.cur = m.palette;
+      };
+    } catch (err) {
+      worklet = null;
+      const aB = ctx.createAnalyser(); aB.fftSize = BASS_N; aB.smoothingTimeConstant = 0;
+      const aT = ctx.createAnalyser(); aT.fftSize = TREB_N; aT.smoothingTimeConstant = 0;
+      analyser = { bass: aB, treb: aT };
+      prepareBins(ctx.sampleRate);
+      src.connect(aB);
+      src.connect(aT);
+    }
   }
 
   async function setSound(on) {
     if (soundBtn.disabled) return;
     if (on) {
-      if (!ctx) buildGraph();
+      if (!ctx) await buildGraph();
       if (ctx.state === "suspended") await ctx.resume();
       if (!started) { started = true; loadTrack(order[pos_i]); }
       try { await audio.play(); } catch (err) { pPlay.checked = false; return; }
@@ -677,7 +708,7 @@
     updatePins();
     updateSpatial();
     if (raveVisible || soundOn) {
-      engineStep(soundOn && analyser ? analyser : null);
+      if (!(soundOn && worklet)) engineStep(soundOn && analyser ? analyser : null);
       if (raveVisible) { drawLeds(); drawFluid(dt); }
       mBass.style.width = (engine.liveBass * 100).toFixed(1) + "%";
       mTreb.style.width = (engine.liveTreble * 100).toFixed(1) + "%";
