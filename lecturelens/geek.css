@@ -5,7 +5,7 @@ body.geek { padding-top: 0; }
 
 /* ---------- cover ---------- */
 .cover { position: relative; height: 100vh; height: 100svh; min-height: 680px; margin-bottom: 10vh; }
-.cover-frame { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 64px); align-items: center; padding: clamp(24px, 4vw, 56px); padding-bottom: 96px; }
+.cover-frame { display: grid; grid-template-columns: minmax(0, 860px); justify-content: center; gap: clamp(24px, 4vw, 64px); align-items: center; padding: clamp(24px, 4vw, 56px); padding-bottom: 96px; }
 .cover-copy { position: relative; }
 .cover-h { font-size: clamp(50px, 6.2vw, 104px); font-weight: 900; line-height: .86; }
 .cover-h .dot { color: var(--accent); }
