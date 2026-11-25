@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LectureLens, taken apart — Arsh Jain</title>
+<meta name="description" content="Detail drawing set for LectureLens: semantic caching, topic identity, time-decayed trending, the Content Constitution and every fallback in between.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500;600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css?v=2611251500">
+<link rel="stylesheet" href="geek.css?v=2611251500">
+</head>
+<body class="geek">
+
+<header class="topbar">
+  <a class="mark" href="../#lecturelens">← A.JAIN<span>/DWG 001 DETAIL SET</span></a>
+  <nav>
+    <a href="#s1">Map</a>
+    <a href="#s2">Recall</a>
+    <a href="#s5">Community</a>
+    <a href="#s6">Constitution</a>
+    <a href="#s9">Fallbacks</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- ============ COVER ============ -->
+<section class="cover">
+  <div class="frame cover-frame">
+    <div class="zones zones-top" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span></div>
+    <div class="zones zones-side" aria-hidden="true"><span>A</span><span>B</span><span>C</span><span>D</span></div>
+
+    <div class="cover-copy">
+      <p class="eyebrow">DWG 001 — DETAIL SET · 11 SHEETS</p>
+      <h1 class="cover-h">LectureLens,<br>taken apart<span class="dot">.</span></h1>
+      <p class="lede">One upload goes in and a study map comes out. Here's everything in between.</p>
+      <p class="hand-note" aria-hidden="true">systems within systems.<br>you were warned.</p>
+    </div>
+
+    <ol class="dreg" aria-label="Drawing register">
+      <li class="reg-head"><span>SHEET</span><span>TITLE</span><span>ANSWERS</span></li>
+      <li><a href="#s0"><span>001.0</span><span>Why</span><span>Why build it at all</span></a></li>
+      <li><a href="#s1"><span>001.1</span><span>System map</span><span>What touches what</span></a></li>
+      <li><a href="#s2"><span>001.2</span><span>Recall</span><span>Have I seen this lecture before?</span></a></li>
+      <li><a href="#s3"><span>001.3</span><span>Understand</span><span>What is this lecture about?</span></a></li>
+      <li><a href="#s4"><span>001.4</span><span>Topic identity</span><span>Have I seen this topic before?</span></a></li>
+      <li><a href="#s5"><span>001.5</span><span>Community decay</span><span>What is everyone studying right now?</span></a></li>
+      <li><a href="#s6"><span>001.6</span><span>Content Constitution</span><span>What should they watch?</span></a></li>
+      <li><a href="#s7"><span>001.7</span><span>Thresholds</span><span>How sure is sure enough?</span></a></li>
+      <li><a href="#s8"><span>001.8</span><span>Render &amp; mastery</span><span>How does the map reach the student?</span></a></li>
+      <li><a href="#s9"><span>001.9</span><span>Fault tree</span><span>What happens when each piece breaks?</span></a></li>
+      <li><a href="#sR"><span>001.R</span><span>Revisions</span><span>What I didn't build, and why</span></a></li>
+    </ol>
+
+    <div class="titleblock">
+      <div><small>DRAWN</small>A. JAIN</div>
+      <div><small>PARENT</small>DWG 001</div>
+      <div><small>SHEETS</small>11</div>
+      <div><small>REV</small>DRAFT A</div>
+      <div class="wide"><small>TITLE</small>LECTURELENS — DETAIL SET</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 001.0 WHY ============ -->
+<article class="sheet" id="s0" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 001.0</span>
+    <h3>Why</h3>
+    <span class="tag">Requirements · traceability</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">School maths has Khan Academy, where every topic maps to a lesson and a progress tick. My degree has 80-slide PDFs.</p>
+      <p>Nothing like that exists for the lecture decks an AI/ML course actually runs on. So I built the part I could: drop in any lecture and get back a topic map you can tick off, with a resource behind every node.</p>
+      <p>It started as a CLI on my laptop (PyPDF2, EasyOCR, Gemini 1.5 Flash) and grew into the Sopra Steria internship build. Once other students were uploading the same decks, three more requirements showed up on their own.</p>
+    </div>
+    <figure class="fig">
+      <figcaption class="fig-cap">FIG 001.0-A — REQUIREMENTS → SHEETS</figcaption>
+      <ol class="reqs">
+        <li><b>REQ-01</b><span>Any lecture in, a structured study map out.</span><a href="#s3">001.3</a></li>
+        <li><b>REQ-02</b><span>Never pay the LLM twice for the same lecture.</span><a href="#s2">001.2</a></li>
+        <li><b>REQ-03</b><span>"Fourier Transform" and "FT basics" are one topic, not two.</span><a href="#s4">001.4</a></li>
+        <li><b>REQ-04</b><span>Show what the batch is studying <em>this week</em>, not all-time.</span><a href="#s5">001.5</a></li>
+        <li><b>REQ-05</b><span>Point every topic at a source faculty would actually recommend.</span><a href="#s6">001.6</a></li>
+        <li><b>REQ-06</b><span>Progress you can see, Khan-style.</span><a href="#s8">001.8</a></li>
+        <li><b>REQ-07</b><span>Nothing fails loudly if it can fail gracefully.</span><a href="#s9">001.9</a></li>
+      </ol>
+    </figure>
+  </div>
+</article>
+
+<!-- ============ 001.1 MAP ============ -->
+<article class="sheet" id="s1" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 001.1</span>
+    <h3>System map</h3>
+    <span class="tag">FastAPI · SQLite · sentence-transformers · Gemini</span>
+  </header>
+  <div class="sheet-body single">
+    <figure class="fig fig-map">
+      <figcaption class="fig-cap">FIG 001.1-A — ONE UPLOAD, TWO ROUTES · <span class="map-toggle" role="group" aria-label="Route"><button class="chip on" data-route="miss">FIRST UPLOAD</button><button class="chip" data-route="hit">SAME LECTURE, 2ND STUDENT</button></span></figcaption>
+      <svg class="map" viewBox="0 0 1000 380" role="img" aria-label="System diagram: upload, extract, recall, understand, topics, render; background loop: community, constitution, YouTube">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
+        </defs>
+        <g class="bg-zone">
+          <rect x="300" y="222" width="690" height="140" rx="0"/>
+          <text x="312" y="352">BACKGROUND LOOP · EVERY 30 MIN – 12 H</text>
+        </g>
+        <g class="edges">
+          <path id="e-req" d="M140 90 H175 M295 90 H330 M450 90 H530 M650 90 H700 M820 90 H860"/>
+          <path class="hitpath" d="M390 120 C 390 175, 760 175, 760 122"/>
+          <path class="dash" d="M760 120 V 262"/>
+          <path class="dash" d="M700 292 H 650"/>
+          <path class="dash" d="M530 292 H 450"/>
+          <path class="dash" d="M390 262 C 390 200, 735 200, 745 124"/>
+        </g>
+        <text class="edge-l hit-l" x="575" y="140" text-anchor="middle">HIT: cos ≥ 0.85 · skip Gemini</text>
+        <text class="edge-l" x="770" y="236">topic_hits</text>
+        <text class="edge-l" x="400" y="248">resource_url → topics</text>
+
+        <a href="#s0"><g class="node" transform="translate(20 60)"><rect width="120" height="60"/><text x="10" y="24">UPLOAD</text><text class="sub" x="10" y="44">pdf docx pptx txt</text></g></a>
+        <a href="#s9"><g class="node" transform="translate(175 60)"><rect width="120" height="60"/><text x="10" y="24">EXTRACT</text><text class="sub" x="10" y="44">PyPDF2 + friends</text></g></a>
+        <a href="#s2"><g class="node key" transform="translate(330 60)"><rect width="120" height="60"/><text x="10" y="24">RECALL</text><text class="sub" x="10" y="44">cosine · 384-d</text></g></a>
+        <a href="#s3"><g class="node" transform="translate(530 60)"><rect width="120" height="60"/><text x="10" y="24">UNDERSTAND</text><text class="sub" x="10" y="44">Gemini → JSON tree</text></g></a>
+        <a href="#s4"><g class="node" transform="translate(700 60)"><rect width="120" height="60"/><text x="10" y="24">TOPICS</text><text class="sub" x="10" y="44">exact, then 0.65</text></g></a>
+        <a href="#s8"><g class="node" transform="translate(860 60)"><rect width="120" height="60"/><text x="10" y="24">RENDER</text><text class="sub" x="10" y="44">tree + mastery</text></g></a>
+
+        <a href="#s5"><g class="node" transform="translate(700 262)"><rect width="120" height="60"/><text x="10" y="24">COMMUNITY</text><text class="sub" x="10" y="44">Σ e^(−0.1·days)</text></g></a>
+        <a href="#s6"><g class="node" transform="translate(530 262)"><rect width="120" height="60"/><text x="10" y="24">CONSTITUTION</text><text class="sub" x="10" y="44">rule cos ≥ 0.45</text></g></a>
+        <a href="#s9"><g class="node" transform="translate(330 262)"><rect width="120" height="60"/><text x="10" y="24">YOUTUBE</text><text class="sub" x="10" y="44">ytInitialData scrape</text></g></a>
+        <a href="#s2"><g class="node db" transform="translate(40 262)"><path d="M0 10 C0 -3 120 -3 120 10 V50 C120 63 0 63 0 50 Z M0 10 C0 23 120 23 120 10"/><text x="14" y="40">cache.db</text></g></a>
+        <path class="dash" d="M160 292 H 330"/>
+        <text class="edge-l" x="180" y="284">one SQLite file</text>
+
+        <circle class="packet" r="7" cx="80" cy="90"/>
+      </svg>
+      <ol class="route-log" aria-live="polite"></ol>
+    </figure>
+  </div>
+</article>
+
+<!-- ============ 001.2 RECALL ============ -->
+<article class="sheet" id="s2" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 001.2</span>
+    <h3>Recall</h3>
+    <span class="tag">REQ-02 · semantic cache · storage</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">The expensive call is Gemini, and everything else in the system exists so I get to skip it.</p>
+      <p>The extracted text gets embedded once with all-MiniLM-L6-v2: 384 floats, normalised to unit length, so cosine similarity collapses to a dot product. That vector gets compared against every stored document. If the nearest one scores ≥ 0.85, its stored analysis is served straight back and the UI says <i>"Previously analyzed by a peer — served from cache"</i>.</p>
+      <p>A byte-exact hash would miss the same deck re-exported, re-spaced or with one typo fixed. Meaning doesn't change when whitespace does, so the cache keys on meaning.</p>
+      <p>SHA-256 is still there, but as the document's <i>identity</i>: it's what your mastery ticks are saved against. <span class="hold" title="Live sheet 001 describes an exact-hash tier plus cosine ≥ 0.94. Repo main.py: embedding cosine is the sole dedup at 0.85. Which is current?">HOLD · tier count</span></p>
+      <ul class="spec">
+        <li><span>Lookup</span>single pass · linear scan over file_cache · O(n)</li>
+        <li><span>Hit</span>serve stored JSON · register this upload under its own id</li>
+        <li><span>Miss</span>Gemini → store {subject, tree, topics} + vector</li>
+      </ul>
+    </div>
+    <figure class="fig">
+      <figcaption class="fig-cap">FIG 001.2-A — SECTION A–A THROUGH ONE file_cache ROW</figcaption>
+      <div class="row-cut">
+        <div class="cell"><b>file_hash</b><small>TEXT · PK</small><span>64 hex chars</span><em>SHA-256 of the text. Identity, not dedup.</em></div>
+        <div class="cell grow"><b>extracted_<wbr>text</b><small>TEXT</small><span>varies</span><em>Kept so the row can be re-embedded if the model changes.</em></div>
+        <div class="cell grow"><b>analysis_<wbr>result</b><small>TEXT · JSON</small><span>varies</span><em>The only thing Gemini ever produced for this lecture.</em></div>
+        <div class="cell"><b>upload_<wbr>count</b><small>INTEGER</small><span>≤ 8 B</span><em>Peers who hit this row.</em></div>
+        <div class="cell key"><b>embedding</b><small>BLOB</small><span>1,536 B</span><em>384 × float32. What recall actually reads.</em></div>
+      </div>
+      <div class="not-stored">
+        <b>NOT STORED</b>
+        <span>The uploaded file. It's written to <code>uploads/</code>, read once, and deleted in a <code>finally:</code> block whether the request succeeds or not.</span>
+      </div>
+    </figure>
+  </div>
+</article>
+
+<!-- ============ 001.3 UNDERSTAND ============ -->
+<article class="sheet" id="s3" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 001.3</span>
+    <h3>Understand</h3>
+    <span class="tag">REQ-01 · prompt contract · output shaping</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">The LLM doesn't get to be creative about format. It signs a contract.</p>
+      <p>The system prompt pins the output to one JSON shape: a subject and a nested topic tree. Then it fences the tree in:</p>
+      <ul class="spec">
+        <li><span>Depth</span>max 3 levels</li>
+        <li><span>Names</span>2–5 words each</li>
+        <li><span>Root</span>the broadest concept the document covers</li>
+        <li><span>Scale</span>short docs stay shallow; long docs go wide before deep</li>
+        <li><span>Guard</span>not academic → <code>NON_ACADEMIC</code>, shown as a polite refusal</li>
+      </ul>
+      <p>Models still wrap JSON in markdown fences or add a chatty sentence. So the parser doesn't trust the edges: it slices from the first <code>{</code> to the last <code>}</code> and parses only that. The tree then gets flattened depth-first into a topic list for the rest of the pipeline.</p>
+    </div>
+    <figure class="terminal">
+      <div class="term-bar"><i></i><i></i><i></i><span>analyze_text() — example response</span></div>
+      <pre id="uTerm"></pre>
+    </figure>
+  </div>
+</article>
+
+<!-- ============ 001.4 TOPICS ============ -->
+<article class="sheet" id="s4" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 001.4</span>
+    <h3>Topic identity</h3>
+    <span class="tag">REQ-03 · get_or_create_topic()</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">It's the same question as Recall, asked one level down, about a topic name instead of a whole lecture.</p>
+      <p>Every node in every tree passes through three gates. An exact name match reuses the row. Otherwise the name is embedded and compared against every stored topic, and a nearest neighbour at ≥ 0.65 gets its id reused. Only if both gates miss does a new topic exist.</p>
+      <p>Each node then writes two rows: one linking it to this document (<code>document_topics</code>, unique per pair), and one timestamped <code>topic_hits</code> row. That hit log is everything the community layer runs on.</p>
+      <p>Older topic rows without a vector get one backfilled the first time they're touched. Nothing needs a migration night.</p>
+    </div>
+    <figure class="fig">
+      <figcaption class="fig-cap">FIG 001.4-A — THREE GATES</figcaption>
+      <svg class="gates" viewBox="0 0 460 300" role="img" aria-label="Exact name gate, then cosine 0.65 gate, then insert">
+        <defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+        <text class="mono" x="10" y="26">"Gradient Descent (GD)"</text>
+        <path class="ln" d="M90 34 V 62" marker-end="url(#ah2)"/>
+        <g transform="translate(20 64)"><rect class="gate" width="160" height="50"/><text x="12" y="22">GATE 1</text><text class="sub" x="12" y="40">name = ? exact</text></g>
+        <path class="ln" d="M180 89 H 300" marker-end="url(#ah2)"/><text class="sub" x="200" y="82">match</text>
+        <path class="ln" d="M90 114 V 142" marker-end="url(#ah2)"/><text class="sub" x="98" y="134">miss</text>
+        <g transform="translate(20 144)"><rect class="gate" width="160" height="50"/><text x="12" y="22">GATE 2</text><text class="sub" x="12" y="40">nearest cos ≥ 0.65</text></g>
+        <path class="ln" d="M180 169 H 300" marker-end="url(#ah2)"/><text class="sub" x="200" y="162">match</text>
+        <path class="ln" d="M90 194 V 222" marker-end="url(#ah2)"/><text class="sub" x="98" y="214">miss</text>
+        <g transform="translate(20 224)"><rect class="gate ins" width="160" height="50"/><text x="12" y="22">INSERT</text><text class="sub" x="12" y="40">new row + vector</text></g>
+        <g transform="translate(302 104)"><rect class="out" width="148" height="80"/><text x="12" y="26">REUSE topic_id</text><text class="sub" x="12" y="48">→ document_topics</text><text class="sub" x="12" y="66">→ topic_hits (+1)</text></g>
+        <path class="ln dash" d="M180 249 H 376 V 186" marker-end="url(#ah2)"/>
+      </svg>
+      <label class="norm">
+        <span class="fig-cap">normalize_topic_name() — try it</span>
+        <input id="normIn" type="text" value="  Gradient-Descent,  (Batch!) " spellcheck="false" aria-label="Topic name to normalise">
+        <code id="normOut"></code>
+      </label>
+    </figure>
+  </div>
+</article>
+
+<!-- ============ 001.5 COMMUNITY ============ -->
+<article class="sheet" id="s5" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 001.5</span>
+    <h3>Community decay</h3>
+    <span class="tag">REQ-04 · get_community_topics()</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">A hit from today counts as 1. A hit from a week ago counts as about half.</p>
+      <p>A raw hit count is an all-time leaderboard, and the topic that was hot in August would sit on top forever. So each hit decays exponentially with age and the topic's score is the sum:</p>
+      <p class="formula">score = Σ e<sup>−0.1 · Δdays</sup> &nbsp;·&nbsp; t<sub>½</sub> = ln 2 / 0.1 ≈ 6.9 days</p>
+      <p>This is why steady beats spiky. Five days of one hit each outranks a ten-hit burst from three weeks ago. You can test it on the right: click a lane to add a hit, click a hit to remove it.</p>
+      <p>Top 20 by score make the Community tab. That same ranking also decides which topics the background loop resolves resources for first, so popular topics get fixed sooner.</p>
+    </div>
+    <figure class="fig">
+      <figcaption class="fig-cap">FIG 001.5-A — TWO TOPICS, LAST 30 DAYS · <button class="chip" id="decayReset">RESET</button></figcaption>
+      <svg class="decay" id="decay" viewBox="0 0 480 300" role="img" aria-label="Interactive decay chart with two lanes of hits"></svg>
+      <div class="scores" id="decayScores"></div>
+    </figure>
+  </div>
+</article>
+
+<!-- ============ 001.6 CONSTITUTION ============ -->
+<article class="sheet" id="s6" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 001.6</span>
+    <h3>Content Constitution</h3>
+    <span class="tag">REQ-05 · resource_finder · background_jobs</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">YouTube's top result for a topic is whoever won the algorithm that week, not the source faculty would recommend.</p>
+      <p>The Constitution is a table of faculty rules: a subject, the rule, and the source they trust. Each rule is embedded when it's added, through a small CLI. When a topic needs a resource, it's matched against every rule.</p>
+      <p>If the best rule scores ≥ 0.45, the search is scoped to that source: <code>topic + source_name</code>. If it doesn't, the search falls back to <code>topic + "university lecture"</code>. The scraper reads YouTube's <code>ytInitialData</code> and keeps the first real video.</p>
+      <p>None of this runs during your upload. A background loop picks the top-20 trending topics that still have no resource and resolves them three at a time on a thread pool, so the event loop stays free for requests. How often it wakes up depends on traffic.</p>
+    </div>
+    <div class="fig-stack">
+      <figure class="fig">
+        <figcaption class="fig-cap">FIG 001.6-A — QUERY BUILDER · <span class="ex">example rule: Machine Learning → StatQuest</span></figcaption>
+        <div class="qb">
+          <label><span>topic</span><input id="qbTopic" type="text" value="Gradient Descent" spellcheck="false"></label>
+          <label><span>best rule cos</span><input id="qbSim" type="range" min="0" max="1" step="0.01" value="0.62"><output id="qbSimOut">0.62</output></label>
+          <div class="qb-out"><small id="qbBranch"></small><code id="qbQuery"></code></div>
+        </div>
+      </figure>
+      <figure class="fig">
+        <figcaption class="fig-cap">FIG 001.6-B — ADAPTIVE WAKE INTERVAL</figcaption>
+        <div class="loop">
+          <label><span>uploads in last 24 h</span><input id="lpN" type="range" min="0" max="80" step="1" value="12"><output id="lpNOut">12</output></label>
+          <svg class="steps" id="lpSvg" viewBox="0 0 420 140" role="img" aria-label="Step function: under 20 uploads 12 hours, 20 to 50 uploads 2 hours, over 50 uploads 30 minutes"></svg>
+          <p class="loop-read" id="lpRead"></p>
+        </div>
+      </figure>
+    </div>
+  </div>
+</article>
+
+<!-- ============ 001.7 THRESHOLDS ============ -->
+<article class="sheet" id="s7" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 001.7</span>
+    <h3>Thresholds</h3>
+    <span class="tag">One model · three decisions</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">The same 384-d embedding gets used three times, and each use sets the bar at a different height.</p>
+      <p>The bar sits where a false match costs the most. Serve the wrong lecture's map and a student studies the wrong thing, so recall is strictest at 0.85. Merge two topics that shouldn't be merged and the trending list is slightly off, so topic identity sits at 0.65. Scope a YouTube search to a source that's a loose fit and the worst case is a mildly worse video, so the Constitution is loosest at 0.45.</p>
+      <p>Drag the cursor and watch which of the three decisions flip.</p>
+    </div>
+    <figure class="fig">
+      <figcaption class="fig-cap">FIG 001.7-A — ONE RULER</figcaption>
+      <div class="ruler-wrap">
+        <svg class="ruler" id="ruler" viewBox="0 0 520 110" aria-hidden="true"></svg>
+        <input id="rulerIn" class="ruler-in" type="range" min="0" max="1" step="0.01" value="0.7" aria-label="Cosine similarity">
+      </div>
+      <ul class="verdicts" id="verdicts">
+        <li data-t="0.85"><b>RECALL</b><span>≥ 0.85</span><em></em></li>
+        <li data-t="0.65"><b>TOPIC IDENTITY</b><span>≥ 0.65</span><em></em></li>
+        <li data-t="0.45"><b>CONSTITUTION</b><span>≥ 0.45</span><em></em></li>
+      </ul>
+    </figure>
+  </div>
+</article>
+
+<!-- ============ 001.8 RENDER ============ -->
+<article class="sheet" id="s8" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 001.8</span>
+    <h3>Render &amp; mastery</h3>
+    <span class="tag">REQ-06 · vanilla JS · localStorage</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">The tree comes back as JSON and gets rendered recursively into cards you can tick off.</p>
+      <p>Ticks follow the tree in both directions. Ticking a parent ticks everything under it. Ticking the last open child ticks the parent. Unticking anything reopens its ancestors. The progress bar counts leaves only, so a big root tick doesn't inflate your progress.</p>
+      <p>Each tick is saved in localStorage under <code>mastered:&lt;sha-256&gt;:&lt;topic&gt;</code>, which is why the document needs a stable identity. Upload the same deck next month and your progress is still there. No account needed.</p>
+      <p>The upload view walks the same stages as the server (upload, extract, peer cache, analysis, resources) with an elapsed timer, so a 10-second Gemini call doesn't feel like a hang.</p>
+    </div>
+    <figure class="fig">
+      <figcaption class="fig-cap">FIG 001.8-A — SAME PROPAGATION LOGIC · <span class="ex">example tree</span></figcaption>
+      <div class="m-head"><span id="mCount">0 of 0 mastered</span><div class="m-bar"><i id="mFill"></i></div></div>
+      <ul class="m-tree" id="mTree"></ul>
+    </figure>
+  </div>
+</article>
+
+<!-- ============ 001.9 FAULT TREE ============ -->
+<article class="sheet" id="s9" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 001.9</span>
+    <h3>Fault tree</h3>
+    <span class="tag">REQ-07 · every fallback in the repo</span>
+  </header>
+  <div class="sheet-body single">
+    <div class="copy narrow">
+      <p class="big">Every subsystem has a ladder. If the top rung breaks, you land on the next one. The bottom rung is the floor, and the floor is never a crash.</p>
+      <p>Click a rung to break it. <button class="chip" id="ftReset">RESET ALL</button></p>
+    </div>
+    <div class="ladders" id="ladders"></div>
+  </div>
+</article>
+
+<!-- ============ 001.R REVISIONS ============ -->
+<article class="sheet" id="sR" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 001.R</span>
+    <h3>Revisions</h3>
+    <span class="tag">Considered · paused · cut</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">The subset problem was the one I spent the most time on, and I chose not to ship it.</p>
+      <p>One student uploads a 10-chapter PDF. Another uploads 5 of those chapters. The whole-document vectors don't match, but every answer for those 5 chapters already exists.</p>
+      <p>The fix was chunk-level caching: page-level embeddings, or a <code>chunk_cache</code> table, with the tree stitched back together from cached pieces. It got too complicated, and it's an edge case where I couldn't make the result trustworthy without compromising somewhere else. A cache that sometimes serves a subtly wrong map is worse than one that sometimes costs a Gemini call.</p>
+    </div>
+    <figure class="fig">
+      <figcaption class="fig-cap">FIG 001.R-A — THE SUBSET PROBLEM</figcaption>
+      <svg class="subset" viewBox="0 0 460 170" role="img" aria-label="Ten chapter document versus five chapter subset">
+        <text class="sub" x="0" y="18">STUDENT A · 10 CHAPTERS</text>
+        <g class="chs" transform="translate(0 26)"></g>
+        <text class="sub" x="0" y="96">STUDENT B · CH 3–7</text>
+        <g class="chs b" transform="translate(0 104)"></g>
+        <text class="sub" x="0" y="160">whole-doc vectors: different · chapter answers: already paid for</text>
+      </svg>
+      <table class="revs">
+        <thead><tr><th>REV</th><th>CHANGE</th><th>STATUS</th></tr></thead>
+        <tbody>
+          <tr><td>A</td><td>Chunk-level cache for subsets</td><td class="st-cut">NOT BUILT</td></tr>
+          <tr><td>B</td><td>Wikipedia link per topic</td><td class="st-pause">PAUSED IN CODE</td></tr>
+          <tr><td>C</td><td>KeyBERT keyword gate before Gemini</td><td><span class="hold" title="Explored with all-MiniLM-L6-v2 at 0.75. Not in the repo. Shipped, cut, or still open?">HOLD</span></td></tr>
+          <tr><td>D</td><td>Exact SHA-256 dedup tier</td><td><span class="hold" title="Repo comment: SHA-256 is 'used for stable document ID only — not for cache dedup'. Was the exact tier removed on purpose?">HOLD</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</article>
+
+</main>
+
+<footer class="geek-end">
+  <a class="link" href="../#lecturelens">← back to the full set</a>
+  <a class="link" href="https://github.com/arshhjain/LectureLens" target="_blank" rel="noopener">source on GitHub ↗</a>
+  <div class="titleblock end">
+    <div><small>DRAWN</small>A. JAIN</div>
+    <div><small>CHECKED</small>—</div>
+    <div><small>SHEET</small>11 / 11</div>
+    <div><small>REV</small>DRAFT A</div>
+    <div class="wide"><small>TITLE</small>LECTURELENS — DETAIL SET — END</div>
+  </div>
+</footer>
+
+<script src="geek.js?v=2611251500"></script>
+</body>
+</html>
