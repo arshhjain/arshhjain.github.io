@@ -17,93 +17,81 @@
   }, { threshold: 0.12 });
   document.querySelectorAll("[data-reveal]").forEach((n) => revealObs.observe(n));
 
-  /* ---------- 001.1 system map ---------- */
+  /* ---------- 001.1 system map: one loop, two students ---------- */
   (() => {
     const svg = $(".map");
     if (!svg) return;
-    const packet = $(".packet", svg);
-    const log = $(".route-log");
-    const nodes = [...svg.querySelectorAll(".node")];
-    const nodeAt = (x) => nodes.find((n) => {
+    const packet = $(".packet:not(.side)", svg), side = $(".packet.side", svg);
+    const log = $(".route-log"), phaseEl = $("#mapPhase");
+    const nodes = [...svg.querySelectorAll(".node[data-n]")].map((n) => {
       const m = /translate\((\d+) (\d+)\)/.exec(n.getAttribute("transform"));
-      return m && +m[2] === 60 && x >= +m[1] && x <= +m[1] + 120;
+      return { n, name: n.dataset.n, x: +m[1], y: +m[2], w: 120, h: 60 };
     });
-    const routes = {
-      miss: {
-        d: "M80 90 H920",
-        steps: [
-          ["UPLOAD", "file lands in uploads/"],
-          ["EXTRACT", "text out · file deleted"],
-          ["RECALL", "no neighbour ≥ 0.85 · MISS"],
-          ["UNDERSTAND", "Gemini → {subject, tree}"],
-          ["TOPICS", "3 gates · +1 hit per node"],
-          ["RENDER", "tree + ticks"]
-        ],
+    const inNode = (p) => nodes.find((o) => p.x >= o.x && p.x <= o.x + o.w && p.y >= o.y - 4 && p.y <= o.y + o.h);
+    const order = ["UPLOAD", "EXTRACT", "RECALL", "UNDERSTAND", "STORE", "TOPICS", "RENDER"];
+    const phases = [
+      {
+        label: "STUDENT 1 · FIRST UPLOAD", cls: "ph-a",
+        main: "M80 90 H920", fork: "UNDERSTAND", side: "M590 120 L500 196",
+        steps: { UPLOAD: "file lands in uploads/", EXTRACT: "text out · file deleted", RECALL: "nothing ≥ 0.85 · MISS", UNDERSTAND: "Gemini → {subject, tree}", STORE: "output + vector → cache.db", TOPICS: "3 gates · +1 hit per node", RENDER: "tree + ticks" },
         skip: []
       },
-      hit: {
-        d: "M80 90 H390 V120 C390 175 760 175 760 122 V90 H920",
-        steps: [
-          ["UPLOAD", "file lands in uploads/"],
-          ["EXTRACT", "text out · file deleted"],
-          ["RECALL", "neighbour ≥ 0.85 · HIT"],
-          ["UNDERSTAND", "skipped · no LLM call"],
-          ["TOPICS", "3 gates · +1 hit per node"],
-          ["RENDER", "'served from cache'"]
-        ],
-        skip: [3]
+      {
+        label: "STUDENT 2 · SAME LECTURE", cls: "ph-b",
+        main: "M80 90 H390 V60 C390 8 760 8 760 60 V90 H920", fork: "RECALL", side: "M390 120 L478 196 L390 120",
+        steps: { UPLOAD: "file lands in uploads/", EXTRACT: "text out · file deleted", RECALL: "student 1's row ≥ 0.85 · HIT", UNDERSTAND: "skipped · no LLM call", STORE: "stored output read back", TOPICS: "3 gates · +1 hit per node", RENDER: "'served from cache'" },
+        skip: ["UNDERSTAND"]
       }
-    };
-    const probe = el("path", { class: "probe" }, svg);
-    let route = "miss", t0 = 0, len = 0, marks = [], visible = false, raf = 0;
-    const DUR = 4200, HOLD = 1400;
+    ];
+    const mk = () => el("path", { class: "probe" }, svg);
+    const probe = mk(), sprobe = mk();
+    const DUR = 4600, HOLD = 1100, SIDE = 1000;
+    let ph = 0, t0 = 0, len = 0, slen = 0, forkF = 0, visible = false, raf = 0;
 
-    function build() {
-      const r = routes[route];
-      probe.setAttribute("d", r.d);
-      len = probe.getTotalLength();
-      marks = [];
-      const seen = new Set();
-      for (let i = 0; i <= 300; i++) {
-        const p = probe.getPointAtLength((len * i) / 300);
-        if (Math.abs(p.y - 90) > 1) continue;
-        const n = nodeAt(p.x);
-        if (n && !seen.has(n)) { seen.add(n); marks.push({ n, f: i / 300 }); }
+    function setPhase(i) {
+      ph = i;
+      const P = phases[i];
+      probe.setAttribute("d", P.main); len = probe.getTotalLength();
+      sprobe.setAttribute("d", P.side); slen = sprobe.getTotalLength();
+      forkF = 0;
+      for (let k = 0; k <= 400; k++) {
+        const pt = probe.getPointAtLength((len * k) / 400), o = inNode(pt);
+        if (o && o.name === P.fork && Math.abs(pt.x - (o.x + 60)) < 4) { forkF = k / 400; break; }
       }
-      log.innerHTML = r.steps.map(([a, b], i) => `<li class="${r.skip.includes(i) ? "skip" : ""}"><b>${a}</b>${b}</li>`).join("");
-      svg.classList.toggle("route-hit", route === "hit");
+      svg.classList.remove("ph-a", "ph-b"); svg.classList.add(P.cls);
+      phaseEl.textContent = P.label;
+      log.innerHTML = order.map((k) => `<li data-k="${k}" class="${P.skip.includes(k) ? "skip" : ""}"><b>${k}</b>${P.steps[k]}</li>`).join("");
       t0 = performance.now();
     }
+    const ease = (f) => (f < .5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2);
     function frame(now) {
       raf = 0;
       if (!visible) return;
-      const el2 = (now - t0) % (DUR + HOLD);
-      const f = Math.min(1, el2 / DUR);
-      const e = f < .5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+      const t = now - t0;
+      if (t > DUR + HOLD) { setPhase((ph + 1) % phases.length); raf = requestAnimationFrame(frame); return; }
+      const f = Math.min(1, t / DUR), e = ease(f);
       const p = probe.getPointAtLength(len * e);
-      packet.setAttribute("cx", p.x.toFixed(1));
-      packet.setAttribute("cy", p.y.toFixed(1));
-      nodes.forEach((n) => n.classList.remove("lit"));
-      let lastIdx = -1;
-      marks.forEach((m, i) => { if (e >= m.f - 0.005) lastIdx = i; });
-      if (lastIdx >= 0) marks[lastIdx].n.classList.add("lit");
-      const steps = [...log.children];
-      const stepNames = routes[route].steps.map((s) => s[0]);
-      const litName = lastIdx >= 0 ? $("text", marks[lastIdx].n).textContent : "";
-      const litStep = stepNames.indexOf(litName);
-      steps.forEach((li, i) => li.classList.toggle("on", i === litStep));
+      packet.setAttribute("cx", p.x.toFixed(1)); packet.setAttribute("cy", p.y.toFixed(1));
+      const tFork = forkF <= 0 ? Infinity : (() => { let lo = 0, hi = 1; for (let k = 0; k < 20; k++) { const m = (lo + hi) / 2; (ease(m) < forkF ? (lo = m) : (hi = m)); } return lo * DUR; })();
+      const sf = (t - tFork) / SIDE;
+      let sideOn = false;
+      if (sf >= 0 && sf <= 1) {
+        const sp = sprobe.getPointAtLength(slen * ease(sf));
+        side.setAttribute("cx", sp.x.toFixed(1)); side.setAttribute("cy", sp.y.toFixed(1));
+        sideOn = true;
+      } else { side.setAttribute("cx", -100); side.setAttribute("cy", -100); }
+      side.style.opacity = sideOn ? 1 : 0;
+      const at = inNode(p);
+      nodes.forEach((o) => o.n.classList.toggle("lit", (at && o === at) || (sideOn && o.name === "STORE" && sf > .35)));
+      const litMain = at ? at.name : null;
+      [...log.children].forEach((li) => li.classList.toggle("on", li.dataset.k === litMain || (sideOn && li.dataset.k === "STORE")));
       raf = requestAnimationFrame(frame);
     }
-    document.querySelectorAll("[data-route]").forEach((b) => b.addEventListener("click", () => {
-      route = b.dataset.route;
-      document.querySelectorAll("[data-route]").forEach((x) => x.classList.toggle("on", x === b));
-      build();
-    }));
-    build();
-    if (reduce) { log.firstElementChild && [...log.children].forEach((li) => li.classList.add("on")); return; }
-    new IntersectionObserver((e) => {
-      visible = e[0].isIntersecting;
-      if (visible && !raf) { t0 = performance.now(); raf = requestAnimationFrame(frame); }
+    setPhase(0);
+    if (reduce) { [...log.children].forEach((li) => li.classList.add("on")); return; }
+    new IntersectionObserver((en) => {
+      visible = en[0].isIntersecting;
+      if (visible && !raf) { setPhase(0); raf = requestAnimationFrame(frame); }
     }, { threshold: 0.3 }).observe(svg);
   })();
 

@@ -64,16 +64,22 @@ body.geek { padding-top: 0; }
 .map .node.lit rect { stroke: var(--accent); stroke-width: 3; }
 .map .edges path, .map > path { fill: none; stroke: var(--ink); stroke-width: 1.5; }
 .map .dash, .gates .dash { stroke-dasharray: 5 5; }
-.map .hitpath { stroke: var(--accent) !important; stroke-dasharray: 2 5; opacity: .35; transition: opacity .3s; }
-.map.route-hit .hitpath { opacity: 1; stroke-width: 2.5 !important; }
+.map .hitpath { stroke: var(--accent) !important; stroke-dasharray: 2 5; opacity: .3; transition: opacity .4s; }
+.map .store { stroke: var(--accent) !important; stroke-width: 2 !important; opacity: .45; transition: opacity .4s; }
+.map.ph-a .store { opacity: 1; }
+.map .packet.side { filter: none; }
+.map .node.db.lit path { stroke: var(--accent); stroke-width: 3; }
+.map-phase { color: var(--accent); font-weight: 600; letter-spacing: .1em; }
+.map.ph-b .hitpath { opacity: 1; stroke-width: 2.5 !important; }
 .map .probe { stroke: none !important; fill: none; }
 .map text.edge-l.hit-l { fill: var(--accent) !important; opacity: .45; transition: opacity .3s; }
-.map.route-hit .hit-l { opacity: 1; }
+.map.ph-b .hit-l { opacity: 1; }
+.map text.edge-l.store-l { fill: var(--accent) !important; }
 .map .edge-l { font: 400 11px var(--mono) !important; fill: var(--ink-2) !important; }
 .map .bg-zone rect { fill: var(--line-2); stroke: var(--ink); stroke-width: 1; stroke-dasharray: 2 4; }
 .map .bg-zone text { font: 600 10px var(--mono); letter-spacing: .12em; fill: var(--ink-2); }
 .map .packet { fill: var(--accent); filter: drop-shadow(0 0 6px var(--accent)); }
-.route-log { list-style: none; margin: 16px 0 0; padding: 12px 0 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; font: 11px/1.35 var(--mono); }
+.route-log { list-style: none; margin: 16px 0 0; padding: 12px 0 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; font: 11px/1.35 var(--mono); }
 .route-log li { padding: 8px 10px; border: 1px solid var(--line); color: var(--ink-2); transition: all .25s; }
 .route-log li b { display: block; font-weight: 600; color: var(--ink); margin-bottom: 3px; letter-spacing: .06em; }
 .route-log li.on { border-color: var(--ink); background: var(--ink); color: var(--paper); }
