@@ -147,7 +147,7 @@
       <p class="big">The expensive call is Gemini, and everything else in the system exists so I get to skip it.</p>
       <p>The extracted text gets embedded once with all-MiniLM-L6-v2: 384 floats, normalised to unit length, so cosine similarity collapses to a dot product. That vector gets compared against every stored document. If the nearest one scores ≥ 0.85, its stored analysis is served straight back and the UI says <i>"Previously analyzed by a peer — served from cache"</i>.</p>
       <p>A byte-exact hash would miss the same deck re-exported, re-spaced or with one typo fixed. Meaning doesn't change when whitespace does, so the cache keys on meaning.</p>
-      <p>SHA-256 is still there, but as the document's <i>identity</i>: it's what your mastery ticks are saved against. <span class="hold" title="Live sheet 001 describes an exact-hash tier plus cosine ≥ 0.94. Repo main.py: embedding cosine is the sole dedup at 0.85. Which is current?">HOLD · tier count</span></p>
+      <p>SHA-256 is still there, but as the document's <i>identity</i>: it's what your mastery ticks are saved against.</p>
       <ul class="spec">
         <li><span>Lookup</span>single pass · linear scan over file_cache · O(n)</li>
         <li><span>Hit</span>serve stored JSON · register this upload under its own id</li>
@@ -386,7 +386,7 @@
           <tr><td>A</td><td>Chunk-level cache for subsets</td><td class="st-cut">NOT BUILT</td></tr>
           <tr><td>B</td><td>Wikipedia link per topic</td><td class="st-pause">PAUSED IN CODE</td></tr>
           <tr><td>C</td><td>KeyBERT keyword gate before Gemini</td><td><span class="hold" title="Explored with all-MiniLM-L6-v2 at 0.75. Not in the repo. Shipped, cut, or still open?">HOLD</span></td></tr>
-          <tr><td>D</td><td>Exact SHA-256 dedup tier</td><td><span class="hold" title="Repo comment: SHA-256 is 'used for stable document ID only — not for cache dedup'. Was the exact tier removed on purpose?">HOLD</span></td></tr>
+          <tr><td>D</td><td>Exact SHA-256 dedup tier</td><td class="st-pause">REPLACED · embedding is the only dedup</td></tr>
         </tbody>
       </table>
     </div>

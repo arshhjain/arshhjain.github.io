@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500;600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=2611250336">
+<link rel="stylesheet" href="css/style.css?v=2611261800">
 </head>
 <body>
 
@@ -105,30 +105,47 @@
 </section>
 
 <!-- DWG 001 LectureLens -->
-<article class="sheet" id="lecturelens" data-reveal>
-  <header class="sheet-head">
-    <span class="dwg">DWG 001</span>
-    <h3>LectureLens</h3>
-    <span class="tag">Sopra Steria · SWE Intern · Jun–Jul 2026</span>
-  </header>
-  <div class="sheet-body">
-    <div class="copy">
-      <p class="big">A document-intelligence pipeline that pulls structured syllabus topics out of dense lecture PDFs.</p>
-      <p>EasyOCR and Gemini 1.5 Flash do the extraction. Behind them sits a two-tier cache: an O(1) SHA-256 hash for exact text, and a cosine-similarity fallback at ≥ 0.94 so whitespace and formatting noise doesn't trigger another LLM call.</p>
-      <p><b>The problem I spent the most time on:</b> subsets. One student uploads a 10-chapter PDF, another uploads just 5 of those chapters. The hashes don't match, but every answer for those 5 chapters already exists from the first lookup.</p>
-      <p>The cache only stores the LLM's structured response, not the PDF, so the cost per document stays tiny.</p>
-      <ul class="spec">
-        <li><span>Stack</span>FastAPI · SQLite · EasyOCR · Gemini 1.5 Flash · Vanilla JS</li>
-        <li><span>Also</span>Deterministic JSON schemas · topic normalisation · Khan Academy-style progress · time-decay leaderboard</li>
-      </ul>
-      <p class="links"><a class="link" href="lecturelens/">Geek out: the full detail set →</a><a class="link" href="https://github.com/arshhjain/LectureLens" target="_blank" rel="noopener">github.com/arshhjain/LectureLens ↗</a></p>
+<section id="lecturelens" class="pin ll-pin" style="--h:340vh">
+  <div class="sticky">
+    <div class="ll-sheet">
+      <header class="sheet-head">
+        <span class="dwg">DWG 001</span>
+        <h3>LectureLens</h3>
+        <span class="tag">Sopra Steria · SWE Intern · Jun–Jul 2026</span>
+      </header>
+      <div class="ll-stage" id="llStage">
+        <canvas id="llWorld" aria-hidden="true"></canvas>
+        <div class="ll-labels" id="llLabels" aria-hidden="true"></div>
+
+        <div class="ll-caps" aria-live="polite">
+          <p class="ll-cap" data-a="0" data-b="0.3"><small>PLAN VIEW · ONE CAMPUS</small>Every lecture gets uploaded more than once.</p>
+          <p class="ll-cap" data-a="0.3" data-b="0.56"><small>FIRST UPLOAD</small>The first student pays for it.</p>
+          <p class="ll-cap" data-a="0.56" data-b="0.76"><small>EVERY UPLOAD AFTER</small>Everyone after them rides free.</p>
+        </div>
+
+        <aside class="ll-hud" id="llHud" aria-label="Simulated cache readout">
+          <div class="ll-hud-row ll-sem"><span>SEMESTER <b id="llSem">1</b></span><span>WEEK <b id="llWeek">1</b>/14</span></div>
+          <div class="ll-hud-big"><small>TOKENS SAVED</small><b id="llSaved">0</b></div>
+          <div class="ll-hud-row"><span><i class="k-llm"></i>GEMINI CALLS</span><b id="llCalls">0</b></div>
+          <div class="ll-hud-row"><span><i class="k-hit"></i>CACHE HITS</span><b id="llHits">0</b></div>
+          <div class="ll-hud-row ll-rate"><span>HIT RATE</span><b id="llRate">—</b></div>
+          <svg class="ll-spark" id="llSpark" viewBox="0 0 200 40" preserveAspectRatio="none"><path class="ll-spark-l"/></svg>
+          <p class="ll-note">Simulated. Token cost per Gemini analysis is estimated at 4k–11k per lecture, from deck length plus the JSON tree it returns.</p>
+        </aside>
+
+        <div class="ll-copy">
+          <p class="big">A study map for any lecture deck, and the answer is cached for everyone who uploads it after you.</p>
+          <p>Gemini reads a lecture once and returns a structured topic tree. Every upload is embedded locally (all-MiniLM-L6-v2, 384 dimensions) and compared against every lecture already stored. Anything at cosine ≥ 0.85 gets the stored map back with no LLM call. Only the output and a 1.5 KB vector are kept, never the file.</p>
+          <ul class="spec">
+            <li><span>Stack</span>FastAPI · SQLite · sentence-transformers · Gemini · Vanilla JS</li>
+            <li><span>Also</span>Topic dedup · time-decayed trending · faculty-curated resources · Khan-style mastery</li>
+          </ul>
+          <p class="links"><a class="link ll-geek" href="lecturelens/">Geek out: the full detail set →</a><a class="link" href="https://github.com/arshhjain/LectureLens" target="_blank" rel="noopener">GitHub ↗</a></p>
+        </div>
+      </div>
     </div>
-    <figure class="terminal" aria-label="Pipeline trace">
-      <div class="term-bar"><i></i><i></i><i></i><span>lecturelens — pipeline trace</span></div>
-      <pre id="term"></pre>
-    </figure>
   </div>
-</article>
+</section>
 
 <!-- DWG 002 Turbine -->
 <article class="sheet" id="turbine" data-reveal>
@@ -481,8 +498,9 @@
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
 } }
 </script>
-<script src="js/main.js?v=2611250336"></script>
+<script src="js/main.js?v=2611261800"></script>
 <script type="module" src="js/cad3d.js?v=2611250336"></script>
 <script type="module" src="js/car3d.js?v=2611250336"></script>
+<script type="module" src="js/ll3d.js?v=2611261800"></script>
 </body>
 </html>

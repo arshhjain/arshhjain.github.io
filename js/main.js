@@ -118,6 +118,7 @@
     if (termStarted) return;
     termStarted = true;
     const pre = document.getElementById("term");
+    if (!pre) return;
     const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
     const render = (lines, partial) => {
       pre.innerHTML = lines.map(([p, t, c]) => `<span class="dim">${esc(p)}</span>${c ? `<span class="${c}">${esc(t)}</span>` : esc(t)}`).join("\n")
