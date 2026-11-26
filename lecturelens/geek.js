@@ -45,20 +45,20 @@
     const phases = [
       {
         label: "STUDENT 1 · FIRST UPLOAD", cls: "ph-a",
-        main: "M80 90 H920", fork: "UNDERSTAND", side: "M590 120 L500 196",
+        main: "M80 90 H920", fork: "UNDERSTAND", side: "M590 120 L500 196", dur: 4600,
         steps: { UPLOAD: "file lands in uploads/", EXTRACT: "text out · file deleted", RECALL: "nothing ≥ 0.85 · MISS", UNDERSTAND: "Gemini → {subject, tree}", STORE: "output + vector → cache.db", TOPICS: "3 gates · +1 hit per node", RENDER: "tree + ticks" },
         skip: []
       },
       {
         label: "STUDENT 2 · SAME LECTURE", cls: "ph-b",
-        main: "M80 90 H390 V60 C390 8 760 8 760 60 V90 H920", fork: "RECALL", side: "M390 120 L478 196 L390 120",
+        main: "M80 90 H390 L478 200 L390 90 V60 C390 8 760 8 760 60 V90 H920", fork: "", side: "M0 0", dur: 6200,
         steps: { UPLOAD: "file lands in uploads/", EXTRACT: "text out · file deleted", RECALL: "student 1's row ≥ 0.85 · HIT", UNDERSTAND: "skipped · no LLM call", STORE: "stored output read back", TOPICS: "3 gates · +1 hit per node", RENDER: "'served from cache'" },
         skip: ["UNDERSTAND"]
       }
     ];
     const mk = () => el("path", { class: "probe" }, svg);
     const probe = mk(), sprobe = mk();
-    const DUR = 4600, HOLD = 1100, SIDE = 1000;
+    let DUR = 4600; const HOLD = 1100, SIDE = 1000;
     let ph = 0, t0 = 0, len = 0, slen = 0, forkF = 0, visible = false, raf = 0;
 
     function setPhase(i) {
@@ -66,10 +66,10 @@
       const P = phases[i];
       probe.setAttribute("d", P.main); len = probe.getTotalLength();
       sprobe.setAttribute("d", P.side); slen = sprobe.getTotalLength();
-      forkF = 0;
+      forkF = 0; DUR = P.dur;
       for (let k = 0; k <= 400; k++) {
         const pt = probe.getPointAtLength((len * k) / 400), o = inNode(pt);
-        if (o && o.name === P.fork && Math.abs(pt.x - (o.x + 60)) < 4) { forkF = k / 400; break; }
+        if (P.fork && o && o.name === P.fork && Math.abs(pt.x - (o.x + 60)) < 4) { forkF = k / 400; break; }
       }
       svg.classList.remove("ph-a", "ph-b"); svg.classList.add(P.cls);
       phaseEl.textContent = P.label;
