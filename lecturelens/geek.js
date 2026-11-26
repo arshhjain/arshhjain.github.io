@@ -8,6 +8,19 @@
     return n;
   };
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const svgPt = (svg, ev) => {
+    const pt = svg.createSVGPoint();
+    pt.x = ev.clientX; pt.y = ev.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  };
+  const dragOn = (svg, onValue) => {
+    let on = false;
+    svg.addEventListener("pointerdown", (ev) => { on = true; svg.setPointerCapture(ev.pointerId); svg.classList.add("dragging"); onValue(svgPt(svg, ev)); });
+    svg.addEventListener("pointermove", (ev) => { if (on) onValue(svgPt(svg, ev)); });
+    const stop = () => { on = false; svg.classList.remove("dragging"); };
+    svg.addEventListener("pointerup", stop);
+    svg.addEventListener("pointercancel", stop);
+  };
 
   /* ---------- reveal ---------- */
   const revealObs = new IntersectionObserver((entries) => {
@@ -145,37 +158,25 @@
   (() => {
     const svg = $("#decay"), scoresEl = $("#decayScores");
     if (!svg) return;
-    const X0 = 40, X1 = 460, DAYS = 30;
+    const X0 = 40, X1 = 460, DAYS = 30, LH = 72;
     const xOf = (d) => X1 - (d / DAYS) * (X1 - X0);
     const dOf = (x) => Math.round(Math.max(0, Math.min(DAYS, ((X1 - x) / (X1 - X0)) * DAYS)));
     const lanes = [
-      { key: "a", name: "TOPIC A · one burst, 3 weeks ago", y: 30 },
-      { key: "b", name: "TOPIC B · one a day, this week", y: 118 }
+      { key: "a", name: "TOPIC A · one burst, 3 weeks ago", y: 26 },
+      { key: "b", name: "TOPIC B · one a day, this week", y: 122 }
     ];
     const preset = () => ({ a: Array(10).fill(20), b: [0, 1, 2, 3, 4] });
     let hits = preset();
     const score = (arr) => arr.reduce((s, d) => s + Math.exp(-0.1 * d), 0);
+    const count = (key, d) => hits[key].filter((x) => x === d).length;
 
     const base = el("g", {}, svg);
     for (let d = 0; d <= DAYS; d += 5) {
-      el("line", { class: "tick", x1: xOf(d), x2: xOf(d), y1: 24, y2: 290 }, base);
-      const t = el("text", { class: "sub", x: xOf(d), y: 298, "text-anchor": "middle" }, base);
+      el("line", { class: "tick", x1: xOf(d), x2: xOf(d), y1: 20, y2: 290 }, base);
+      const t = el("text", { class: "sub", x: xOf(d), y: 302, "text-anchor": "middle" }, base);
       t.textContent = d === 0 ? "today" : `${d}d`;
     }
-    lanes.forEach((L) => {
-      const r = el("rect", { class: "lane", x: X0, y: L.y, width: X1 - X0, height: 64 }, base);
-      r.addEventListener("click", (ev) => {
-        const pt = svg.createSVGPoint();
-        pt.x = ev.clientX; pt.y = ev.clientY;
-        const p = pt.matrixTransform(svg.getScreenCTM().inverse());
-        hits[L.key].push(dOf(p.x));
-        draw();
-      });
-      const t = el("text", { class: "sub", x: X0, y: L.y - 6 }, base);
-      t.textContent = L.name;
-    });
-    // kernel
-    const KY0 = 280, KY1 = 206;
+    const KY0 = 284, KY1 = 214;
     let dk = "";
     for (let d = 0; d <= DAYS; d += 0.5) dk += `${d ? "L" : "M"}${xOf(d).toFixed(1)} ${(KY0 - (KY0 - KY1) * Math.exp(-0.1 * d)).toFixed(1)} `;
     el("path", { class: "kernel", d: dk }, base);
@@ -184,15 +185,44 @@
     const ht = el("text", { class: "sub", x: hx + 5, y: KY0 - 6 }, base); ht.textContent = "t½ ≈ 6.9d";
     const kt = el("text", { class: "sub", x: X0, y: KY1 - 8 }, base); kt.textContent = "weight of one hit = e^(−0.1·days)";
 
-    const dots = el("g", {}, svg);
+    const dots = el("g", { "pointer-events": "none" }, svg);
+    const ghosts = {};
+    lanes.forEach((L) => {
+      const t = el("text", { class: "sub", x: X0, y: L.y - 6 }, base);
+      t.textContent = L.name;
+      const r = el("rect", { class: "lane", x: X0 - 8, y: L.y, width: X1 - X0 + 16, height: LH, tabindex: 0, role: "button", "aria-label": `${L.name}: click to add or remove a hit` }, svg);
+      const g = el("g", { class: "ghost", "pointer-events": "none" }, svg);
+      const gl = el("line", { y1: L.y + 4, y2: L.y + LH - 4 }, g);
+      const gt = el("text", { x: X1 + 8, y: L.y - 6, "text-anchor": "end" }, g);
+      ghosts[L.key] = { g, gl, gt };
+      const show = (d) => {
+        const n = count(L.key, d);
+        g.style.display = "";
+        gl.setAttribute("x1", xOf(d)); gl.setAttribute("x2", xOf(d));
+        gt.textContent = n ? `− remove · ${d}d` : `+ add hit · ${d}d`;
+        g.classList.toggle("rm", !!n);
+      };
+      r.addEventListener("pointermove", (ev) => show(dOf(svgPt(svg, ev).x)));
+      r.addEventListener("pointerleave", () => { g.style.display = "none"; });
+      r.addEventListener("click", (ev) => {
+        const d = dOf(svgPt(svg, ev).x);
+        const i = hits[L.key].indexOf(d);
+        if (i >= 0) hits[L.key].splice(i, 1); else hits[L.key].push(d);
+        draw(); show(d);
+      });
+      g.style.display = "none";
+    });
+    svg.appendChild(dots);
+
     function draw() {
       dots.innerHTML = "";
       lanes.forEach((L) => {
-        const stack = {};
-        hits[L.key].forEach((d, idx) => {
-          const k = (stack[d] = (stack[d] || 0) + 1) - 1;
-          const c = el("circle", { class: `hitdot ${L.key}`, cx: xOf(d), cy: L.y + 56 - k * 5.2, r: 4.5 }, dots);
-          c.addEventListener("click", (ev) => { ev.stopPropagation(); hits[L.key].splice(idx, 1); draw(); });
+        const days = {};
+        hits[L.key].forEach((d) => { days[d] = (days[d] || 0) + 1; });
+        Object.entries(days).forEach(([d, n]) => {
+          const show = Math.min(n, 5);
+          for (let k = 0; k < show; k++) el("circle", { class: `hitdot ${L.key}`, cx: xOf(+d), cy: L.y + LH - 10 - k * 11, r: 5 }, dots);
+          if (n > 5) { const t = el("text", { class: "stackn", x: xOf(+d) + 9, y: L.y + LH - 52 }, dots); t.textContent = `×${n}`; }
         });
       });
       const sa = score(hits.a), sb = score(hits.b), mx = Math.max(sa, sb, 0.0001);
@@ -223,62 +253,78 @@
   (() => {
     const svg = $("#lpSvg"), n = $("#lpN"), nOut = $("#lpNOut"), read = $("#lpRead");
     if (!svg) return;
-    const X0 = 40, X1 = 410, MAX = 80;
+    const X0 = 50, X1 = 410, MAX = 80;
     const xOf = (u) => X0 + (u / MAX) * (X1 - X0);
     const yOf = (h) => ({ 12: 22, 2: 72, 0.5: 108 })[h];
     const interval = (u) => (u < 20 ? 12 : u <= 50 ? 2 : 0.5);
+    el("rect", { class: "hitpad", x: 0, y: 0, width: 420, height: 140 }, svg);
     [[12, "12 h"], [2, "2 h"], [0.5, "30 min"]].forEach(([h, l]) => {
       const t = el("text", { class: "sub", x: 0, y: yOf(h) + 4 }, svg); t.textContent = l;
     });
     [0, 20, 50, 80].forEach((u) => { const t = el("text", { class: "sub", x: xOf(u), y: 134, "text-anchor": "middle" }, svg); t.textContent = u; });
     el("path", { class: "st", d: `M${xOf(0)} ${yOf(12)} H${xOf(20)} V${yOf(2)} H${xOf(50)} V${yOf(0.5)} H${xOf(80)}` }, svg);
-    const cur = el("line", { class: "cur", y1: 10, y2: 120 }, svg);
-    const dot = el("circle", { class: "dot", r: 5 }, svg);
+    const cur = el("line", { class: "cur", y1: 8, y2: 122 }, svg);
+    const knob = el("rect", { class: "knob", width: 16, height: 22, rx: 0 }, svg);
     const run = () => {
       const u = +n.value, h = interval(u);
       nOut.textContent = u;
       cur.setAttribute("x1", xOf(u)); cur.setAttribute("x2", xOf(u));
-      dot.setAttribute("cx", xOf(u)); dot.setAttribute("cy", yOf(h));
+      knob.setAttribute("x", xOf(u) - 8); knob.setAttribute("y", yOf(h) - 11);
       const lbl = h === 0.5 ? "30 minutes" : `${h} hours`;
       read.textContent = `${u} upload${u === 1 ? "" : "s"} today → wakes every ${lbl}, takes the top-20 trending topics with no resource, resolves them 3 at a time.`;
     };
+    dragOn(svg, (p) => { n.value = Math.round(Math.max(0, Math.min(MAX, ((p.x - X0) / (X1 - X0)) * MAX))); run(); });
     n.addEventListener("input", run); run();
   })();
 
   /* ---------- 001.7 ruler ---------- */
   (() => {
-    const svg = $("#ruler"), inp = $("#rulerIn"), list = $("#verdicts");
+    const svg = $("#ruler"), list = $("#verdicts");
     if (!svg) return;
-    const X0 = 20, X1 = 500;
+    const X0 = 24, X1 = 496;
     const xOf = (v) => X0 + v * (X1 - X0);
+    let v = 0.7;
+    el("rect", { class: "hitpad", x: 0, y: 0, width: 520, height: 120 }, svg);
     for (let i = 0; i <= 100; i += 5) {
       const major = i % 10 === 0;
       el("line", { class: `tk${major ? " m" : ""}`, x1: xOf(i / 100), x2: xOf(i / 100), y1: 52, y2: major ? 68 : 60 }, svg);
-      if (major) { const t = el("text", { class: "sub", x: xOf(i / 100), y: 80, "text-anchor": "middle" }, svg); t.textContent = (i / 100).toFixed(1); }
+      if (major) { const t = el("text", { class: "sub", x: xOf(i / 100), y: 82, "text-anchor": "middle" }, svg); t.textContent = (i / 100).toFixed(1); }
     }
     el("line", { class: "tk m", x1: X0, x2: X1, y1: 52, y2: 52 }, svg);
-    [[0.45, "CONSTITUTION"], [0.65, "TOPIC"], [0.85, "RECALL"]].forEach(([v, l]) => {
-      el("line", { class: "th", x1: xOf(v), x2: xOf(v), y1: 20, y2: 68 }, svg);
-      const t = el("text", { class: "thl", x: xOf(v), y: 14, "text-anchor": "middle" }, svg); t.textContent = `${l} ${v}`;
+    [[0.45, "CONSTITUTION"], [0.65, "TOPIC"], [0.85, "RECALL"]].forEach(([t, l]) => {
+      el("line", { class: "th", x1: xOf(t), x2: xOf(t), y1: 20, y2: 68 }, svg);
+      const tx = el("text", { class: "thl", x: xOf(t), y: 14, "text-anchor": "middle" }, svg); tx.textContent = `${l} ${t}`;
     });
-    const cur = el("line", { class: "cursor", y1: 30, y2: 90 }, svg);
-    const cl = el("text", { class: "cursor-l", y: 104, "text-anchor": "middle" }, svg);
+    const cur = el("g", { class: "cursor" }, svg);
+    el("line", { x1: 0, x2: 0, y1: 26, y2: 92 }, cur);
+    el("rect", { class: "grip", x: -11, y: 88, width: 22, height: 26 }, cur);
+    el("path", { class: "grip-l", d: "M-4 95 V107 M0 95 V107 M4 95 V107" }, cur);
+    const cl = el("text", { class: "cursor-l", x: 16, y: 106 }, cur);
     const words = {
       "0.85": ["serve the peer's map", "call Gemini"],
       "0.65": ["reuse topic id", "new topic"],
       "0.45": ["scope to the source", "university lecture"]
     };
     const run = () => {
-      const v = +inp.value;
-      cur.setAttribute("x1", xOf(v)); cur.setAttribute("x2", xOf(v));
-      cl.setAttribute("x", xOf(v)); cl.textContent = `cos ${v.toFixed(2)}`;
+      cur.setAttribute("transform", `translate(${xOf(v).toFixed(1)} 0)`);
+      cl.textContent = `cos ${v.toFixed(2)}`;
+      cl.setAttribute("x", v > 0.82 ? -92 : 16);
+      svg.setAttribute("aria-valuenow", v.toFixed(2));
       [...list.children].forEach((li) => {
         const t = li.dataset.t, pass = v >= +t;
         li.classList.toggle("pass", pass);
         $("em", li).textContent = pass ? words[t][0] : words[t][1];
       });
     };
-    inp.addEventListener("input", run); run();
+    dragOn(svg, (p) => { v = Math.round(Math.max(0, Math.min(1, (p.x - X0) / (X1 - X0))) * 100) / 100; run(); });
+    svg.addEventListener("keydown", (e) => {
+      const step = e.shiftKey ? 0.1 : 0.01;
+      if (e.key === "ArrowRight" || e.key === "ArrowUp") v = Math.min(1, +(v + step).toFixed(2));
+      else if (e.key === "ArrowLeft" || e.key === "ArrowDown") v = Math.max(0, +(v - step).toFixed(2));
+      else return;
+      e.preventDefault(); run();
+    });
+    run();
   })();
 
   /* ---------- 001.8 mastery ---------- */
@@ -350,7 +396,7 @@
     host.innerHTML = data.map(([name, rungs]) => `
       <div class="ladder">
         <h4>${name}<span>${rungs.length} RUNGS</span></h4>
-        <ol class="rungs">${rungs.map(([a, b], i) => `<li><button class="rung${i === 0 ? " live" : ""}${i === rungs.length - 1 ? " floor" : ""}" type="button"><i></i><span>${a.replace(/</g, "&lt;")}<small>${b.replace(/</g, "&lt;")}</small></span></button></li>`).join("")}</ol>
+        <ol class="rungs">${rungs.map(([a, b], i) => `<li><button class="rung${i === 0 ? " live" : ""}${i === rungs.length - 1 ? " floor" : ""}" type="button"><i></i><span>${a.replace(/</g, "&lt;")}<small>${b.replace(/</g, "&lt;")}</small></span><em class="brk">BREAK ✕</em></button></li>`).join("")}</ol>
       </div>`).join("");
     host.addEventListener("click", (e) => {
       const r = e.target.closest(".rung");

@@ -94,7 +94,7 @@
   </header>
   <div class="sheet-body single">
     <figure class="fig fig-map">
-      <figcaption class="fig-cap">FIG 001.1-A — SAME LECTURE, TWO STUDENTS · <span class="map-phase" id="mapPhase">STUDENT 1 · FIRST UPLOAD</span></figcaption>
+      <figcaption class="fig-cap">FIG 001.1-A — SAME LECTURE, TWO STUDENTS · <span class="map-phase" id="mapPhase">STUDENT 1 · FIRST UPLOAD</span><span class="try">CLICK ANY BOX → ITS SHEET</span></figcaption>
       <svg class="map" viewBox="0 0 1000 420" role="img" aria-label="System diagram. Student 1's upload misses the cache, goes through Gemini, and the result is both stored in cache.db and rendered. Student 2's upload of the same lecture hits the cache and skips Gemini.">
         <g class="bg-zone">
           <rect x="300" y="262" width="690" height="148"/>
@@ -229,7 +229,7 @@
         <path class="ln dash" d="M180 249 H 376 V 186" marker-end="url(#ah2)"/>
       </svg>
       <label class="norm">
-        <span class="fig-cap">normalize_topic_name() — try it</span>
+        <span class="fig-cap">normalize_topic_name()<span class="try">TYPE A TOPIC NAME</span></span>
         <input id="normIn" type="text" value="  Gradient-Descent,  (Batch!) " spellcheck="false" aria-label="Topic name to normalise">
         <code id="normOut"></code>
       </label>
@@ -253,7 +253,7 @@
       <p>Top 20 by score make the Community tab. That same ranking also decides which topics the background loop resolves resources for first, so popular topics get fixed sooner.</p>
     </div>
     <figure class="fig">
-      <figcaption class="fig-cap">FIG 001.5-A — TWO TOPICS, LAST 30 DAYS · <button class="chip" id="decayReset">RESET</button></figcaption>
+      <figcaption class="fig-cap">FIG 001.5-A — TWO TOPICS, LAST 30 DAYS · <button class="chip" id="decayReset">RESET</button><span class="try">CLICK IN A LANE · ADD OR REMOVE HITS</span></figcaption>
       <svg class="decay" id="decay" viewBox="0 0 480 300" role="img" aria-label="Interactive decay chart with two lanes of hits"></svg>
       <div class="scores" id="decayScores"></div>
     </figure>
@@ -276,7 +276,7 @@
     </div>
     <div class="fig-stack">
       <figure class="fig">
-        <figcaption class="fig-cap">FIG 001.6-A — QUERY BUILDER · <span class="ex">example rule: Machine Learning → StatQuest</span></figcaption>
+        <figcaption class="fig-cap">FIG 001.6-A — QUERY BUILDER · <span class="ex">example rule: Machine Learning → StatQuest</span><span class="try">TYPE · DRAG</span></figcaption>
         <div class="qb">
           <label><span>topic</span><input id="qbTopic" type="text" value="Gradient Descent" spellcheck="false"></label>
           <label><span>best rule cos</span><input id="qbSim" type="range" min="0" max="1" step="0.01" value="0.62"><output id="qbSimOut">0.62</output></label>
@@ -284,7 +284,7 @@
         </div>
       </figure>
       <figure class="fig">
-        <figcaption class="fig-cap">FIG 001.6-B — ADAPTIVE WAKE INTERVAL</figcaption>
+        <figcaption class="fig-cap">FIG 001.6-B — ADAPTIVE WAKE INTERVAL<span class="try">DRAG ACROSS THE CHART</span></figcaption>
         <div class="loop">
           <label><span>uploads in last 24 h</span><input id="lpN" type="range" min="0" max="80" step="1" value="12"><output id="lpNOut">12</output></label>
           <svg class="steps" id="lpSvg" viewBox="0 0 420 140" role="img" aria-label="Step function: under 20 uploads 12 hours, 20 to 50 uploads 2 hours, over 50 uploads 30 minutes"></svg>
@@ -309,11 +309,8 @@
       <p>Drag the cursor and watch which of the three decisions flip.</p>
     </div>
     <figure class="fig">
-      <figcaption class="fig-cap">FIG 001.7-A — ONE RULER</figcaption>
-      <div class="ruler-wrap">
-        <svg class="ruler" id="ruler" viewBox="0 0 520 110" aria-hidden="true"></svg>
-        <input id="rulerIn" class="ruler-in" type="range" min="0" max="1" step="0.01" value="0.7" aria-label="Cosine similarity">
-      </div>
+      <figcaption class="fig-cap">FIG 001.7-A — ONE RULER<span class="try">DRAG ANYWHERE ON THE RULER</span></figcaption>
+      <svg class="ruler" id="ruler" viewBox="0 0 520 120" tabindex="0" role="slider" aria-label="Cosine similarity" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0.7"></svg>
       <ul class="verdicts" id="verdicts">
         <li data-t="0.85"><b>RECALL</b><span>≥ 0.85</span><em></em></li>
         <li data-t="0.65"><b>TOPIC IDENTITY</b><span>≥ 0.65</span><em></em></li>
@@ -338,7 +335,7 @@
       <p>The upload view walks the same stages as the server (upload, extract, peer cache, analysis, resources) with an elapsed timer, so a 10-second Gemini call doesn't feel like a hang.</p>
     </div>
     <figure class="fig">
-      <figcaption class="fig-cap">FIG 001.8-A — SAME PROPAGATION LOGIC · <span class="ex">example tree</span></figcaption>
+      <figcaption class="fig-cap">FIG 001.8-A — SAME PROPAGATION LOGIC · <span class="ex">example tree</span><span class="try">TICK ANY TOPIC</span></figcaption>
       <div class="m-head"><span id="mCount">0 of 0 mastered</span><div class="m-bar"><i id="mFill"></i></div></div>
       <ul class="m-tree" id="mTree"></ul>
     </figure>
@@ -355,7 +352,7 @@
   <div class="sheet-body single">
     <div class="copy narrow">
       <p class="big">Every subsystem has a ladder. If the top rung breaks, you land on the next one. The bottom rung is the floor, and the floor is never a crash.</p>
-      <p>Click a rung to break it. <button class="chip" id="ftReset">RESET ALL</button></p>
+      <p class="ft-ctl"><span class="try">CLICK A LIT RUNG TO BREAK IT</span><button class="chip" id="ftReset">RESET ALL</button></p>
     </div>
     <div class="ladders" id="ladders"></div>
   </div>
