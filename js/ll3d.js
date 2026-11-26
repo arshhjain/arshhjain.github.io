@@ -135,14 +135,39 @@ import * as THREE from "three";
     });
 
     /* ---------- packets ---------- */
-    const pktGeo = new THREE.BoxGeometry(0.75, 0.16, 0.95);
-    const pktInk = new THREE.MeshBasicMaterial({ color: INK }), pktHot = new THREE.MeshBasicMaterial({ color: ACCENT });
+    /* packet colour says where it is in the story: ink = asking, blue = cache hit, orange = paid LLM call */
+    const CACHE = new THREE.Color("#2f6bff");
+    const pktGeo = new THREE.BoxGeometry(0.95, 0.2, 1.15);
+    const pktInk = new THREE.MeshBasicMaterial({ color: INK }), pktHot = new THREE.MeshBasicMaterial({ color: ACCENT }), pktHit = new THREE.MeshBasicMaterial({ color: CACHE });
+    const trailMat = new Map([[pktInk, INK], [pktHot, ACCENT], [pktHit, CACHE]].map(([k, c]) => [k, new THREE.LineBasicMaterial({ color: c, transparent: true, opacity: 0.55 })]));
+    const TRAIL = 22;
     const pool = [];
     const getPkt = (mat) => {
-      const m = pool.pop() || new THREE.Mesh(pktGeo, mat);
-      m.material = mat; m.visible = true; m.scale.setScalar(1); scene.add(m); return m;
+      let m = pool.pop();
+      if (!m) {
+        m = new THREE.Mesh(pktGeo, mat);
+        const tg = new THREE.BufferGeometry();
+        tg.setAttribute("position", new THREE.BufferAttribute(new Float32Array(TRAIL * 3), 3));
+        m.userData.trail = new THREE.Line(tg, trailMat.get(mat));
+        m.userData.trail.frustumCulled = false;
+      }
+      m.material = mat; m.visible = true; scene.add(m);
+      m.userData.trail.material = trailMat.get(mat);
+      m.userData.n = 0;
+      m.userData.trail.geometry.setDrawRange(0, 0);
+      scene.add(m.userData.trail);
+      return m;
     };
-    const freePkt = (m) => { m.visible = false; scene.remove(m); pool.push(m); };
+    const setMat = (m, mat) => { m.material = mat; m.userData.trail.material = trailMat.get(mat); };
+    const freePkt = (m) => { m.visible = false; scene.remove(m); scene.remove(m.userData.trail); pool.push(m); };
+    function pushTrail(m) {
+      const a = m.userData.trail.geometry.attributes.position, arr = a.array;
+      arr.copyWithin(3, 0, (TRAIL - 1) * 3);
+      arr[0] = m.position.x; arr[1] = m.position.y; arr[2] = m.position.z;
+      m.userData.n = Math.min(TRAIL, m.userData.n + 1);
+      m.userData.trail.geometry.setDrawRange(0, m.userData.n);
+      a.needsUpdate = true;
+    }
 
     const P_HQ = new THREE.Vector3(0, 2.6, 0);
     const P_SILO = new THREE.Vector3(-6.5, 4.2, -4);
@@ -172,13 +197,14 @@ import * as THREE from "three";
       const u = unlocked();
       return rnd() < 0.5 ? u - 1 - Math.floor(rnd() * Math.min(2, u)) : Math.floor(rnd() * u);
     }
+    /* pops are pinned to a world point and re-projected every frame, so they ride along with the camera */
+    const pops = [];
     function pop(worldPos, text, cls) {
       const el = document.createElement("span");
       el.className = `ll-pop ${cls}`; el.textContent = text;
-      const s = project(worldPos);
-      el.style.left = `${s.x + (rnd() - 0.5) * 50}px`; el.style.top = `${s.y - rnd() * 14}px`;
       labelsEl.appendChild(el);
-      setTimeout(() => el.remove(), 1350);
+      pops.push({ el, pos: worldPos.clone(), dx: (rnd() - 0.5) * 40, dy: -rnd() * 12 });
+      setTimeout(() => { el.remove(); pops.splice(pops.findIndex((q) => q.el === el), 1); }, 1350);
     }
     const fmtK = (n) => `${(n / 1000).toFixed(1)}k`;
 
@@ -196,28 +222,35 @@ import * as THREE from "three";
       const back = (from, mat) => ({ c: hop(from, p.pos, 0.28), done: () => { p.busy = false; }, mat });
       const legs = [
         { c: hop(p.pos, P_HQ, 0.25) },
-        { c: hop(P_HQ, P_SILO, 0.35), wait: 0.15 },
+        {
+          c: hop(P_HQ, P_SILO, 0.35), wait: 0.2,
+          /* the lookup resolves at cache.db: the packet takes its colour here */
+          arrive: (f) => {
+            f.hit = sim.cache.has(deck);
+            sim.wk.n++;
+            if (f.hit) {
+              sim.hits++; sim.wk.h++; sim.saved += tok;
+              setMat(f.mesh, pktHit);
+              pop(P_SILO, `HIT · +${fmtK(tok)} saved`, "hit");
+            } else {
+              sim.misses++;
+              setMat(f.mesh, pktHot);
+              pop(P_SILO, "MISS", "miss");
+            }
+          }
+        },
         {
           c: hop(P_SILO, P_HQ, 0.35),
           arrive: (f) => {
-            const hit = sim.cache.has(deck);
-            sim.wk.n++;
-            if (hit) {
-              sim.hits++; sim.wk.h++; sim.saved += tok;
-              pop(P_SILO, `+${fmtK(tok)} saved`, "save");
-              f.legs.push(back(P_HQ));
-            } else {
-              sim.misses++;
-              f.legs.push({ c: hop(P_HQ, P_GEM, 0.15), wait: 0.9, arrive: () => {
-                sim.calls++;
-                pop(P_GEM, `−${fmtK(tok)} tokens`, "spend");
-                flash = 1;
-                f.mesh.material = pktHot;
-                /* the fresh map goes to cache.db and to the student at the same time */
-                launch([{ c: hop(P_GEM, P_SILO, 0.2), done: () => sim.cache.add(deck) }], pktHot);
-              } });
-              f.legs.push(back(P_GEM));
-            }
+            if (f.hit) { f.legs.push(back(P_HQ)); return; }
+            f.legs.push({ c: hop(P_HQ, P_GEM, 0.15), wait: 0.9, arrive: () => {
+              sim.calls++;
+              pop(P_GEM, `−${fmtK(tok)} tokens`, "spend");
+              flash = 1;
+              /* the fresh map goes to cache.db and to the student at the same time */
+              launch([{ c: hop(P_GEM, P_SILO, 0.2), done: () => sim.cache.add(deck) }], pktHot);
+            } });
+            f.legs.push(back(P_GEM));
           }
         }
       ];
@@ -252,6 +285,7 @@ import * as THREE from "three";
         f.u += (dt * SPEED) / Math.max(1, leg.c.getLength());
         const u = Math.min(1, f.u);
         f.mesh.position.copy(leg.c.getPoint(u));
+        pushTrail(f.mesh);
         f.mesh.rotation.y += dt * 3;
         if (u >= 1) {
           if (leg.arrive) leg.arrive(f);
@@ -259,7 +293,7 @@ import * as THREE from "three";
           f.i++; f.u = 0;
           if (f.i >= f.legs.length) { freePkt(f.mesh); flights.splice(k, 1); continue; }
           f.wait = f.legs[f.i - 1].wait || 0;
-          if (f.legs[f.i].mat) f.mesh.material = f.legs[f.i].mat;
+          if (f.legs[f.i].mat) setMat(f.mesh, f.legs[f.i].mat);
         }
       }
     }
@@ -329,7 +363,11 @@ import * as THREE from "three";
       labels.forEach((l) => {
         const at = l.base.clone().lerp(l.pos, ext);
         const s = project(at);
-        l.el.style.transform = `translate(${s.x.toFixed(1)}px, ${s.y.toFixed(1)}px) translate(-50%, -100%)`;
+        l.el.style.transform = `translate3d(${Math.round(s.x)}px, ${Math.round(s.y)}px, 0) translate(-50%, -100%)`;
+      });
+      pops.forEach((q) => {
+        const s = project(q.pos);
+        q.el.style.transform = `translate3d(${Math.round(s.x + q.dx)}px, ${Math.round(s.y + q.dy)}px, 0) translate(-50%, -100%)`;
       });
     }
 
