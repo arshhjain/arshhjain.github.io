@@ -220,7 +220,9 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
   const fillD = mkStage(0.1, 0.07, 900), exD = mkStage(0.26, 0.22, 1100);
   let lastT = 0, detentInit = false;
   function stepStage(d, p, dt) {
+    const was = d.on;
     if (!d.on && p >= d.trip) d.on = true; else if (d.on && p < d.untrip) d.on = false;
+    if (detentInit && d.on !== was && window.__detentLock) window.__detentLock(section, d.on ? d.trip + 0.005 : d.untrip - 0.005, d.dur);
     if (!detentInit) { d.u = d.on ? 1 : 0; return; }
     d.u = reduceMotion ? (d.on ? 1 : 0) : Math.max(0, Math.min(1, d.u + (d.on ? 1 : -1) * (dt / d.dur)));
   }

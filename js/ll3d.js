@@ -345,8 +345,13 @@ import * as THREE from "three";
     const END_TRIP = 0.78, END_UNTRIP = 0.74, END_S = 1.0;
     let endTarget = 0, endRaw = 0, cap3 = false;
     function stepMorph(p, dt) {
+      const mWas = morphTarget, eWas = endTarget;
       if (p >= TRIP) morphTarget = 1; else if (p < UNTRIP) morphTarget = 0;
       if (p >= END_TRIP) endTarget = 1; else if (p < END_UNTRIP) endTarget = 0;
+      if (morphInit && window.__detentLock) {
+        if (morphTarget !== mWas) window.__detentLock(section, morphTarget ? TRIP + 0.005 : UNTRIP - 0.005, MORPH_S * 1000);
+        else if (endTarget !== eWas) window.__detentLock(section, endTarget ? END_TRIP + 0.005 : END_UNTRIP - 0.005, END_S * 1000);
+      }
       if (!morphInit) { morph = morphTarget; endRaw = endTarget; morphInit = true; return; }
       const dir = Math.sign(morphTarget - morph);
       if (dir) morph = clamp(morph + (dir * dt) / MORPH_S, 0, 1);

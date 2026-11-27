@@ -161,17 +161,58 @@
     heroLocked = false;
     root.classList.remove("hero-locked");
   }
+  let autoScrolling = false;
   function scrollToY(y) {
     cancelAnimationFrame(scrollAnim);
+    autoScrolling = true;
     const from = window.scrollY, t0 = performance.now(), dur = reduceMotion ? 1 : 1100;
     const step = (now) => {
       const u = clamp((now - t0) / dur, 0, 1), e = 1 - Math.pow(1 - u, 4);
       window.scrollTo({ top: from + (y - from) * e, behavior: "instant" });
-      if (u < 1) scrollAnim = requestAnimationFrame(step);
+      if (u < 1) scrollAnim = requestAnimationFrame(step); else autoScrolling = false;
     };
     scrollAnim = requestAnimationFrame(step);
   }
-  const stopScrollAnim = () => cancelAnimationFrame(scrollAnim);
+  const stopScrollAnim = () => { cancelAnimationFrame(scrollAnim); autoScrolling = false; };
+
+  /* ---------- detent scroll lock ----------
+     Trackpads keep firing wheel events for a second or more after the fingers lift, which would
+     carry a flick straight through several detents. When a detent trips from the user's own
+     wheel/touch input, the page is pinned at that detent's anchor for its animation, and the rest
+     of the momentum is swallowed: inertia arrives as a run of shrinking deltas, so the lock holds
+     until that run stops (a 140 ms gap) or a delta jumps up, which means a fresh swipe has started.
+     Nav links, the hero tap's auto-scroll and scrollbar drags never lock. */
+  let lastUserInput = -1e9, lockOn = false, lockUntil = 0, lockAnchor = 0, lastWheelT = 0, lastWheelAbs = 0;
+  const userDriven = () => !autoScrolling && performance.now() - lastUserInput < 350;
+  function releaseLock() { lockOn = false; }
+  function detentLock(sec, frac, ms) {
+    if (!userDriven() || reduceMotion) return;
+    const span = sec.offsetHeight - window.innerHeight;
+    lockAnchor = Math.round(sec.getBoundingClientRect().top + window.scrollY + span * clamp(frac, 0, 1));
+    lockUntil = performance.now() + ms;
+    lockOn = true;
+    lastWheelAbs = Infinity;
+    window.scrollTo({ top: lockAnchor, behavior: "instant" });
+  }
+  window.__detentLock = detentLock;
+  window.addEventListener("wheel", (e) => {
+    const now = performance.now(), a = Math.abs(e.deltaY) + Math.abs(e.deltaX);
+    if (lockOn) {
+      const fresh = now - lastWheelT > 140 || a > lastWheelAbs * 1.6 + 6;
+      if (now > lockUntil && fresh) releaseLock();
+      else { e.preventDefault(); lastWheelT = now; lastWheelAbs = a; return; }
+    }
+    lastWheelT = now; lastWheelAbs = a; lastUserInput = now;
+  }, { passive: false });
+  window.addEventListener("touchmove", (e) => {
+    if (lockOn) { if (performance.now() > lockUntil) releaseLock(); else { e.preventDefault(); return; } }
+    lastUserInput = performance.now();
+  }, { passive: false });
+  window.addEventListener("touchend", () => { if (lockOn && performance.now() > lockUntil) releaseLock(); }, { passive: true });
+  window.addEventListener("scroll", () => {
+    if (lockOn && Math.abs(window.scrollY - lockAnchor) > 2) window.scrollTo({ top: lockAnchor, behavior: "instant" });
+  }, { passive: true });
+  setInterval(() => { if (lockOn && performance.now() > lockUntil && performance.now() - lastWheelT > 140) releaseLock(); }, 60);
   window.addEventListener("wheel", stopScrollAnim, { passive: true });
   window.addEventListener("touchstart", stopScrollAnim, { passive: true });
   function toggleHero(force) {
@@ -223,7 +264,11 @@
     const to = d.value(idx);
     if (!d.init) { d.idx = idx; d.x = d.from = d.to = to; d.init = true; d.el.style.setProperty("--x", to.toFixed(4)); return; }
     if (idx === d.idx && to === d.to) return;
-    d.idx = idx; d.from = d.x; d.to = to; d.t0 = now;
+    /* a user gesture moves one detent at a time, and the page is caught at that detent */
+    if (userDriven() && Math.abs(idx - d.idx) > 1) idx = d.idx + Math.sign(idx - d.idx);
+    if (idx !== d.idx && d.anchor) detentLock(d.el, d.anchor(idx, idx > d.idx), d.dur);
+    const toC = d.value(idx);
+    d.idx = idx; d.from = d.x; d.to = toC; d.t0 = now;
     if (!detentRaf) detentRaf = requestAnimationFrame(tickDetents);
   }
   let detentRaf = 0;
@@ -241,7 +286,7 @@
   }
 
   /* hero: collapsed ↔ exploded */
-  const heroDetent = makeDetent(hero, { dur: 1100, value: (i) => i, pick: (p, cur) => (cur === 0 ? (p >= 0.12 ? 1 : 0) : (p < 0.07 ? 0 : 1)) });
+  const heroDetent = makeDetent(hero, { dur: 1100, value: (i) => i, anchor: (i) => i, pick: (p, cur) => (cur === 0 ? (p >= 0.12 ? 1 : 0) : (p < 0.07 ? 0 : 1)) });
 
   /* index carousel: one card per detent, each stop centres its card */
   const originCards = [...originTrack.querySelectorAll(".o-card")];
@@ -256,7 +301,7 @@
     if (originDetent.init) { originDetent.init = false; setDetent(originDetent, originDetent.idx, performance.now()); }
   }
   const originDetent = makeDetent(originSection, {
-    dur: 900, value: (i) => originStops[i] ?? 0,
+    dur: 900, value: (i) => originStops[i] ?? 0, anchor: (i) => i / Math.max(1, originStops.length - 1),
     pick: (p, cur) => {
       const n = originStops.length - 1, pos = p * n;
       let i = cur;
