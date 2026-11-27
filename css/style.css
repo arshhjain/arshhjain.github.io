@@ -95,8 +95,8 @@ h3 { font-size: clamp(26px, 3.4vw, 44px); font-weight: 750; }
 .hero-copy {
   position: absolute; left: clamp(20px, 4vw, 56px); top: clamp(24px, 6vh, 64px);
   max-width: 560px; z-index: 2;
-  opacity: calc(1 - var(--p) * 1.6);
-  transform: translateY(calc(var(--p) * -60px));
+  opacity: calc(1 - var(--x, 0) * 1.6);
+  transform: translateY(calc(var(--x, 0) * -60px));
 }
 h1 { font-size: clamp(72px, 15vw, 210px); font-weight: 900; line-height: .82; }
 h1 .dot { color: var(--accent); }
@@ -109,8 +109,8 @@ h1 .dot { color: var(--accent); }
 }
 .hero-copy2 {
   position: absolute; left: clamp(20px, 4vw, 56px); top: 50%; max-width: 360px;
-  opacity: clamp(0, calc(var(--p) * 3 - 1), 1);
-  transform: translateY(calc(-50% + (1 - clamp(0, var(--p) * 3 - 1, 1)) * 30px));
+  opacity: clamp(0, calc(var(--x, 0) * 3 - 1), 1);
+  transform: translateY(calc(-50% + (1 - clamp(0, var(--x, 0) * 3 - 1, 1)) * 30px));
 }
 .stack { position: absolute; inset: 0; perspective: none; }
 .plate {
@@ -118,7 +118,7 @@ h1 .dot { color: var(--accent); }
   margin: -31% 0 0 -31%;
   border: 1.5px solid var(--ink);
   background: var(--paper);
-  transform: rotateX(60deg) rotateZ(-45deg) translateZ(calc((var(--i) - 1.5) * (14px + var(--p) * 110px)));
+  transform: rotateX(60deg) rotateZ(-45deg) translateZ(calc((var(--i) - 1.5) * (14px + var(--x, 0) * 110px)));
   transform-style: preserve-3d;
   box-shadow: 0 0 0 6px color-mix(in srgb, var(--paper) 60%, transparent);
 }
@@ -137,8 +137,8 @@ h1 .dot { color: var(--accent); }
 .callouts li {
   position: absolute; left: 91%; top: 50%;
   display: flex; align-items: center; gap: 10px; white-space: nowrap;
-  opacity: clamp(0, calc(var(--p) * 3 - .4), 1);
-  transform: translateY(calc((var(--i) - 1.5) * (14px + var(--p) * 110px) * -0.866 - 50%));
+  opacity: clamp(0, calc(var(--x, 0) * 3 - .4), 1);
+  transform: translateY(calc((var(--i) - 1.5) * (14px + var(--x, 0) * 110px) * -0.866 - 50%));
 }
 .callouts li::before { content: ""; width: 44px; height: 1px; background: var(--ink); order: -1; }
 .callouts span { display: grid; gap: 3px; }
@@ -163,7 +163,7 @@ h1 .dot { color: var(--accent); }
 .titleblock small { display: block; font-size: 9px; letter-spacing: .12em; color: var(--ink-2); }
 .scroll-hint {
   position: absolute; left: clamp(20px, 4vw, 56px); bottom: 16px; margin: 0;
-  font: 12px var(--mono); letter-spacing: .14em; opacity: calc(1 - var(--p) * 4);
+  font: 12px var(--mono); letter-spacing: .14em; opacity: calc(1 - var(--x, 0) * 4);
   animation: nudge 2s ease-in-out infinite;
 }
 @keyframes nudge { 50% { transform: translateY(4px); } }
@@ -175,7 +175,7 @@ h1 .dot { color: var(--accent); }
   .callouts small, .scroll-hint { display: none; }
   .hero-copy2 { top: 96px; transform: none; max-width: 80%; }
   .hero-copy2 .lede { font-size: 20px; }
-  .hero-copy { opacity: calc(1 - var(--p) * 2.4); }
+  .hero-copy { opacity: calc(1 - var(--x, 0) * 2.4); }
   .titleblock { font-size: 10px; }
   .titleblock .wide { display: none; }
 }
@@ -186,7 +186,7 @@ h1 .dot { color: var(--accent); }
 .origin-head h2 { max-width: 14ch; font-size: clamp(40px, 6.4vw, 92px); }
 .track {
   display: flex; gap: 20px; padding: 0 var(--pad); width: max-content;
-  transform: translateX(calc(var(--p) * var(--travel, 0px) * -1));
+  transform: translateX(calc(var(--x, 0) * var(--travel, 0px) * -1));
   will-change: transform;
 }
 .o-card {
@@ -695,7 +695,7 @@ main, .contact { position: relative; z-index: 1; }
   position: absolute; left: 34%; bottom: 96%; margin: 0; z-index: 3; pointer-events: none;
   font: 700 clamp(22px, 2vw, 30px)/1 "Caveat", "Segoe Print", cursive; color: var(--accent);
   transform: rotate(-4deg); white-space: nowrap;
-  opacity: calc(1 - var(--p) * 4); transition: opacity .2s;
+  opacity: calc(1 - var(--x, 0) * 4); transition: opacity .2s;
 }
 .annot svg { position: absolute; left: -46px; top: 30%; width: 60px; height: 96px; overflow: visible; }
 .annot path { fill: none; stroke: var(--accent); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }

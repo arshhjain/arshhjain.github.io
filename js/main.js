@@ -208,6 +208,67 @@
   window.addEventListener("resize", measureTravel);
   if (document.fonts) document.fonts.ready.then(measureTravel);
 
+  /* ---------- detents ----------
+     A detent turns a scroll threshold into a switch: crossing it plays one timed animation to the
+     next state (written to --x), and scroll position never scrubs it. Each detent has a forward trip
+     point and a slightly earlier untrip point so hovering on the edge can't flicker. */
+  const easeIO = (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
+  const detents = [];
+  function makeDetent(el, opts) {
+    const d = { el, ...opts, idx: 0, from: 0, to: 0, t0: 0, x: 0, init: false };
+    detents.push(d);
+    return d;
+  }
+  function setDetent(d, idx, now) {
+    const to = d.value(idx);
+    if (!d.init) { d.idx = idx; d.x = d.from = d.to = to; d.init = true; d.el.style.setProperty("--x", to.toFixed(4)); return; }
+    if (idx === d.idx && to === d.to) return;
+    d.idx = idx; d.from = d.x; d.to = to; d.t0 = now;
+    if (!detentRaf) detentRaf = requestAnimationFrame(tickDetents);
+  }
+  let detentRaf = 0;
+  function tickDetents(now) {
+    detentRaf = 0;
+    let moving = false;
+    for (const d of detents) {
+      if (d.x === d.to) continue;
+      const u = reduceMotion ? 1 : clamp((now - d.t0) / d.dur, 0, 1);
+      d.x = u >= 1 ? d.to : d.from + (d.to - d.from) * easeIO(u);
+      d.el.style.setProperty("--x", d.x.toFixed(4));
+      if (u < 1) moving = true;
+    }
+    if (moving) detentRaf = requestAnimationFrame(tickDetents);
+  }
+
+  /* hero: collapsed ↔ exploded */
+  const heroDetent = makeDetent(hero, { dur: 1100, value: (i) => i, pick: (p, cur) => (cur === 0 ? (p >= 0.12 ? 1 : 0) : (p < 0.07 ? 0 : 1)) });
+
+  /* index carousel: one card per detent, each stop centres its card */
+  const originCards = [...originTrack.querySelectorAll(".o-card")];
+  let originStops = [0];
+  function measureStops() {
+    const travel = Math.max(1, originTrack.scrollWidth - window.innerWidth);
+    /* centre each card; stops that land within 8% of each other (cards pinned at either end) merge */
+    const raw = originCards.map((c) => clamp((c.offsetLeft - (window.innerWidth - c.offsetWidth) / 2) / travel, 0, 1));
+    originStops = [0];
+    for (const r of raw) if (r > originStops[originStops.length - 1] + 0.08) originStops.push(r);
+    if (1 - originStops[originStops.length - 1] < 0.08) originStops[originStops.length - 1] = 1; else originStops.push(1);
+    if (originDetent.init) { originDetent.init = false; setDetent(originDetent, originDetent.idx, performance.now()); }
+  }
+  const originDetent = makeDetent(originSection, {
+    dur: 900, value: (i) => originStops[i] ?? 0,
+    pick: (p, cur) => {
+      const n = originStops.length - 1, pos = p * n;
+      let i = cur;
+      while (i < n && pos > i + 0.35) i++;
+      while (i > 0 && pos < i - 0.35) i--;
+      return i;
+    }
+  });
+  window.addEventListener("resize", measureStops);
+  if (document.fonts) document.fonts.ready.then(measureStops);
+  measureStops();
+
   let lastDk = -1;
   function updatePins() {
     const vh = window.innerHeight;
@@ -216,7 +277,9 @@
       const span = r.height - vh;
       s.style.setProperty("--p", (span > 0 ? clamp(-r.top / span, 0, 1) : 0).toFixed(4));
     }
-    explodeBtn.setAttribute("aria-pressed", String((parseFloat(hero.style.getPropertyValue("--p")) || 0) > 0.5));
+    const now = performance.now();
+    for (const d of detents) setDetent(d, d.pick(parseFloat(d.el.style.getPropertyValue("--p")) || 0, d.idx), now);
+    explodeBtn.setAttribute("aria-pressed", String(heroDetent.idx === 1));
     const rr = rave.getBoundingClientRect();
     /* --dk: paper → night as Rave Mode arrives, night → paper as it leaves */
     const sm = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };

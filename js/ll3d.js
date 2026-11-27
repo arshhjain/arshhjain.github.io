@@ -341,14 +341,20 @@ import * as THREE from "three";
        scrolling back past UNTRIP plays it in reverse. Scroll position never scrubs it. */
     const TRIP = 0.2, UNTRIP = 0.16, MORPH_S = 1.7;
     let morphTarget = 0, morph = 0, morphInit = false;
+    /* second detent: the world slides aside and the copy comes in */
+    const END_TRIP = 0.78, END_UNTRIP = 0.74, END_S = 1.0;
+    let endTarget = 0, endRaw = 0;
     function stepMorph(p, dt) {
       if (p >= TRIP) morphTarget = 1; else if (p < UNTRIP) morphTarget = 0;
-      if (!morphInit) { morph = morphTarget; morphInit = true; return; }
+      if (p >= END_TRIP) endTarget = 1; else if (p < END_UNTRIP) endTarget = 0;
+      if (!morphInit) { morph = morphTarget; endRaw = endTarget; morphInit = true; return; }
       const dir = Math.sign(morphTarget - morph);
       if (dir) morph = clamp(morph + (dir * dt) / MORPH_S, 0, 1);
+      const de = Math.sign(endTarget - endRaw);
+      if (de) endRaw = clamp(endRaw + (de * dt) / END_S, 0, 1);
     }
     function place(p) {
-      const tilt = sm(0, 0.62, morph), ext = sm(0.22, 1, morph), end = sm(0.74, 0.86, p);
+      const tilt = sm(0, 0.62, morph), ext = sm(0.22, 1, morph), end = sm(0, 1, endRaw);
       const theta = 0.002 + tilt * 0.98, phi = tilt * (Math.PI / 4);
       const D = 120;
       camera.position.set(D * Math.sin(theta) * Math.sin(phi), D * Math.cos(theta), D * Math.sin(theta) * Math.cos(phi));
@@ -367,7 +373,7 @@ import * as THREE from "three";
       beacon.visible = ext > 0.85;
       siloLid.position.y = 0.04 + 3.62 * sm(0.1, 0.7, ext);
       caps.forEach((c) => c.classList.toggle("on", p >= +c.dataset.a && p < +c.dataset.b));
-      section.classList.toggle("ll-end", p >= 0.78);
+      section.classList.toggle("ll-end", endTarget === 1);
       hudEl.style.opacity = String(sm(0.06, 0.18, p));
       hudEl.style.transform = `translateY(${(end * Math.max(0, H - hudEl.offsetHeight - 6)).toFixed(1)}px)`;
       labels.forEach((l) => {

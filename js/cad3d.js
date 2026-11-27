@@ -213,14 +213,28 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
     if (visible && !currentKey) select("speaker");
   }, { rootMargin: "600px 0px" }).observe(section);
 
+  /* detents: line drawing → solid → exploded. Each threshold trips a timed animation (with an
+     earlier untrip point so the edge can't flicker); only the spin below stays tied to scroll. */
+  const easeIO = (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
+  const mkStage = (trip, untrip, dur) => ({ trip, untrip, dur, on: false, u: 0 });
+  const fillD = mkStage(0.1, 0.07, 900), exD = mkStage(0.26, 0.22, 1100);
+  let lastT = 0, detentInit = false;
+  function stepStage(d, p, dt) {
+    if (!d.on && p >= d.trip) d.on = true; else if (d.on && p < d.untrip) d.on = false;
+    if (!detentInit) { d.u = d.on ? 1 : 0; return; }
+    d.u = reduceMotion ? (d.on ? 1 : 0) : Math.max(0, Math.min(1, d.u + (d.on ? 1 : -1) * (dt / d.dur)));
+  }
+
   const tmp = new THREE.Vector3();
   let shown = 0;
   function frame(t) {
     requestAnimationFrame(frame);
+    const dt = lastT ? Math.min(100, t - lastT) : 0; lastT = t;
     if (!visible || !current) return;
     const p = progress();
-    const fill = smooth(0.08, 0.2, p);
-    const ex = smooth(0.24, 0.42, p);
+    stepStage(fillD, p, dt); stepStage(exD, p, dt); detentInit = true;
+    const fill = easeIO(fillD.u);
+    const ex = easeIO(exD.u);
     /* detent: exploded and held; scrolling here spins the model a full turn while the camera eases in */
     const spin = smooth(0.46, 0.9, p);
     shown += ((ex > 0.55 ? 1 : 0) - shown) * 0.15;
