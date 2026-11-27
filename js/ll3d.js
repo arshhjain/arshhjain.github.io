@@ -337,8 +337,18 @@ import * as THREE from "three";
     window.addEventListener("resize", resize);
     resize();
 
+    /* the 2D → 2.5D morph is a detent: crossing TRIP plays the whole transition as one timed animation,
+       scrolling back past UNTRIP plays it in reverse. Scroll position never scrubs it. */
+    const TRIP = 0.2, UNTRIP = 0.16, MORPH_S = 1.7;
+    let morphTarget = 0, morph = 0, morphInit = false;
+    function stepMorph(p, dt) {
+      if (p >= TRIP) morphTarget = 1; else if (p < UNTRIP) morphTarget = 0;
+      if (!morphInit) { morph = morphTarget; morphInit = true; return; }
+      const dir = Math.sign(morphTarget - morph);
+      if (dir) morph = clamp(morph + (dir * dt) / MORPH_S, 0, 1);
+    }
     function place(p) {
-      const tilt = sm(0.2, 0.5, p), ext = sm(0.26, 0.58, p), end = sm(0.74, 0.86, p);
+      const tilt = sm(0, 0.62, morph), ext = sm(0.22, 1, morph), end = sm(0.74, 0.86, p);
       const theta = 0.002 + tilt * 0.98, phi = tilt * (Math.PI / 4);
       const D = 120;
       camera.position.set(D * Math.sin(theta) * Math.sin(phi), D * Math.cos(theta), D * Math.sin(theta) * Math.cos(phi));
@@ -383,6 +393,7 @@ import * as THREE from "three";
       flash = Math.max(0, flash - dt * 1.6);
       beacon.material.opacity = 0.35 + flash * 0.65;
       beacon.scale.setScalar(1 + flash * 0.8);
+      stepMorph(p, dt);
       place(p);
       drawHud(dt);
       renderer.render(scene, camera);
