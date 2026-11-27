@@ -214,10 +214,11 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
   }, { rootMargin: "600px 0px" }).observe(section);
 
   /* detents: line drawing → solid → exploded. Each threshold trips a timed animation (with an
-     earlier untrip point so the edge can't flicker); only the spin below stays tied to scroll. */
+     earlier untrip point so the edge can't flicker). Once exploded the model holds; drag still rotates it.
+     Pin is 340vh (240vh of scroll): detents sit ~52vh and ~135vh in, then ~105vh to take it in. */
   const easeIO = (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
   const mkStage = (trip, untrip, dur) => ({ trip, untrip, dur, on: false, u: 0 });
-  const fillD = mkStage(0.1, 0.07, 900), exD = mkStage(0.26, 0.22, 1100);
+  const fillD = mkStage(0.217, 0.15, 900), exD = mkStage(0.5625, 0.475, 1100);
   let lastT = 0, detentInit = false;
   function stepStage(d, p, dt) {
     const was = d.on;
@@ -237,8 +238,6 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
     stepStage(fillD, p, dt); stepStage(exD, p, dt); detentInit = true;
     const fill = easeIO(fillD.u);
     const ex = easeIO(exD.u);
-    /* detent: exploded and held; scrolling here spins the model a full turn while the camera eases in */
-    const spin = smooth(0.46, 0.9, p);
     shown += ((ex > 0.55 ? 1 : 0) - shown) * 0.15;
 
     phaseEls.forEach((el, i) => el.classList.toggle("on", i === (ex > 0.05 ? 2 : fill > 0.05 ? 1 : 0)));
@@ -254,9 +253,9 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
     }
     shadow.material.opacity = 1 - ex * 0.6;
 
-    dist = (distA + (distE - distA) * ex) * (1 - 0.22 * Math.sin(Math.PI * spin));
+    dist = distA + (distE - distA) * ex;
     const drift = reduceMotion ? 0 : t * 0.00008;
-    const yaw = -0.75 + smooth(0, 0.44, p) * 0.6 + spin * Math.PI * 2 + drift + yawUser;
+    const yaw = -0.75 + ex * 0.6 + drift + yawUser;
     const pitch = 0.32 + pitchUser - ex * 0.06;
     camera.position.set(
       target.x + dist * Math.cos(pitch) * Math.sin(yaw),
