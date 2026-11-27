@@ -27,6 +27,14 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
   const capKitchen = capD.querySelector(".cd-kitchen");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const bus = () => window.__rave;
+  /* latch: true once x reaches `on`, false again only once x drops below on − HYST */
+  const HYST = 0.006, latches = new Map();
+  const latch = (k, x, on) => {
+    let st = latches.get(k) || false;
+    if (!st && x >= on) st = true; else if (st && x < on - HYST) st = false;
+    latches.set(k, st); return st;
+  };
+  const band = (k, x, a, b) => latch(k + "<", x, a) && !latch(k + ">", x, b);
 
   let renderer;
   try {
@@ -610,19 +618,20 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
     holdNow = hold;
     section.style.setProperty("--hold", hold.toFixed(3));
     section.classList.toggle("holding", hold > 0.02);
-    /* desk → car → what it is → where it belongs → presenting, then the car takes the stage */
-    const win = (a, b, c, d) => smooth(a, b, shown) * (1 - smooth(c, d, shown));
-    capA.style.opacity = win(0.0, 0.012, 0.035, 0.045);
-    capB.style.opacity = win(0.045, 0.057, 0.08, 0.09);
-    capC.style.opacity = win(0.09, 0.1, 0.15, 0.16);
-    capChunks[0].classList.toggle("on", shown > 0.093);
-    capChunks[1].classList.toggle("on", shown > 0.118);
-    capD.style.opacity = win(0.16, 0.17, 0.355, 0.37);
-    const w = shown < 0.205 ? 0 : shown < 0.245 ? 1 : 2;
+    /* desk → car → what it is → where it belongs → presenting, then the car takes the stage.
+       Every caption swap is a detent: it trips at its point, releases a little earlier on the way
+       back, and plays its own timed transition instead of fading with scroll. */
+    capA.classList.toggle("on", band("A", shown, 0, 0.04));
+    capB.classList.toggle("on", band("B", shown, 0.051, 0.085));
+    capC.classList.toggle("on", band("C", shown, 0.095, 0.155));
+    capChunks[0].classList.toggle("on", latch("c0", shown, 0.093));
+    capChunks[1].classList.toggle("on", latch("c1", shown, 0.118));
+    capD.classList.toggle("on", band("D", shown, 0.165, 0.362));
+    const w = latch("w2", shown, 0.245) ? 2 : latch("w1", shown, 0.205) ? 1 : 0;
     if (w !== capW) { capW = w; capReel.style.transform = `translateY(${-w * 1.12}em)`; capSlot.style.width = capWords[w].offsetWidth + "px"; }
-    capD.classList.toggle("wild", shown > 0.29);
-    capKitchen.classList.toggle("on", shown > 0.318);
-    capE.style.opacity = win(0.375, 0.39, 0.47, 0.5);
+    capD.classList.toggle("wild", latch("wild", shown, 0.29));
+    capKitchen.classList.toggle("on", latch("kitchen", shown, 0.318));
+    capE.classList.toggle("on", band("E", shown, 0.383, 0.485));
     const hf = smooth(0.38, 0.45, shown) * (1 - smooth(0.72, 0.8, shown));
     if (Math.abs(hf - holdFov) > 0.002) { holdFov = hf; camera.fov = baseFov + 14 * hf; camera.updateProjectionMatrix(); }
 

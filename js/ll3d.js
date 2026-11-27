@@ -343,7 +343,7 @@ import * as THREE from "three";
     let morphTarget = 0, morph = 0, morphInit = false;
     /* second detent: the world slides aside and the copy comes in */
     const END_TRIP = 0.78, END_UNTRIP = 0.74, END_S = 1.0;
-    let endTarget = 0, endRaw = 0;
+    let endTarget = 0, endRaw = 0, cap3 = false;
     function stepMorph(p, dt) {
       if (p >= TRIP) morphTarget = 1; else if (p < UNTRIP) morphTarget = 0;
       if (p >= END_TRIP) endTarget = 1; else if (p < END_UNTRIP) endTarget = 0;
@@ -372,7 +372,11 @@ import * as THREE from "three";
       pawns.forEach((pw) => { const s = 0.02 + 0.98 * sm(0.5, 1, ext); pw.g.scale.set(1, s, 1); });
       beacon.visible = ext > 0.85;
       siloLid.position.y = 0.04 + 3.62 * sm(0.1, 0.7, ext);
-      caps.forEach((c) => c.classList.toggle("on", p >= +c.dataset.a && p < +c.dataset.b));
+      /* captions latch too: caption 1 belongs to the flat plan and caption 2 to the morph detent,
+         caption 3 trips at its own point with a release just before it */
+      if (!cap3 && p >= 0.5) cap3 = true; else if (cap3 && p < 0.47) cap3 = false;
+      const capIdx = endTarget ? -1 : morphTarget === 0 ? 0 : cap3 ? 2 : 1;
+      caps.forEach((c, i) => c.classList.toggle("on", i === capIdx));
       section.classList.toggle("ll-end", endTarget === 1);
       hudEl.style.opacity = String(sm(0.06, 0.18, p));
       hudEl.style.transform = `translateY(${(end * Math.max(0, H - hudEl.offsetHeight - 6)).toFixed(1)}px)`;

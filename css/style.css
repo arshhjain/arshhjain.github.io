@@ -601,7 +601,9 @@ main, .contact { position: relative; z-index: 1; }
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; z-index: 3;
   font: 800 clamp(40px, 7.5vw, 112px)/1 var(--display); font-stretch: 125%; letter-spacing: -.02em;
   color: #f2efe6; text-shadow: 0 6px 50px rgba(0, 0, 0, .7); white-space: nowrap; pointer-events: none; opacity: 0;
+  transition: opacity .55s cubic-bezier(.2, .7, .2, 1);
 }
+.car-cap.on { opacity: 1; }
 #rave:not(.has-car) .car-cap { display: none; }
 #rave.has-car .rave-inner {
   position: absolute; inset: 0; z-index: 2; max-width: none; margin: 0;
