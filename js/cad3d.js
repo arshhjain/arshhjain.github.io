@@ -217,9 +217,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
      earlier untrip point so the edge can't flicker); only the spin below stays tied to scroll. */
   const easeIO = (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
   const mkStage = (trip, untrip, dur) => ({ trip, untrip, dur, on: false, u: 0 });
-  /* pin is 850vh (750vh of scroll): detents sit at the same distance in as before, and the spin
-     gets ~465vh for its full turn so it reads at the same pace as the rest of the page */
-  const fillD = mkStage(0.07, 0.048, 900), exD = mkStage(0.18, 0.152, 1100);
+  const fillD = mkStage(0.1, 0.07, 900), exD = mkStage(0.26, 0.22, 1100);
   let lastT = 0, detentInit = false;
   function stepStage(d, p, dt) {
     const was = d.on;
@@ -240,7 +238,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
     const fill = easeIO(fillD.u);
     const ex = easeIO(exD.u);
     /* detent: exploded and held; scrolling here spins the model a full turn while the camera eases in */
-    const spin = smooth(0.3, 0.92, p);
+    const spin = smooth(0.46, 0.9, p);
     shown += ((ex > 0.55 ? 1 : 0) - shown) * 0.15;
 
     phaseEls.forEach((el, i) => el.classList.toggle("on", i === (ex > 0.05 ? 2 : fill > 0.05 ? 1 : 0)));
@@ -258,7 +256,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 
     dist = (distA + (distE - distA) * ex) * (1 - 0.22 * Math.sin(Math.PI * spin));
     const drift = reduceMotion ? 0 : t * 0.00008;
-    const yaw = -0.75 + smooth(0, 0.29, p) * 0.6 + spin * Math.PI * 2 + drift + yawUser;
+    const yaw = -0.75 + smooth(0, 0.44, p) * 0.6 + spin * Math.PI * 2 + drift + yawUser;
     const pitch = 0.32 + pitchUser - ex * 0.06;
     camera.position.set(
       target.x + dist * Math.cos(pitch) * Math.sin(yaw),
