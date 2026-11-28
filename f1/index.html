@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>F1 Overtakability, taken apart — Arsh Jain</title>
+<meta name="description" content="Detail drawing set for F1 Overtakability: what counts as a pass, the races FastF1 quietly substituted, why the first version measured pit stops, and a layout-only model tested on circuits it never saw.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500;600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css?v=2611290100">
+<link rel="stylesheet" href="../lecturelens/geek.css?v=2611290100">
+<link rel="stylesheet" href="fgeek.css?v=2611290100">
+</head>
+<body class="geek">
+
+<header class="topbar">
+  <a class="mark" href="../#f1">← A.JAIN<span>/DWG 003 DETAIL SET</span></a>
+  <nav>
+    <a href="#s1">A pass</a>
+    <a href="#s2">Fake races</a>
+    <a href="#s3">Pit stops</a>
+    <a href="#s4">Model</a>
+    <a href="#s5">Limits</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- ============ COVER ============ -->
+<section class="cover">
+  <div class="frame cover-frame">
+    <div class="zones zones-top" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span></div>
+    <div class="zones zones-side" aria-hidden="true"><span>A</span><span>B</span><span>C</span><span>D</span></div>
+
+    <ol class="dreg" aria-label="Drawing register">
+      <li class="reg-head"><span>SHEET</span><span>TITLE</span><span>ANSWERS</span></li>
+      <li><a href="#s0"><span>003.0</span><span>Why</span><span>Which tracks actually race?</span></a></li>
+      <li><a href="#s1"><span>003.1</span><span>A pass</span><span>What gets counted, lap by lap</span></a></li>
+      <li><a href="#s2"><span>003.2</span><span>Fake races</span><span>Did that race even happen?</span></a></li>
+      <li><a href="#s3"><span>003.3</span><span>Pit stops</span><span>What was V1 really measuring?</span></a></li>
+      <li><a href="#s4"><span>003.4</span><span>The model</span><span>How much does layout explain?</span></a></li>
+      <li><a href="#s5"><span>003.5</span><span>Limits</span><span>What it can't say</span></a></li>
+      <li><a href="#sR"><span>003.R</span><span>Revisions</span><span>V1 → V2, and what's next</span></a></li>
+    </ol>
+
+    <div class="titleblock">
+      <div><small>DRAWN</small>A. JAIN</div>
+      <div><small>PARENT</small>DWG 003</div>
+      <div><small>SHEETS</small>7</div>
+      <div><small>REV</small>V2 · DRAFT A</div>
+      <div class="wide"><small>TITLE</small>F1 OVERTAKABILITY — DETAIL SET</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 003.0 WHY ============ -->
+<article class="sheet" id="s0" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 003.0</span>
+    <h3>Why</h3>
+    <span class="tag">FastF1 · 2018–2024 · 131 races · 28 circuits</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">Everyone knows Monaco is a procession and Bahrain usually isn't. I wanted to know how much of that is the track itself.</p>
+      <p>Two questions: which circuits actually produce on-track racing, and can you tell from the layout alone, before a race has ever been run there?</p>
+      <p>The second question is the useful one. Circuit designers and organisers argue about straights, DRS zones and street layouts all the time; a model that ranks circuits it has never seen would say which of those things matter.</p>
+    </div>
+    <figure class="fig">
+      <figcaption class="fig-cap">FIG 003.0-A — REQUIREMENTS → SHEETS</figcaption>
+      <ol class="reqs">
+        <li><b>REQ-01</b><span>Count passes, not position changes.</span><a href="#s1">003.1</a></li>
+        <li><b>REQ-02</b><span>Only count races that actually happened at that track.</span><a href="#s2">003.2</a></li>
+        <li><b>REQ-03</b><span>Make sure the count isn't secretly measuring something else.</span><a href="#s3">003.3</a></li>
+        <li><b>REQ-04</b><span>Test on circuits the model has never seen.</span><a href="#s4">003.4</a></li>
+        <li><b>REQ-05</b><span>Say how much a track can explain at all.</span><a href="#s5">003.5</a></li>
+      </ol>
+    </figure>
+  </div>
+</article>
+
+<!-- ============ 003.1 A PASS ============ -->
+<article class="sheet" id="s1" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 003.1</span>
+    <h3>A pass</h3>
+    <span class="tag">REQ-01 · running order at the end of every lap</span>
+  </header>
+  <div class="sheet-body single">
+    <div class="copy narrow">
+      <p class="big">A pass is two cars swapping places between one lap and the next, on track.</p>
+      <p>FastF1 gives the running order at the end of every lap. V1 summed every place gained and halved it. That also counts a car rejoining from the pits behind you, a rival pitting in front of you, and everyone moving up one when someone retires.</p>
+      <p>V2 looks at pairs instead. A pair counts when their order flips from lap <i>n−1</i> to lap <i>n</i>, neither car pitted on either lap, and the track was green on both (no safety car, VSC or red flag). A retirement never counts, because the retired car has no position to swap.</p>
+    </div>
+    <figure class="fig fig-wide">
+      <figcaption class="fig-cap">FIG 003.1-A — LAP CHART · <span id="lcRaces"></span> · <button class="chip on" id="lcV2">V2 · PASSES</button><button class="chip" id="lcV1">V1 · POSITION GAINS</button><span class="try">PICK A RACE · FLIP · HOVER A LINE</span></figcaption>
+      <div class="lc-wrap"><svg id="lc" viewBox="0 0 1000 420" role="img" aria-label="Lap chart with counted overtakes marked"></svg></div>
+      <div class="lc-read" aria-live="polite">
+        <p><span>COUNTED</span><b id="lcN">—</b></p>
+        <p><span>V1 SAID</span><b id="lcV1n">—</b></p>
+        <p><span>V2 SAYS</span><b id="lcV2n">—</b></p>
+        <p><span>PIT STOPS</span><b id="lcStops">—</b></p>
+        <p class="lc-key"><i class="k-pit"></i>pit lap <i class="k-sc"></i>safety car / VSC <i class="k-ev"></i>counted</p>
+      </div>
+    </figure>
+  </div>
+</article>
+
+<!-- ============ 003.2 FAKE RACES ============ -->
+<article class="sheet" id="s2" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 003.2</span>
+    <h3>Fake races</h3>
+    <span class="tag">REQ-02 · checked against FastF1's own calendar</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">Ask FastF1 for a race that didn't happen, and it quietly gives you a different one.</p>
+      <p>The fetch script asked for every circuit's race in every season. When a Grand Prix wasn't on that year's calendar, FastF1's fuzzy name matching picked the closest event it could find and loaded that instead, with a warning nobody reads in a loop of 200 requests.</p>
+      <p>So "Australia 2021", a race cancelled for COVID, was sitting in my data as a real race. Nine like it, plus Spa 2021 (three laps behind the safety car, then called off). V2 checks every race against the season calendar and drops all ten.</p>
+    </div>
+    <figure class="fig">
+      <figcaption class="fig-cap">FIG 003.2-A — WHAT WAS ASKED FOR vs WHAT HAPPENED</figcaption>
+      <table class="revs fk">
+        <thead><tr><th>ASKED FOR</th><th>WHY IT DIDN'T RUN</th><th>STATUS</th></tr></thead>
+        <tbody>
+          <tr><td>Australia 2021</td><td>Cancelled (COVID)</td><td class="st-cut">DROPPED</td></tr>
+          <tr><td>Azerbaijan 2020</td><td>Cancelled (COVID)</td><td class="st-cut">DROPPED</td></tr>
+          <tr><td>Mexico City 2020</td><td>Cancelled (COVID)</td><td class="st-cut">DROPPED</td></tr>
+          <tr><td>São Paulo 2020</td><td>Cancelled (COVID)</td><td class="st-cut">DROPPED</td></tr>
+          <tr><td>United States 2020</td><td>Cancelled (COVID)</td><td class="st-cut">DROPPED</td></tr>
+          <tr><td>Portugal 2018, 2019</td><td>Not on the calendar until 2020</td><td class="st-cut">DROPPED</td></tr>
+          <tr><td>Turkey 2018, 2019</td><td>Not on the calendar until 2020</td><td class="st-cut">DROPPED</td></tr>
+          <tr><td>Belgium 2021</td><td>Ran, but no green-flag racing</td><td class="st-cut">DROPPED</td></tr>
+        </tbody>
+      </table>
+    </figure>
+  </div>
+</article>
+
+<!-- ============ 003.3 PIT STOPS ============ -->
+<article class="sheet" id="s3" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 003.3</span>
+    <h3>Pit stops</h3>
+    <span class="tag">REQ-03 · the confounder</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">V1's count rose and fell with the number of pit stops. It was measuring strategy, not racing.</p>
+      <p>Every pit stop drops a car down the order and then sends it back up as the others stop, and V1 counted all of that as overtaking. More stops, more "overtakes". That's why high tyre-wear tracks like Barcelona and Bahrain sat near the top.</p>
+      <p>The clearest case is Qatar 2023, where the FIA capped tyre stints at 18 laps and forced three stops each. V1 scored it 178, so I dropped it as an anomaly. V2 scores it 44, a perfectly normal race. The anomaly was the metric.</p>
+      <p>Counting real passes cuts the link with pit stops from a correlation of 0.48 to 0.19. Some link should remain, since fresh tyres genuinely help cars pass.</p>
+    </div>
+    <figure class="fig">
+      <figcaption class="fig-cap">FIG 003.3-A — 131 RACES · <button class="chip" id="scV1">V1</button><button class="chip on" id="scV2">V2</button><span class="try">FLIP · HOVER A DOT</span></figcaption>
+      <svg id="sc" viewBox="0 0 520 400" role="img" aria-label="Count per race against number of pit stops"></svg>
+      <p class="sc-read" id="scRead" aria-live="polite">&nbsp;</p>
+    </figure>
+  </div>
+</article>
+
+<!-- ============ 003.4 MODEL ============ -->
+<article class="sheet" id="s4" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 003.4</span>
+    <h3>The model</h3>
+    <span class="tag">REQ-04 · ridge regression · leave one circuit out</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">One row per circuit, five layout features, and every circuit is predicted with itself hidden.</p>
+      <p><b>Target:</b> each race's passes per green lap, divided by that season's median race, then averaged per circuit. 1.0 means a typical race. Rows are weighted by how many races a circuit has.</p>
+      <p><b>Features:</b> track length, longest straight (from telemetry), corners per km, DRS zones and street-or-permanent, all checked against official circuit data. Where the layout changed mid-window, the layout most of the races used.</p>
+      <p><b>Testing:</b> 28 circuits is tiny, so a random split would be noise, and V1's random row split let a circuit's other seasons leak into training. Here the model is refit 28 times, each time without one circuit, and predicts that circuit. Ridge's strength is picked inside each fold, so the held-out circuit never touches it.</p>
+      <ul class="stat-list">
+        <li><span>RANK CORRELATION</span><b>0.38</b><em>p = 0.049</em></li>
+        <li><span>R² · HELD-OUT</span><b>0.22</b><em>predict-the-mean: −0.07</em></li>
+        <li><span>TYPICAL MISS</span><b>21%</b><em>of a typical track's pass rate</em></li>
+      </ul>
+    </div>
+    <div class="fig-stack">
+      <figure class="fig">
+        <figcaption class="fig-cap">FIG 003.4-A — WHAT MOVES THE SCORE · STANDARDISED</figcaption>
+        <ol class="coef" id="coef"></ol>
+        <p class="fig-note">Longer laps and longer straights mean more passing, twistier tracks less. DRS zone count adds almost nothing once those are known: ridge is sharing the credit between correlated features, so treat the order as rough.</p>
+      </figure>
+      <figure class="fig">
+        <figcaption class="fig-cap">FIG 003.4-B — ACTUAL RANK vs PREDICTED, EACH CIRCUIT HIDDEN<span class="try">HOVER A LINE</span></figcaption>
+        <svg id="sl" viewBox="0 0 520 560" role="img" aria-label="Slope chart from actual rank to predicted rank"></svg>
+      </figure>
+    </div>
+  </div>
+</article>
+
+<!-- ============ 003.5 LIMITS ============ -->
+<article class="sheet" id="s5" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 003.5</span>
+    <h3>Limits</h3>
+    <span class="tag">REQ-05 · what it can't say</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">The circuit explains about 45% of how many passes a race gets. The other 55% is that particular race.</p>
+      <p>That's measured straight from the data: split the variation in pass rate between "which circuit" and "which race at that circuit". Rain, safety cars, a fast car starting at the back, a dominant leader: none of that is in a layout. So no layout-only model could ever predict single races well, and that's why this one predicts circuits.</p>
+    </div>
+    <figure class="fig">
+      <figcaption class="fig-cap">FIG 003.5-A — KNOWN GAPS</figcaption>
+      <ol class="reqs gaps">
+        <li><b>THIN</b><span>Las Vegas, Hockenheim, Portimão and Istanbul have two races each; Interlagos, Austin, Shanghai, Miami and Lusail three. Their scores move a lot with one wild race.</span></li>
+        <li><b>MISSING</b><span>Monza 2024, plus Interlagos and Austin 2022–24, were never fetched. A second attempt stalled on F1's lap-timing feed, so they're out for now.</span></li>
+        <li><b>MISS</b><span>Melbourne: predicted 5th, actually 27th. Long lap, long straights, and still processional. Something about it isn't in these five features.</span></li>
+        <li><b>ERA</b><span>2022's ground-effect cars follow each other more closely. Scoring each race against its own season removes the average shift, not differences between tracks.</span></li>
+        <li><b>PRE-2018</b><span>V1 also used Ergast lap times back to 1996. V2 drops them: no pit or safety-car data, so they can't be counted the same way.</span></li>
+      </ol>
+    </figure>
+  </div>
+</article>
+
+<!-- ============ 003.R REVISIONS ============ -->
+<article class="sheet" id="sR" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 003.R</span>
+    <h3>Revisions</h3>
+    <span class="tag">V1 → V2, and what I'd build next</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">V1 had a better-looking R² and a worse question. V2 fixed the target before touching the model.</p>
+      <p>V1 was a confidence-weighted random forest on four telemetry features predicting a "drama score": R² 0.17, MAE 0.128 on a 0–1 scale, on a random 80/20 split of rows, so other seasons of the same circuit sat in training. Running V2's model on V1's position-change count, tested circuit by circuit, scores about zero (R² −0.01, rank correlation 0.04). All of V2's gain came from counting the right thing.</p>
+      <p>Next is the feature I think is missing: track width at each braking zone. A pass needs a long run, a big stop and room to go side by side, so one "passing zone" score per braking point should beat five separate numbers. No dataset has the widths, so they'd be measured by hand from satellite images.</p>
+    </div>
+    <figure class="fig">
+      <figcaption class="fig-cap">FIG 003.R-A — REVISION TABLE</figcaption>
+      <table class="revs">
+        <thead><tr><th>REV</th><th>CHANGE</th><th>STATUS</th></tr></thead>
+        <tbody>
+          <tr><td>V1</td><td>Position-change count, Ergast 1996–2017 + FastF1 2018–2024, drama score, random forest, random row split</td><td class="st-pause">REPLACED</td></tr>
+          <tr><td>V2</td><td>Pair-swap pass count, calendar check, season-normalised circuit score, ridge, leave-one-circuit-out</td><td class="st-ok">LIVE</td></tr>
+          <tr><td>A</td><td>Passing-zone score: straight length × braking speed loss × width at the braking point</td><td class="st-cut">NOT BUILT</td></tr>
+          <tr><td>B</td><td>Fetch the 7 missing races with F1 login credentials</td><td class="st-cut">NOT BUILT</td></tr>
+          <tr><td>C</td><td>Tyre degradation and pit-lane time loss as features</td><td class="st-cut">NOT BUILT</td></tr>
+        </tbody>
+      </table>
+    </figure>
+  </div>
+</article>
+
+</main>
+
+<footer class="geek-end">
+  <a class="link" href="../#f1">← back to the full set</a>
+  <div class="titleblock end">
+    <div><small>DRAWN</small>A. JAIN</div>
+    <div><small>CHECKED</small>—</div>
+    <div><small>SHEET</small>7 / 7</div>
+    <div><small>REV</small>V2 · DRAFT A</div>
+    <div class="wide"><small>TITLE</small>F1 OVERTAKABILITY — DETAIL SET — END</div>
+  </div>
+</footer>
+
+<script src="geek.js?v=2611290100"></script>
+</body>
+</html>

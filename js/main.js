@@ -326,6 +326,22 @@
   if (document.fonts) document.fonts.ready.then(measureStops);
   measureStops();
 
+  /* DWG 003: four reel stops (Monaco → Hungaroring → Spa → Las Vegas), then the ranking. js/f1.js draws the reels from --x */
+  const f1Sec = document.getElementById("f1");
+  if (f1Sec) {
+    const F1_TRIP = [0.14, 0.33, 0.52, 0.72], F1_BACK = 0.03;
+    makeDetent(f1Sec, {
+      dur: 1300, value: (i) => i,
+      anchor: (i, fwd) => (fwd ? F1_TRIP[i - 1] + 0.005 : F1_TRIP[i] - F1_BACK - 0.005),
+      pick: (p, cur) => {
+        let i = cur;
+        while (i < F1_TRIP.length && p >= F1_TRIP[i]) i++;
+        while (i > 0 && p < F1_TRIP[i - 1] - F1_BACK) i--;
+        return i;
+      }
+    });
+  }
+
   let lastDk = -1;
   function updatePins() {
     const vh = window.innerHeight;

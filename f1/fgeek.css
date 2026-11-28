@@ -1,0 +1,66 @@
+/* F1 detail set — layered on ../css/style.css and ../lecturelens/geek.css */
+.fig-note { margin: 12px 0 0; font: 11px/1.5 var(--mono); color: var(--ink-2); }
+.st-ok { color: var(--ink); font-weight: 600; }
+.revs.fk td:first-child { width: auto; white-space: nowrap; }
+
+/* 003.1 lap chart */
+.lc-wrap { position: relative; }
+#lc { display: block; width: 100%; height: auto; }
+#lc .grid { stroke: var(--line); stroke-width: 1; }
+#lc .sc-band { fill: color-mix(in srgb, #f4d27a 55%, transparent); }
+#lc .ax { font: 400 10px var(--mono); fill: var(--ink-2); }
+#lc .drv { fill: none; stroke: var(--ink); stroke-width: 1.3; opacity: .28; stroke-linejoin: round; transition: opacity .2s, stroke-width .2s; cursor: pointer; }
+#lc .drv.hot { opacity: 1; stroke-width: 2.6; }
+#lc .pitm { fill: var(--paper); stroke: var(--ink); stroke-width: 1.2; opacity: .5; }
+#lc .ev { fill: var(--accent); stroke: var(--paper); stroke-width: 1; }
+#lc .lab { font: 600 10px var(--mono); fill: var(--ink-2); }
+#lc .lab.hot { fill: var(--ink); }
+.lc-read { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 26px; margin-top: 12px; font: 11px var(--mono); letter-spacing: .06em; color: var(--ink-2); }
+.lc-read p { margin: 0; display: flex; gap: 8px; align-items: baseline; }
+.lc-read b { font: 700 22px var(--display); color: var(--ink); letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.lc-read #lcN { color: var(--accent); }
+.lc-key { margin-left: auto !important; gap: 6px !important; align-items: center !important; }
+.lc-key i { display: inline-block; width: 10px; height: 10px; margin-left: 10px; border: 1.2px solid var(--ink); border-radius: 50%; background: var(--paper); }
+.lc-key .k-sc { border-radius: 0; border: 0; background: color-mix(in srgb, #f4d27a 55%, transparent); }
+.lc-key .k-ev { background: var(--accent); border-color: var(--accent); }
+
+/* 003.3 scatter */
+#sc .ax { font: 400 10px var(--mono); fill: var(--ink-2); }
+#sc .axl { stroke: var(--ink); stroke-width: 1.2; }
+#sc .grid { stroke: var(--line); }
+#sc .dot { fill: var(--ink); opacity: .55; transition: cy .7s cubic-bezier(.2, .7, .2, 1), opacity .2s; cursor: pointer; }
+#sc .dot.qat { fill: var(--accent); opacity: 1; }
+#sc .dot:hover { opacity: 1; }
+#sc .fit { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 6 5; transition: all .7s cubic-bezier(.2, .7, .2, 1); }
+#sc .rlab { font: 700 15px var(--mono); fill: var(--accent); }
+.sc-read { margin: 8px 0 0; font: 11px var(--mono); color: var(--ink-2); min-height: 1.5em; }
+
+/* 003.4 model */
+.stat-list { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.stat-list li { border: 1.5px solid var(--ink); padding: 10px 12px; display: grid; gap: 2px; }
+.stat-list span { font: 10px var(--mono); letter-spacing: .12em; color: var(--ink-2); }
+.stat-list b { font: 800 30px var(--display); font-stretch: 115%; line-height: 1.05; }
+.stat-list em { font: 10px var(--mono); font-style: normal; color: var(--ink-2); }
+.coef { list-style: none; margin: 0; padding: 0; font: 12px var(--mono); }
+.coef li { display: grid; grid-template-columns: 150px 1fr 56px; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.coef li:last-child { border-bottom: 0; }
+.coef .cbar { position: relative; height: 12px; }
+.coef .cbar::before { content: ""; position: absolute; left: 50%; top: -4px; bottom: -4px; width: 1px; background: var(--ink); }
+.coef .cbar i { position: absolute; top: 0; bottom: 0; background: var(--ink); }
+.coef .cbar i.neg { background: var(--accent); }
+.coef b { text-align: right; font-variant-numeric: tabular-nums; }
+#sl .ax { font: 600 10px var(--mono); fill: var(--ink-2); letter-spacing: .1em; }
+#sl .ln { stroke: var(--ink); stroke-width: 1.2; opacity: .3; fill: none; transition: opacity .2s, stroke-width .2s; }
+#sl .ln.big { stroke: var(--accent); opacity: .75; }
+#sl g.row { cursor: pointer; }
+#sl g.row text { font: 500 10.5px var(--mono); fill: var(--ink-2); }
+#sl g.row:hover .ln, #sl g.row.hot .ln { opacity: 1; stroke-width: 2.6; }
+#sl g.row:hover text, #sl g.row.hot text { fill: var(--ink); font-weight: 700; }
+
+.gaps li { grid-template-columns: 78px 1fr; }
+
+@media (max-width: 760px) {
+  .stat-list { grid-template-columns: 1fr; }
+  .coef li { grid-template-columns: 110px 1fr 44px; }
+  .lc-key { margin-left: 0 !important; }
+}
