@@ -282,7 +282,7 @@ import * as THREE from "three";
         J.R.el.rotation.x = P("re") + tap * 0.5;
         for (const L of [J.LL, J.RL]) { L.hp.rotation.x = P("hp"); L.kn.rotation.x = P("kn"); }
       }
-      return { g: m, SULK, WATCH, STAND, CHEER, HIPS, pose };
+      return { g: m, head, SULK, WATCH, STAND, CHEER, HIPS, pose };
     })();
 
     /* ---------- drone ---------- */
@@ -547,7 +547,7 @@ import * as THREE from "three";
       HOV.clone()
     ], false, "centripetal");
     const camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), tmpP = new THREE.Vector3(), tmpL = new THREE.Vector3();
-    const chase = V(5.5, 2.2, 9);
+    const flyCam = new THREE.CatmullRomCurve3([SP.pos.clone(), V(CAB.x + 2, 7, CAB.z + 8), V(CAB.x + 25, 17, CAB.z - 14), S1.pos.clone()], false, "centripetal");
 
     /* leader line from the SCADA panel to the operator's screen */
     const leader = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -625,7 +625,8 @@ import * as THREE from "three";
         setLabel(t, (c > 0.5 && e < 0.4 && (t.state === "flagged" || t.state === "visiting")) || early);
         if (t.label) place(t.label, tipOf(t));
       });
-      hudEl.style.opacity = sm(0.55, 1, c).toFixed(3);
+      /* the board steps aside at the end so the operator is the subject */
+      hudEl.style.opacity = (sm(0.55, 1, c) * (1 - e)).toFixed(3);
       if (!!D.farm.t !== farmState) { farmState = !!D.farm.t; section.classList.toggle("tb-farm", farmState); }
 
       /* operator: sulk → looks up and taps (push) → on his feet and cheering (end) */
@@ -644,7 +645,8 @@ import * as THREE from "three";
       else man.pose(man.SULK, man.WATCH, a, tap);
       man.g.position.y = hop;
       annot.classList.toggle("on", cheerT > 0.1 && e > 0.5);
-      place(annot, tmpP.set(man.g.position.x, 2.25 + hop, man.g.position.z), 0, -2, "-50%", "-100%");
+      /* pinned just above his head, so it reads as his */
+      place(annot, man.head.getWorldPosition(tmpP).add(tmpL.set(0, 0.28, 0)), 0, 0, "-50%", "-100%");
 
       /* SCADA panel: opens with the push-in on the left of the hut, leader line to his screen, gone once the drone leaves */
       const scadaOn = sm(0.15, 0.6, D.push.v) * (1 - sm(0, 0.25, D.fly.v));
@@ -668,12 +670,12 @@ import * as THREE from "three";
       camPos.copy(S0.pos).lerp(SP.pos, a); camLook.copy(S0.look).lerp(SP.look, a);
       let fov = S0.fov + (SP.fov - S0.fov) * a;
       if (D.fly.v > 0) {
-        const follow = tmpP.copy(dronePos).add(chase);
-        const blendIn = sm(0, 0.25, fp), blendOut = sm(0.7, 1, fp);
-        camPos.lerp(follow, blendIn * (1 - blendOut)).lerp(S1.pos, blendOut);
-        tmpL.copy(dronePos).lerp(S1.look, blendOut * 0.9 + fp * 0.1);
-        camLook.lerp(tmpL, sm(0, 0.2, fp));
-        fov += (S1.fov - fov) * fp;
+        /* a steady crane move: the camera glides along its own smooth path behind the drone, and its aim drifts
+           from the cabin to the turbine with only a gentle pull toward the drone, so the frame never whips around */
+        camPos.copy(flyCam.getPoint(fp));
+        tmpL.copy(SP.look).lerp(S1.look, sm(0, 1, fp)).lerp(dronePos, 0.42 * Math.sin(Math.PI * fp));
+        camLook.copy(tmpL);
+        fov = SP.fov + (S1.fov - SP.fov) * fp;
       }
       const sb = ease(clamp(sB / 0.5, 0, 1)) * fp;
       camPos.lerp(S1b.pos, sb); camLook.lerp(S1b.look, sb); fov += (S1b.fov - fov) * sb;

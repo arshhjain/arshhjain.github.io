@@ -980,7 +980,10 @@ html.hero-locked, html.hero-locked body { overflow: hidden; }
   position: absolute; left: 0; top: 0; margin: 0; pointer-events: none; white-space: nowrap; z-index: 2;
   font: 700 34px/1 "Caveat", "Segoe Print", cursive; color: var(--accent); opacity: 0; will-change: transform;
 }
-.tb-annot.on { opacity: 1; animation: tbFinally .55s cubic-bezier(.3, 1.7, .5, 1) both; }
+/* the pop and tilt live on the inner span: an individual rotate on the positioned element would swing its whole offset */
+.tb-annot span { display: inline-block; transform-origin: 50% 100%; }
+.tb-annot.on { opacity: 1; }
+.tb-annot.on span { animation: tbFinally .55s cubic-bezier(.3, 1.7, .5, 1) both; }
 @keyframes tbFinally { from { opacity: 0; scale: .4; rotate: -12deg; } to { opacity: 1; scale: 1; rotate: -4deg; } }
 
 /* paper fog behind the captions, and across the top of the farm */

@@ -4,6 +4,16 @@
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
+  /* a reload (F5, Ctrl+Shift+R) always starts from the top, gate and all: drop the #section and the restored scroll.
+     Ordinary in-page links and shared #links still land where they point. */
+  const navEntry = performance.getEntriesByType("navigation")[0];
+  if (navEntry && navEntry.type === "reload") {
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+    window.scrollTo(0, 0);
+    window.addEventListener("load", () => window.scrollTo(0, 0), { once: true });
+  }
+
   /* ================= content lists ================= */
 
   /* Shuffled in the Rave Mode section. cover is optional: its palette drives the LEDs. */
