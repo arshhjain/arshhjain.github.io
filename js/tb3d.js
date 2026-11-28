@@ -497,20 +497,24 @@ import * as THREE from "three";
     const sm = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
     const ease = (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
     const D = {
-      push: { trip: 0.1, untrip: 0.07, f: 1.5, b: 0.9, t: 0, v: 0 },
-      fly: { trip: 0.27, untrip: 0.24, f: 2.6, b: 1.2, t: 0, v: 0 },
-      scan: { trip: 0.44, untrip: 0.41, f: 3.4, b: 0.9, t: 0, v: 0, after: "fly" },
-      farm: { trip: 0.61, untrip: 0.58, f: 2.4, b: 1.6, t: 0, v: 0 },
-      end: { trip: 0.8, untrip: 0.77, f: 1.2, b: 0.8, t: 0, v: 0 }
+      push: { trip: 0.12, untrip: 0.09, f: 1.5, b: 0.9, t: 0, v: 0 },
+      fly: { trip: 0.34, untrip: 0.31, f: 2.6, b: 1.2, t: 0, v: 0 },
+      /* the scan has no scroll stop of its own: it follows the flight half a second after the drone is on station */
+      scan: { auto: true, f: 3.4, b: 0.9, t: 0, v: 0, after: "fly" },
+      farm: { trip: 0.56, untrip: 0.53, f: 2.4, b: 1.6, t: 0, v: 0 },
+      end: { trip: 0.78, untrip: 0.75, f: 1.2, b: 0.8, t: 0, v: 0 }
     };
     const DL = Object.values(D);
-    let detInit = false;
+    let detInit = false, landed = 0;
     function stepDetents(p, dt) {
       let locked = false;
       for (const d of DL) {
         const was = d.t;
-        if (p >= d.trip) d.t = 1; else if (p < d.untrip) d.t = 0;
-        if (detInit && d.t !== was && !locked && window.__detentLock) {
+        if (d.auto) {
+          landed = D.fly.t && D.fly.v >= 0.999 ? landed + dt : 0;
+          d.t = D.fly.t && (landed >= 0.5 || d.t) ? 1 : 0;
+        } else if (p >= d.trip) d.t = 1; else if (p < d.untrip) d.t = 0;
+        if (detInit && d.t !== was && !locked && !d.auto && window.__detentLock) {
           window.__detentLock(section, d.t ? d.trip + 0.005 : d.untrip - 0.005, (d.t ? d.f : d.b) * 1000);
           locked = true;
         }
@@ -662,8 +666,10 @@ import * as THREE from "three";
       }
 
       /* captions latch: one per beat */
-      const cap = D.end.t ? -1 : D.farm.t ? 4 : D.scan.t ? 3 : D.fly.t ? 2 : D.push.t ? 1 : 0;
+      const cap = D.end.t ? -1 : D.farm.t ? 3 : D.fly.t ? 2 : D.push.t ? 1 : 0;
       caps.forEach((el, i) => el.classList.toggle("on", i === cap));
+      /* "What is it, and how bad?" joins under "So a drone goes and looks." as the scan starts */
+      caps[2].classList.toggle("more", D.scan.t === 1);
       if (!!D.end.t !== endState) { endState = !!D.end.t; section.classList.toggle("tb-end", endState); }
 
       /* camera: establishing → push-in → chase along the flight → scan push-in → farm pull-back → back to the cabin */

@@ -872,6 +872,8 @@ html.hero-locked, html.hero-locked body { overflow: hidden; }
 }
 .tb-cap small { display: block; margin-bottom: 10px; font: 600 11px var(--mono); letter-spacing: .14em; color: var(--accent); }
 .tb-cap.on { opacity: 1; transform: none; }
+.tb-cap-more { display: block; margin-top: .32em; opacity: 0; transform: translateY(12px); transition: opacity .45s, transform .6s cubic-bezier(.2, .7, .2, 1); }
+.tb-cap.more .tb-cap-more { opacity: 1; transform: none; }
 
 /* SCADA panel, pinned beside the operator's monitor */
 .tb-scada {
