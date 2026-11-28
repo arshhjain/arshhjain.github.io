@@ -1023,3 +1023,12 @@ html.hero-locked, html.hero-locked body { overflow: hidden; }
 }
 .geek-btn:hover { color: var(--paper); transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--accent); }
 .ll-copy, .tb-copy { z-index: 3; }
+
+/* LectureLens: the campus now sits in a wider world, so the captions and the end copy get the same paper fog as DWG 002 */
+.ll-fog { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 46% 44% at 0 0, var(--paper) 0, color-mix(in srgb, var(--paper) 88%, transparent) 45%, color-mix(in srgb, var(--paper) 0%, transparent) 100%); }
+.ll-stage::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .6s;
+  background: linear-gradient(90deg, var(--paper) 0, var(--paper) 42%, color-mix(in srgb, var(--paper) 0%, transparent) 58%);
+}
+.ll-pin.ll-end .ll-stage::after { opacity: 1; }
+.ll-caps, .ll-hud { z-index: 2; }

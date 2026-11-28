@@ -134,6 +134,114 @@ import * as THREE from "three";
       }
     });
 
+    /* ---------- the world around the campus ----------
+       The campus sheet sits in a town: a ring road and roads running off the edge of the frame, a sports ground, a
+       neighbourhood of houses, a hill drawn as contours, a river with a bridge, parking and trees. Everything outside
+       the sheet is a shade paler, and anything with height extrudes with the morph like the campus blocks. */
+    {
+      const OUTER = new THREE.Color("#e4e1d6"), PALE = new THREE.Color("#dfdbcf");
+      const outer = new THREE.Mesh(new THREE.PlaneGeometry(260, 260), new THREE.MeshBasicMaterial({ color: OUTER }));
+      outer.rotation.x = -Math.PI / 2; outer.position.y = -0.02; scene.add(outer);
+      const og = new THREE.GridHelper(260, 65, INK, INK);
+      og.material.transparent = true; og.material.opacity = 0.05; og.position.y = -0.01; scene.add(og);
+      const faint = new THREE.LineBasicMaterial({ color: INK, transparent: true, opacity: 0.35 });
+      const paleMat = new THREE.MeshLambertMaterial({ color: PALE });
+      const roadMat = new THREE.MeshBasicMaterial({ color: new THREE.Color("#d9d5c8") });
+      let s = 11;
+      const r = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+
+      const flat = (x1, z1, x2, z2, w) => {
+        const len = Math.hypot(x2 - x1, z2 - z1);
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(w, len), roadMat);
+        m.rotation.x = -Math.PI / 2; m.rotation.z = Math.atan2(x2 - x1, z2 - z1);
+        m.position.set((x1 + x2) / 2, 0.005, (z1 + z2) / 2); scene.add(m);
+        const nx = (-(z2 - z1) / len) * (w / 2), nz = ((x2 - x1) / len) * (w / 2);
+        scene.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(x1 + nx, 0.012, z1 + nz), new THREE.Vector3(x2 + nx, 0.012, z2 + nz),
+          new THREE.Vector3(x1 - nx, 0.012, z1 - nz), new THREE.Vector3(x2 - nx, 0.012, z2 - nz)]), faint));
+      };
+      /* ring road just outside the campus wall, and roads that leave the frame */
+      const RR = 27;
+      flat(-RR, -RR, RR, -RR, 2.2); flat(-RR, RR, RR, RR, 2.2); flat(-RR, -RR, -RR, RR, 2.2); flat(RR, -RR, RR, RR, 2.2);
+      flat(0, RR, 0, 130, 2.6); flat(RR, -4, 130, -4, 2.6); flat(-RR, 10, -130, 10, 2.2); flat(-8, -RR, -8, -130, 2.2);
+      /* gate posts where the main road meets the wall */
+      [-1.8, 1.8].forEach((x) => block(x, G / 2 - 0.3, 0.5, 1.4, 0.5, null, { delay: 0.3 }));
+
+      const crown = new THREE.ConeGeometry(0.75, 2.2, 7); crown.translate(0, 1.6, 0);
+      const crownE = new THREE.EdgesGeometry(crown, 30);
+      const trunk = new THREE.CylinderGeometry(0.08, 0.1, 0.6, 6); trunk.translate(0, 0.3, 0);
+      const tree = (x, z, sc = 1) => {
+        const g = new THREE.Group();
+        g.add(new THREE.Mesh(crown, paleMat), new THREE.LineSegments(crownE, lineMat), new THREE.Mesh(trunk, inkMat));
+        g.position.set(x, 0, z); g.scale.set(sc, 0.02, sc); scene.add(g);
+        extruders.push({ g, delay: 0.45 + r() * 0.35 });
+      };
+      /* avenues along the roads, a row inside the campus wall, groves out in the corners */
+      for (let z = RR + 4; z < 70; z += 3.2) { tree(-2.6, z, 0.9); tree(2.6, z, 0.9); }
+      for (let x = RR + 4; x < 70; x += 3.4) { tree(x, -6.6, 0.9); }
+      for (let x = -20; x <= 20; x += 4) { if (Math.abs(x - 1) > 6) tree(x, -21.5, 0.8); if (Math.abs(x) > 4) tree(x, 21.5, 0.8); }
+      const grove = (cx, cz, n, sp) => { for (let i = 0; i < n; i++) { const a = r() * 6.283, d = Math.sqrt(r()) * sp; tree(cx + Math.cos(a) * d, cz + Math.sin(a) * d, 0.7 + r() * 0.6); } };
+      [[-40, -40, 14, 7], [44, 36, 10, 6], [-46, 40, 12, 7], [40, -42, 9, 6], [-30, 34, 6, 4]].forEach((g) => grove(...g));
+
+      /* sports ground west of the ring road: a running track drawn in plan, a stand that extrudes */
+      const track = (cx, cz, a, b, rad) => {
+        const pts = [];
+        for (let i = 0; i <= 64; i++) {
+          const t = i / 64; let x, z;
+          if (t < 0.25) { x = -a + (t / 0.25) * 2 * a; z = -rad; }
+          else if (t < 0.5) { const q = Math.PI * ((t - 0.25) / 0.25) - Math.PI / 2; x = a + Math.cos(q) * rad; z = Math.sin(q) * rad; }
+          else if (t < 0.75) { x = a - ((t - 0.5) / 0.25) * 2 * a; z = rad; }
+          else { const q = Math.PI * ((t - 0.75) / 0.25) + Math.PI / 2; x = -a + Math.cos(q) * rad; z = Math.sin(q) * rad; }
+          pts.push(new THREE.Vector3(cx + x, 0.015, cz + z));
+        }
+        scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), faint));
+      };
+      track(-44, -12, 7, 0, 7.5); track(-44, -12, 7, 0, 6.2); track(-44, -12, 7, 0, 4.9);
+      const pitch = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(12, 0.001, 8)), faint);
+      pitch.position.set(-44, 0.015, -12); scene.add(pitch);
+      block(-44, -22, 12, 1.4, 2.2, null, { delay: 0.4, mat: paleMat });
+
+      /* a neighbourhood east of the campus */
+      for (let i = 0; i < 5; i++) for (let j = 0; j < 4; j++) {
+        if (r() < 0.18) continue;
+        const x = 36 + i * 5.2 + (j % 2) * 1.4, z = -26 + j * 6 + (j > 1 ? 6 : 0);
+        block(x, z, 2.6 + r(), 1.2 + r() * 2.2, 2.6, null, { delay: 0.35 + r() * 0.3, mat: paleMat });
+      }
+      /* parking by the gate */
+      const lot = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(14, 0.001, 6)), faint);
+      lot.position.set(-11, 0.015, 33); scene.add(lot);
+      for (let i = 0; i < 7; i++) {
+        scene.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-17.5 + i * 2, 0.015, 30), new THREE.Vector3(-17.5 + i * 2, 0.015, 32.5)]), faint));
+        if (r() < 0.65) block(-16.5 + i * 2, 31.3, 1.1, 0.7, 2, null, { delay: 0.5, mat: fillMat2 });
+      }
+
+      /* a hill to the north-west, drawn as contours on the plan; it rises with the morph */
+      const hill = new THREE.Group();
+      const hm = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 12, 0, Math.PI * 2, 0, Math.PI / 2), paleMat);
+      hm.scale.set(22, 6, 15); hill.add(hm);
+      for (let k = 1; k <= 5; k++) {
+        const y = (6 * k) / 6.2, f = Math.sqrt(1 - (y / 6) ** 2), pts = [];
+        for (let i = 0; i < 64; i++) { const a = (i / 64) * 6.283; pts.push(new THREE.Vector3(Math.cos(a) * 22 * f, y + 0.03, Math.sin(a) * 15 * f)); }
+        hill.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), faint));
+      }
+      hill.position.set(-58, 0, -50); hill.scale.y = 0.02; scene.add(hill);
+      extruders.push({ g: hill, delay: 0.25 });
+
+      /* a river along the south, with a bridge where the main road crosses */
+      const bank = (off) => {
+        const pts = [];
+        for (let x = -130; x <= 130; x += 4) pts.push(new THREE.Vector3(x, 0.014, 50 + Math.sin(x * 0.045) * 6 + off));
+        return pts;
+      };
+      const a = bank(-2.4), b = bank(2.4), riverGeo = new THREE.BufferGeometry(), pos = [];
+      for (let i = 0; i < a.length - 1; i++) pos.push(...a[i].toArray(), ...b[i].toArray(), ...a[i + 1].toArray(), ...a[i + 1].toArray(), ...b[i].toArray(), ...b[i + 1].toArray());
+      riverGeo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+      scene.add(new THREE.Mesh(riverGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color("#d7dad3"), side: THREE.DoubleSide })));
+      scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(a), faint), new THREE.Line(new THREE.BufferGeometry().setFromPoints(b), faint));
+      const rz = 50;
+      block(-1.8, rz, 0.3, 0.6, 7, null, { delay: 0.5 }); block(1.8, rz, 0.3, 0.6, 7, null, { delay: 0.5 });
+    }
+
     /* ---------- packets ---------- */
     /* packet colour says where it is in the story: ink = asking, blue = cache hit, orange = paid LLM call */
     const CACHE = new THREE.Color("#2f6bff");
