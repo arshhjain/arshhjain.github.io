@@ -131,6 +131,88 @@ import * as THREE from "three";
       return { ring, local: new THREE.Vector3(0.12, 7.5, 0.13) };
     })();
 
+    /* ---------- landscape: hills drawn as contours, tree clusters, access roads, substation and a power line ---------- */
+    const GREEN = new THREE.Color("#d9d5c6");
+    const hillFill = new THREE.MeshLambertMaterial({ color: GREEN });
+    function hill(x, z, rx, rz, h) {
+      const geo = new THREE.SphereGeometry(1, 40, 14, 0, Math.PI * 2, 0, Math.PI / 2);
+      const m = new THREE.Mesh(geo, hillFill); m.scale.set(rx, h, rz); m.position.set(x, 0, z); scene.add(m);
+      for (let k = 1; k <= 5; k++) {
+        const y = (h * k) / 6, f = Math.sqrt(1 - (y / h) ** 2), pts = [];
+        for (let i = 0; i < 64; i++) { const a = (i / 64) * Math.PI * 2; pts.push(new THREE.Vector3(x + Math.cos(a) * rx * f, y + 0.05, z + Math.sin(a) * rz * f)); }
+        const l = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: INK, transparent: true, opacity: 0.35, fog: true }));
+        scene.add(l);
+      }
+    }
+    [[-150, -150, 70, 50, 22], [-40, -250, 110, 46, 30], [110, -255, 120, 50, 26], [235, -150, 70, 60, 20], [-120, -10, 40, 34, 9], [200, 10, 44, 30, 8]]
+      .forEach((h) => hill(...h));
+
+    const roadMat = new THREE.MeshBasicMaterial({ color: new THREE.Color("#ddd9cb") });
+    const roadEdge = new THREE.LineBasicMaterial({ color: INK, transparent: true, opacity: 0.28, fog: true });
+    function road(x1, z1, x2, z2, w = 2.4) {
+      const len = Math.hypot(x2 - x1, z2 - z1), g = new THREE.PlaneGeometry(w, len);
+      const m = new THREE.Mesh(g, roadMat); m.rotation.x = -Math.PI / 2; m.rotation.z = Math.atan2(x2 - x1, z2 - z1);
+      m.position.set((x1 + x2) / 2, 0.02, (z1 + z2) / 2); scene.add(m);
+      const nx = (-(z2 - z1) / len) * (w / 2), nz = ((x2 - x1) / len) * (w / 2);
+      const e = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(x1 + nx, 0.03, z1 + nz), new THREE.Vector3(x2 + nx, 0.03, z2 + nz),
+        new THREE.Vector3(x1 - nx, 0.03, z1 - nz), new THREE.Vector3(x2 - nx, 0.03, z2 - nz)]), roadEdge);
+      scene.add(e);
+    }
+    /* a trunk road from the cabin up the middle of the farm, a row road behind each row, a short spur to every tower */
+    road(4, 8, 4, -196, 3);
+    for (let r = 0; r < 4; r++) { const z = -62 - r * 40 - 7; road(-60, z, 150, z); }
+    turbines.forEach((t) => road(t.x, t.z, t.x, t.z - 7, 1.4));
+
+    const treeFill = new THREE.MeshLambertMaterial({ color: new THREE.Color("#cfcab8") });
+    const crownGeo = new THREE.ConeGeometry(1.1, 3.2, 7); crownGeo.translate(0, 2.4, 0);
+    const trunkGeo = new THREE.CylinderGeometry(0.12, 0.16, 0.9, 6); trunkGeo.translate(0, 0.45, 0);
+    const crownEdges = new THREE.EdgesGeometry(crownGeo, 30);
+    let ts = 41;
+    const trnd = () => { ts = (ts * 16807) % 2147483647; return ts / 2147483647; };
+    function grove(cx, cz, n, spread) {
+      for (let i = 0; i < n; i++) {
+        const a = trnd() * Math.PI * 2, r = Math.sqrt(trnd()) * spread, s = 0.7 + trnd() * 0.7;
+        const g = new THREE.Group();
+        g.add(new THREE.Mesh(crownGeo, treeFill), new THREE.LineSegments(crownEdges, lineMat), new THREE.Mesh(trunkGeo, inkMat));
+        g.position.set(cx + Math.cos(a) * r, 0, cz + Math.sin(a) * r); g.scale.setScalar(s);
+        scene.add(g);
+      }
+    }
+    [[-26, -14, 7, 5], [24, 14, 6, 5], [-30, -40, 9, 9], [70, -42, 7, 7], [-70, -110, 10, 10], [130, -118, 9, 9], [40, -205, 12, 12], [160, -40, 8, 8]]
+      .forEach((g) => grove(...g));
+
+    /* substation by the trunk road, and a line of pylons heading off the site */
+    const SUB = new THREE.Vector3(30, 0, -14);
+    const subPad = new THREE.Mesh(new THREE.PlaneGeometry(14, 10), new THREE.MeshBasicMaterial({ color: new THREE.Color("#ddd9cb") }));
+    subPad.rotation.x = -Math.PI / 2; subPad.position.set(SUB.x, 0.025, SUB.z); scene.add(subPad);
+    const fence = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(14, 1.6, 10)), new THREE.LineBasicMaterial({ color: INK, transparent: true, opacity: 0.55 }));
+    fence.position.set(SUB.x, 0.8, SUB.z); scene.add(fence);
+    [[-3.5, -1.5], [0, -1.5], [3.5, -1.5]].forEach(([dx, dz]) => {
+      const tr = solid(new THREE.BoxGeometry(2.2, 2.4, 2.2)); tr.position.set(SUB.x + dx, 1.2, SUB.z + dz); scene.add(tr);
+    });
+    road(SUB.x - 7, SUB.z + 5, 4, SUB.z + 5, 2);
+    const pylonGeo = new THREE.CylinderGeometry(0.15, 0.55, 14, 4); pylonGeo.translate(0, 7, 0);
+    const armGeo = new THREE.BoxGeometry(5, 0.2, 0.2);
+    const pylons = [];
+    for (let i = 0; i < 6; i++) {
+      const p = new THREE.Vector3(SUB.x + 14 + i * 34, 0, SUB.z - 6 - i * 4);
+      const g = new THREE.Group(); g.position.copy(p);
+      g.add(new THREE.LineSegments(new THREE.EdgesGeometry(pylonGeo), lineMat));
+      const arm = new THREE.Mesh(armGeo, inkMat); arm.position.y = 12.5; g.add(arm);
+      scene.add(g); pylons.push(p);
+    }
+    const wireMat = new THREE.LineBasicMaterial({ color: INK, transparent: true, opacity: 0.5, fog: true });
+    for (const side of [-2.2, 2.2]) {
+      const pts = [new THREE.Vector3(SUB.x + 4, 2.4, SUB.z - 1.5)];
+      pylons.forEach((p, i) => {
+        const top = new THREE.Vector3(p.x + side * 0.2, 12.4, p.z + side);
+        if (i) { const prev = pts[pts.length - 1]; for (let k = 1; k < 8; k++) { const u = k / 8; pts.push(prev.clone().lerp(top, u).add(new THREE.Vector3(0, -Math.sin(Math.PI * u) * 1.4, 0))); } }
+        pts.push(top);
+      });
+      scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), wireMat));
+    }
+
     /* ---------- site cabin, operator, monitor ---------- */
     const CAB = new THREE.Vector3(10, 0, 4);
     const cabin = solid(new THREE.BoxGeometry(6, 2.8, 3.4)); cabin.position.set(CAB.x, 1.4, CAB.z); scene.add(cabin);
@@ -148,6 +230,7 @@ import * as THREE from "three";
     const screen = solid(new THREE.BoxGeometry(0.9, 0.58, 0.08)); screen.position.set(MON.x, 1.35, MON.z); screen.rotation.y = -0.5; scene.add(screen);
     const glow = new THREE.Mesh(new THREE.PlaneGeometry(0.78, 0.46), new THREE.MeshBasicMaterial({ color: INK })); glow.position.set(0, 0, 0.045); screen.add(glow);
     const MON_TOP = new THREE.Vector3(MON.x, 1.7, MON.z);
+    const MON_BASE = new THREE.Vector3(MON.x, 1.06, MON.z);
 
     /* the operator: a jointed figure with three poses. Units in metres, seated on the step */
     const man = (() => {
@@ -181,7 +264,11 @@ import * as THREE from "three";
       /* poses: [hipsY, torsoX, neckX, L.sh(x,z), L.el x, R.sh(x,z), R.el x, legs hp x, kn x] */
       const SULK = { hy: 0.86, tx: 0.62, nx: 0.55, ls: [-0.95, 0.1], le: -1.9, rs: [-0.55, -0.25], re: -0.9, hp: -1.45, kn: 1.5 };
       const WATCH = { hy: 0.86, tx: 0.12, nx: -0.28, ls: [-0.55, 0.12], le: -0.6, rs: [-0.35, -0.15], re: -0.5, hp: -1.45, kn: 1.5 };
-      const STAND = { hy: 0.9, tx: 0.0, nx: -0.12, ls: [0.0, 0.08], le: -0.15, rs: [-2.6, -0.2], re: -0.35, hp: 0, kn: 0 };
+      const STAND = { hy: 0.9, tx: 0.0, nx: -0.12, ls: [0.0, 0.08], le: -0.15, rs: [-0.05, -0.08], re: -0.15, hp: 0, kn: 0 };
+      /* the cheer: both arms straight up, head back */
+      const CHEER = { hy: 0.9, tx: -0.08, nx: -0.35, ls: [-2.95, 0.32], le: -0.1, rs: [-2.95, -0.32], re: -0.1, hp: 0, kn: 0 };
+      /* after the cheer: hands on hips */
+      const HIPS = { hy: 0.9, tx: 0.0, nx: -0.1, ls: [0.25, 0.95], le: -2.1, rs: [0.25, -0.95], re: -2.1, hp: 0, kn: 0 };
       const lerp = (a, b, t) => a + (b - a) * t;
       function pose(a, b, t, tap) {
         const P = (k) => lerp(a[k], b[k], t);
@@ -195,7 +282,7 @@ import * as THREE from "three";
         J.R.el.rotation.x = P("re") + tap * 0.5;
         for (const L of [J.LL, J.RL]) { L.hp.rotation.x = P("hp"); L.kn.rotation.x = P("kn"); }
       }
-      return { g: m, SULK, WATCH, STAND, pose };
+      return { g: m, SULK, WATCH, STAND, CHEER, HIPS, pose };
     })();
 
     /* ---------- drone ---------- */
@@ -402,16 +489,19 @@ import * as THREE from "three";
       }
     }
 
-    /* ---------- detents ---------- */
+    /* ---------- detents ----------
+       Every beat is a detent: crossing `trip` plays the beat forward as one timed animation, dropping below `untrip`
+       plays it back. They sit evenly ~0.17 apart over a 420vh pin, so one deliberate gesture moves one beat; the page
+       lock in main.js only holds long enough to swallow the flick, and the animation carries on after it lets go. */
     const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
     const sm = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
     const ease = (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
-    /* each detent: crossing `trip` plays its animation forward as one timed move, dropping below `untrip` plays it back */
     const D = {
-      flag: { trip: 0.08, untrip: 0.05, f: 1.4, b: 0.8, t: 0, v: 0 },
-      scan: { trip: 0.4, untrip: 0.36, f: 3.4, b: 0.9, t: 0, v: 0 },
-      farm: { trip: 0.6, untrip: 0.56, f: 2.4, b: 1.6, t: 0, v: 0 },
-      end: { trip: 0.86, untrip: 0.82, f: 1.0, b: 1.0, t: 0, v: 0 }
+      push: { trip: 0.1, untrip: 0.07, f: 1.5, b: 0.9, t: 0, v: 0 },
+      fly: { trip: 0.27, untrip: 0.24, f: 2.6, b: 1.2, t: 0, v: 0 },
+      scan: { trip: 0.44, untrip: 0.41, f: 3.4, b: 0.9, t: 0, v: 0, after: "fly" },
+      farm: { trip: 0.61, untrip: 0.58, f: 2.4, b: 1.6, t: 0, v: 0 },
+      end: { trip: 0.8, untrip: 0.77, f: 1.2, b: 0.8, t: 0, v: 0 }
     };
     const DL = Object.values(D);
     let detInit = false;
@@ -425,7 +515,9 @@ import * as THREE from "three";
           locked = true;
         }
         if (!detInit || reduceMotion) { d.v = d.t; continue; }
-        if (d.v < d.t) d.v = Math.min(1, d.v + dt / d.f); else if (d.v > d.t) d.v = Math.max(0, d.v - dt / d.b);
+        /* a beat that follows another waits for it to land before it starts */
+        const ready = !d.after || D[d.after].v >= 0.999;
+        if (d.v < d.t && ready) d.v = Math.min(1, d.v + dt / d.f); else if (d.v > d.t) d.v = Math.max(0, d.v - dt / d.b);
       }
       detInit = true;
     }
@@ -433,67 +525,76 @@ import * as THREE from "three";
     /* ---------- camera shots ---------- */
     T04.rotor.rotation.z = PARK; scene.updateMatrixWorld(true);
     const CRACK_W = crackB.localToWorld(crack.local.clone());
-    const S0 = { pos: new THREE.Vector3(CAB.x - 4.2, 2.0, CAB.z + 12.5), look: new THREE.Vector3(CAB.x + 2.5, 7, CAB.z - 60), fov: 40 };
-    const at = (x, y, z) => CRACK_W.clone().add(new THREE.Vector3(x, y, z));
+    const V = (x, y, z) => new THREE.Vector3(x, y, z);
+    /* establishing: low and close, the cabin and the operator fill the right half, the farm on the horizon */
+    const S0 = { pos: V(CAB.x - 3.4, 1.6, CAB.z + 10.8), look: V(CAB.x + 1.8, 3.2, CAB.z - 30), fov: 40 };
+    /* push-in: operator and his screen, right of frame; the SCADA panel opens on the left */
+    const SP = { pos: V(CAB.x - 2.2, 1.45, CAB.z + 7.8), look: V(CAB.x + 1.27, 1.35, CAB.z - 11.9), fov: 38 };
+    const at = (x, y, z) => CRACK_W.clone().add(V(x, y, z));
     const HOV = at(3.4, 1.9, 6.2);
     const S1 = { pos: at(10.5, -0.6, 18), look: at(-0.6, 1.4, 0), fov: 36 };
     const S1b = { pos: at(8.2, -0.2, 14), look: at(-0.4, 1.2, 0), fov: 34 };
-    const S2 = { pos: new THREE.Vector3(CAB.x - 18, 92, CAB.z + 46), look: new THREE.Vector3(CAB.x + 10, 0, CAB.z - 92), fov: 44 };
-    /* the end shot comes back to the cabin: the opening framing from higher up, operator on his feet, the farm behind him */
-    const S3 = { pos: new THREE.Vector3(CAB.x - 9, 7.5, CAB.z + 24), look: new THREE.Vector3(CAB.x + 9, 9, CAB.z - 70), fov: 42 };
-    const roofPos = new THREE.Vector3(CAB.x + 1.4, 3.35, CAB.z);
+    /* farm: closer and lower than before, so the farm fills the frame left of the dispatch board */
+    const S2 = { pos: V(CAB.x - 30, 58, CAB.z + 34), look: V(CAB.x + 8, 16, CAB.z - 96), fov: 44 };
+    /* end: back over the cabin, operator on his feet, the farm behind him */
+    const S3 = { pos: V(CAB.x - 8, 5.5, CAB.z + 19), look: V(CAB.x + 17, 7.5, CAB.z - 70), fov: 42 };
+    const roofPos = V(CAB.x + 1.4, 3.35, CAB.z);
     const path = new THREE.CatmullRomCurve3([
-      roofPos.clone().add(new THREE.Vector3(0, 2.6, 0)),
-      new THREE.Vector3(CAB.x + 2, 11, CAB.z - 8),
-      new THREE.Vector3(T04.x + 2, 24, T04.z + 40),
+      roofPos.clone().add(V(0, 2.6, 0)),
+      V(CAB.x + 2, 11, CAB.z - 8),
+      V(T04.x + 2, 24, T04.z + 40),
       at(7, 3, 16),
       HOV.clone()
     ], false, "centripetal");
     const camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), tmpP = new THREE.Vector3(), tmpL = new THREE.Vector3();
-    const chase = new THREE.Vector3(5.5, 2.2, 9);
-    let jp = 0;
+    const chase = V(5.5, 2.2, 9);
+
+    /* leader line from the SCADA panel to the operator's screen */
+    const leader = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    leader.setAttribute("class", "tb-leader");
+    leader.innerHTML = '<path d="M0 0"/><circle r="4"/>';
+    labelsEl.appendChild(leader);
+    const leaderPath = leader.querySelector("path"), leaderDot = leader.querySelector("circle");
 
     function resize() {
       const r = stage.getBoundingClientRect();
       W = Math.max(1, r.width); H = Math.max(1, r.height);
       renderer.setSize(W, H, false);
       camera.aspect = W / H;
+      leader.setAttribute("viewBox", `0 0 ${W} ${H}`);
     }
     window.addEventListener("resize", resize);
     resize();
     resetSim();
 
-    let simLive = false, endState = false;
+    let simLive = false, endState = false, farmState = false, cheerT = -1;
     function frame(now, dt) {
       const p = parseFloat(section.style.getPropertyValue("--p")) || 0;
       stepDetents(p, dt);
-      const a = ease(D.flag.v), sB = D.scan.v, c = ease(D.farm.v), e = ease(D.end.v);
-      /* the journey is a journey: scrubbed, with a little smoothing */
-      const jt = sm(0.12, 0.36, p);
-      jp = reduceMotion ? jt : jp + (jt - jp) * Math.min(1, dt * 5);
+      const a = ease(D.push.v), fp = ease(D.fly.v), sB = D.scan.v, c = ease(D.farm.v), e = ease(D.end.v);
 
       /* turbines turn; flagged and parked ones idle down */
       turbines.forEach((t) => {
-        const target = t === T04 ? 0 : t.state === "ok" || t.state === "crew" ? (t.state === "crew" ? 0 : t.speed) : 0.08;
+        const target = t === T04 ? 0 : t.state === "ok" ? t.speed : t.state === "crew" ? 0 : 0.08;
         t.cur = (t.cur ?? t.speed) + (target - (t.cur ?? t.speed)) * Math.min(1, dt * 0.8);
         if (!reduceMotion) t.angle += t.cur * dt;
         t.rotor.rotation.z = t === T04 ? PARK : t.angle;
       });
 
-      /* drone */
-      const lift = sm(0.2, 1, a);
-      if (jp <= 0) dronePos.copy(roofPos).add(tmpP.set(0, lift * 2.6, 0));
-      else dronePos.copy(path.getPoint(ease(jp)));
-      if (!reduceMotion) dronePos.y += Math.sin(now * 0.0021) * 0.12 * Math.min(1, lift + jp);
+      /* drone: lifts off the roof with the push-in, then the flight is one timed move to T-04 */
+      const lift = sm(0.35, 1, a);
+      if (D.fly.v <= 0) dronePos.copy(roofPos).add(tmpP.set(0, lift * 2.6, 0));
+      else dronePos.copy(path.getPoint(fp));
+      if (!reduceMotion) dronePos.y += Math.sin(now * 0.0021) * 0.12 * Math.max(lift, D.fly.v > 0 ? 1 : 0);
       if (c > 0 && simLive) dronePos.lerp(simPos, c);
       drone.g.position.copy(dronePos);
-      const ahead = jp > 0 && jp < 1 ? path.getPoint(Math.min(1, ease(jp) + 0.02)) : null;
+      const ahead = D.fly.v > 0 && D.fly.v < 1 ? path.getPoint(Math.min(1, fp + 0.02)) : null;
       if (c > 0.5 && sim.mode === "fly") drone.g.lookAt(tmpL.copy(sim.curve.getPoint(1)).setY(dronePos.y));
       else if (ahead && ahead.distanceToSquared(dronePos) > 1e-4) drone.g.lookAt(ahead.setY(dronePos.y));
       else drone.g.lookAt(tmpL.copy(CRACK_W).setY(dronePos.y));
-      if (!reduceMotion) drone.props.forEach((pr, i) => { pr.rotation.z += dt * (i % 2 ? 40 : -40) * (lift > 0.02 ? 1 : 0); });
+      if (!reduceMotion) drone.props.forEach((pr, i) => { pr.rotation.z += dt * (i % 2 ? 40 : -40) * (lift > 0.02 || D.fly.v > 0 ? 1 : 0); });
 
-      /* scan sequence */
+      /* scan sequence (only starts once the drone is on station) */
       const sweep = sm(0.03, 0.42, sB);
       const scanR0 = 1.2 + sweep * (BLADE - 1.6);
       const toCrack = sm(0.42, 0.5, sB);
@@ -520,66 +621,78 @@ import * as THREE from "three";
       if (D.farm.t === 0 && c < 0.02 && simLive) { simLive = false; resetSim(); }
       if (simLive && !reduceMotion) stepSim(dt);
       turbines.forEach((t) => {
-        const showFlag = (c > 0.5 && (t.state === "flagged" || t.state === "visiting")) || (c <= 0.5 && a > 0.5 && FIRST_FLAGS.includes(t.name) && (t === T04 ? sB < 0.3 : jp < 0.6));
-        setLabel(t, showFlag);
+        const early = c <= 0.5 && a > 0.5 && FIRST_FLAGS.includes(t.name) && (t === T04 ? sB < 0.3 : fp < 0.6);
+        setLabel(t, (c > 0.5 && e < 0.4 && (t.state === "flagged" || t.state === "visiting")) || early);
         if (t.label) place(t.label, tipOf(t));
       });
       hudEl.style.opacity = sm(0.55, 1, c).toFixed(3);
+      if (!!D.farm.t !== farmState) { farmState = !!D.farm.t; section.classList.toggle("tb-farm", farmState); }
 
-      /* operator */
-      const tap = Math.sin(Math.PI * clamp(D.flag.v * 1.6 - 0.1, 0, 1)) * (D.flag.t ? 1 : 0);
-      if (e > 0) man.pose(man.WATCH, man.STAND, e, 0);
+      /* operator: sulk → looks up and taps (push) → on his feet and cheering (end) */
+      const tap = Math.sin(Math.PI * clamp(D.push.v * 1.6 - 0.1, 0, 1)) * (D.push.t ? 1 : 0);
+      if (D.end.t && cheerT < 0) cheerT = 0;
+      if (!D.end.t && e < 0.02) cheerT = -1;
+      let hop = 0;
+      if (cheerT >= 0 && e > 0.5) {
+        cheerT += dt;
+        const CH = 1.3;
+        if (cheerT < CH && !reduceMotion) {
+          hop = Math.abs(Math.sin((Math.PI * cheerT) / (CH / 2))) * 0.42;
+          man.pose(man.STAND, man.CHEER, sm(0, 0.15, cheerT), 0);
+        } else man.pose(man.CHEER, man.HIPS, sm(CH, CH + 0.45, cheerT), 0);
+      } else if (e > 0) man.pose(man.WATCH, man.STAND, e * 2, 0);
       else man.pose(man.SULK, man.WATCH, a, tap);
-      scadaEl.classList.toggle("flagged", D.flag.v > 0.45);
-      scadaEl.style.opacity = (1 - sm(0.05, 0.25, jp)).toFixed(3);
-      /* the panel sits right of the monitor, or flips left when the stage is too narrow for it */
-      const ms = project(MON_TOP);
-      if (ms.x + 24 + scadaEl.offsetWidth + 12 < W) place(scadaEl, MON_TOP, 24, -18, "0%", "-100%");
-      else place(scadaEl, MON_TOP, -24, -18, "-100%", "-100%");
-      annot.style.opacity = e > 0.6 ? "1" : "0";
-      place(annot, tmpP.set(man.g.position.x, 2.4, man.g.position.z), 0, -6, "-30%", "-100%");
+      man.g.position.y = hop;
+      annot.classList.toggle("on", cheerT > 0.1 && e > 0.5);
+      place(annot, tmpP.set(man.g.position.x, 2.25 + hop, man.g.position.z), 0, -2, "-50%", "-100%");
+
+      /* SCADA panel: opens with the push-in on the left of the hut, leader line to his screen, gone once the drone leaves */
+      const scadaOn = sm(0.15, 0.6, D.push.v) * (1 - sm(0, 0.25, D.fly.v));
+      scadaEl.style.opacity = scadaOn.toFixed(3);
+      scadaEl.classList.toggle("flagged", D.push.v > 0.55);
+      leader.style.opacity = scadaOn.toFixed(3);
+      if (scadaOn > 0.01) {
+        /* routed low and up the monitor's post like a cable, so it never crosses the operator */
+        const mb = project(MON_BASE), r = scadaEl.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+        const x0 = r.right - sr.left, y0 = Math.max(r.bottom - sr.top - 26, mb.y + 40);
+        leaderPath.setAttribute("d", `M${x0.toFixed(1)} ${y0.toFixed(1)} H${mb.x.toFixed(1)} V${mb.y.toFixed(1)}`);
+        leaderDot.setAttribute("cx", mb.x.toFixed(1)); leaderDot.setAttribute("cy", mb.y.toFixed(1));
+      }
 
       /* captions latch: one per beat */
-      let cap = -1;
-      if (D.end.t) cap = -1;
-      else if (D.farm.t) cap = 4;
-      else if (D.scan.t) cap = 3;
-      else if (p >= 0.2) cap = 2;
-      else if (D.flag.t) cap = 1;
-      else cap = 0;
+      const cap = D.end.t ? -1 : D.farm.t ? 4 : D.scan.t ? 3 : D.fly.t ? 2 : D.push.t ? 1 : 0;
       caps.forEach((el, i) => el.classList.toggle("on", i === cap));
-      if (D.end.t !== +endState) { endState = !!D.end.t; section.classList.toggle("tb-end", endState); }
+      if (!!D.end.t !== endState) { endState = !!D.end.t; section.classList.toggle("tb-end", endState); }
 
-      /* camera: establishing → chase along the journey → scan push-in → farm pull-back → slide aside for the copy */
-      camPos.copy(S0.pos); camLook.copy(S0.look);
-      let fov = S0.fov;
-      if (jp > 0) {
-        const u = ease(jp);
+      /* camera: establishing → push-in → chase along the flight → scan push-in → farm pull-back → back to the cabin */
+      camPos.copy(S0.pos).lerp(SP.pos, a); camLook.copy(S0.look).lerp(SP.look, a);
+      let fov = S0.fov + (SP.fov - S0.fov) * a;
+      if (D.fly.v > 0) {
         const follow = tmpP.copy(dronePos).add(chase);
-        const blendIn = sm(0, 0.25, jp), blendOut = sm(0.7, 1, jp);
+        const blendIn = sm(0, 0.25, fp), blendOut = sm(0.7, 1, fp);
         camPos.lerp(follow, blendIn * (1 - blendOut)).lerp(S1.pos, blendOut);
-        tmpL.copy(dronePos).lerp(S1.look, blendOut * 0.9 + u * 0.1);
-        camLook.lerp(tmpL, sm(0, 0.2, jp));
-        fov += (S1.fov - fov) * u;
+        tmpL.copy(dronePos).lerp(S1.look, blendOut * 0.9 + fp * 0.1);
+        camLook.lerp(tmpL, sm(0, 0.2, fp));
+        fov += (S1.fov - fov) * fp;
       }
-      const sb = ease(clamp(sB / 0.5, 0, 1));
-      camPos.lerp(S1b.pos, sb * (jp >= 0.999 ? 1 : jp)); camLook.lerp(S1b.look, sb * (jp >= 0.999 ? 1 : jp)); fov += (S1b.fov - fov) * sb * jp;
+      const sb = ease(clamp(sB / 0.5, 0, 1)) * fp;
+      camPos.lerp(S1b.pos, sb); camLook.lerp(S1b.look, sb); fov += (S1b.fov - fov) * sb;
       if (c > 0) {
         /* rise first, then swing out, so the pull-back reads as the camera backing away from the turbine */
         const up = tmpP.copy(camPos).lerp(S2.pos, c); up.y += Math.sin(Math.PI * c) * 14;
         camPos.copy(up); camLook.lerp(S2.look, ease(c)); fov += (S2.fov - fov) * c;
       }
-      if (!reduceMotion && c > 0.99) { camPos.x += Math.sin(now * 0.00008) * 6 * (1 - e); }
+      if (!reduceMotion && c > 0.99) { camPos.x += Math.sin(now * 0.00008) * 5 * (1 - e); }
       if (e > 0) { camPos.lerp(S3.pos, e); camLook.lerp(S3.look, e); fov += (S3.fov - fov) * e; }
       camera.position.copy(camPos);
       camera.lookAt(camLook);
       camera.fov = fov;
-      /* keep the action clear of the captions on the left; at the end it slides right for the copy */
-      const shift = W * (0.06 + e * 0.2);
+      /* framing: clear of the captions; during the farm, left of the dispatch board; at the end, right for the copy */
+      const shift = W * (0.06 - c * (1 - e) * 0.16 + e * 0.2);
       camera.setViewOffset(W, H, -shift, 0, W, H);
       camera.updateProjectionMatrix();
       chips.forEach((q) => place(q.el, q.pos));
-      droneTag.style.opacity = (sm(0.6, 1, c)).toFixed(3);
+      droneTag.style.opacity = (sm(0.6, 1, c) * (1 - e)).toFixed(3);
       if (c > 0.6) place(droneTag, tmpP.copy(dronePos).add(tmpL.set(0, 1.2, 0)), 0, -4);
 
       renderer.render(scene, camera);

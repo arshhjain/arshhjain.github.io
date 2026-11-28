@@ -875,14 +875,17 @@ html.hero-locked, html.hero-locked body { overflow: hidden; }
 
 /* SCADA panel, pinned beside the operator's monitor */
 .tb-scada {
-  position: absolute; left: 0; top: 0; width: 214px; padding: 10px 12px 8px; background: var(--paper);
-  border: 1.5px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); font: 10px var(--mono);
-  pointer-events: none; will-change: transform, opacity; transition: opacity .4s;
+  position: absolute; left: 0; bottom: 4%; width: min(330px, 30%); padding: 14px 16px 12px; background: var(--paper);
+  border: 1.5px solid var(--ink); box-shadow: 8px 8px 0 var(--ink); font: 12px var(--mono);
+  pointer-events: none; opacity: 0; z-index: 2;
 }
+.tb-leader { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; opacity: 0; }
+.tb-leader path { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.tb-leader circle { fill: var(--accent); }
 .tb-scada-h { margin: 0 0 8px; font-weight: 600; letter-spacing: .1em; }
-.tb-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
-.tb-bars li { display: grid; grid-template-columns: 34px 1fr 30px; align-items: center; gap: 6px; color: var(--ink-2); }
-.tb-bars li i { display: block; height: 6px; background: var(--ink); width: calc(var(--v) * 100%); transition: background .3s; }
+.tb-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.tb-bars li { display: grid; grid-template-columns: 40px 1fr 34px; align-items: center; gap: 8px; color: var(--ink-2); }
+.tb-bars li i { display: block; height: 8px; background: var(--ink); width: calc(var(--v) * 100%); transition: background .3s; }
 .tb-bars li b { font-weight: 600; font-size: 9px; letter-spacing: .08em; color: transparent; transition: color .3s; }
 .tb-scada.flagged .tb-bars li.low i { background: var(--accent); }
 .tb-scada.flagged .tb-bars li.low b { color: var(--accent); }
@@ -974,15 +977,25 @@ html.hero-locked, html.hero-locked body { overflow: hidden; }
 .tb-note { margin: 8px 0 0; font-size: 9px; line-height: 1.45; color: var(--ink-2); }
 
 .tb-annot {
-  position: absolute; left: 0; top: 0; margin: 0; pointer-events: none; white-space: nowrap;
-  font: 700 26px/1 "Caveat", "Segoe Print", cursive; color: var(--accent); opacity: 0; transition: opacity .5s; will-change: transform;
+  position: absolute; left: 0; top: 0; margin: 0; pointer-events: none; white-space: nowrap; z-index: 2;
+  font: 700 34px/1 "Caveat", "Segoe Print", cursive; color: var(--accent); opacity: 0; will-change: transform;
 }
+.tb-annot.on { opacity: 1; animation: tbFinally .55s cubic-bezier(.3, 1.7, .5, 1) both; }
+@keyframes tbFinally { from { opacity: 0; scale: .4; rotate: -12deg; } to { opacity: 1; scale: 1; rotate: -4deg; } }
+
+/* paper fog behind the captions, and across the top of the farm */
+.tb-fog, .tb-fogtop { position: absolute; inset: 0; pointer-events: none; }
+.tb-fog { background: radial-gradient(ellipse 46% 44% at 0 0, var(--paper) 0, color-mix(in srgb, var(--paper) 88%, transparent) 45%, color-mix(in srgb, var(--paper) 0%, transparent) 100%); }
+.tb-fogtop { opacity: 0; transition: opacity .8s; background: linear-gradient(180deg, var(--paper) 0, color-mix(in srgb, var(--paper) 70%, transparent) 18%, color-mix(in srgb, var(--paper) 0%, transparent) 42%); }
+.tb-pin.tb-farm .tb-fogtop { opacity: 1; }
+.tb-pin.tb-end .tb-fogtop { opacity: 0; }
 
 .tb-copy {
   position: absolute; left: 0; top: 0; bottom: 0; width: min(560px, 44%); overflow: auto; padding-right: 8px;
   opacity: 0; transform: translateX(-24px); pointer-events: none; transition: opacity .5s, transform .6s cubic-bezier(.2, .7, .2, 1);
 }
 .tb-copy .big { font-size: clamp(22px, 2.1vw, 32px); }
+.tb-copy .revs { margin-bottom: 6px; }
 .tb-pin.tb-end .tb-copy { opacity: 1; transform: none; pointer-events: auto; }
 .tb-stage::after {
   content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .6s;
@@ -1000,3 +1013,13 @@ html.hero-locked, html.hero-locked body { overflow: hidden; }
   .tb-hud { width: 230px; }
   .tb-scada { display: none; }
 }
+
+/* geek-out link: a solid button at the end of the copy, pinned to the bottom of the copy column so it never scrolls away */
+.geek-row { position: sticky; bottom: 0; z-index: 2; align-items: center; padding: 14px 0 4px; background: linear-gradient(180deg, color-mix(in srgb, var(--paper) 0%, transparent), var(--paper) 30%); }
+.geek-btn {
+  display: inline-flex; align-items: center; gap: 8px; padding: 11px 16px 10px; text-decoration: none;
+  font: 600 13px var(--mono); letter-spacing: .04em; color: var(--paper); background: var(--ink);
+  border: 1.5px solid var(--ink); box-shadow: 4px 4px 0 var(--accent); transition: transform .15s, box-shadow .15s;
+}
+.geek-btn:hover { color: var(--paper); transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--accent); }
+.ll-copy, .tb-copy { z-index: 3; }

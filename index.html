@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500;600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=2611281205">
+<link rel="stylesheet" href="css/style.css?v=2611281237">
 </head>
 <body>
 
@@ -141,7 +141,7 @@
             <li><span>Stack</span>FastAPI · SQLite · sentence-transformers · Gemini · Vanilla JS</li>
             <li><span>Also</span>Topic dedup · time-decayed trending · faculty-curated resources · Khan-style mastery</li>
           </ul>
-          <p class="links"><a class="link ll-geek" href="lecturelens/">Geek out: the full detail set →</a><a class="link" href="https://github.com/arshhjain/LectureLens" target="_blank" rel="noopener">GitHub ↗</a></p>
+          <p class="links geek-row"><a class="geek-btn" href="lecturelens/">Geek out: the full detail set →</a><a class="link" href="https://github.com/arshhjain/LectureLens" target="_blank" rel="noopener">GitHub ↗</a></p>
         </div>
       </div>
     </div>
@@ -149,7 +149,7 @@
 </section>
 
 <!-- DWG 002 Turbine -->
-<section id="turbine" class="pin tb-pin" style="--h:560vh">
+<section id="turbine" class="pin tb-pin" style="--h:420vh">
   <div class="sticky">
     <div class="tb-sheet">
       <header class="sheet-head">
@@ -159,6 +159,7 @@
       </header>
       <div class="tb-stage" id="tbStage">
         <canvas id="tbWorld" aria-hidden="true"></canvas>
+        <i class="tb-fog" aria-hidden="true"></i><i class="tb-fogtop" aria-hidden="true"></i>
         <div class="tb-labels" id="tbLabels" aria-hidden="true"></div>
 
         <div class="tb-caps" aria-live="polite">
@@ -209,13 +210,12 @@
           <p class="tb-note">Farm, schedule and turbines are simulated. Every report is model C's real call on one of the 159 held-out test images, so it's wrong as often as the model is. "Requesting a human" below 50% confidence is a rule for this demo, not part of the trained system.</p>
         </aside>
 
-        <p class="tb-annot" id="tbAnnot" aria-hidden="true">finally.</p>
+        <p class="tb-annot" id="tbAnnot" aria-hidden="true">finally!</p>
 
         <div class="tb-copy">
-          <p class="big">Triage for drone photos of turbine blades: what kind of damage it is, and how soon someone needs to climb up there.</p>
-          <p>An ImageNet-pretrained ResNet50, fine-tuned end to end on 1,065 drone images across six defect classes, with CBAM attention and a separate ordinal head that predicts severity from L1 to L5.</p>
-          <p><b>The part that mattered most was the split.</b> Consecutive frames are near-duplicates of the same blade, so a random split quietly leaks test images into training. I grouped the frames into 361 inspection sequences, and no group crosses train, validation and test.</p>
-          <p>Honest results: deep features beat hand-crafted ones by a mile, but CBAM's edge over a plain ResNet50 is one image out of 159, which isn't statistically significant (McNemar p = 0.69). Every image in the dataset contains a defect, so it can't yet say a blade is healthy. It's scoped as triage of damage that's already been reported.</p>
+          <p class="big">Drone photos of turbine blades in; damage type and urgency out.</p>
+          <p>ResNet50 with CBAM attention and an ordinal severity head, trained on 1,065 drone images across six defect classes. Near-duplicate frames are grouped into 361 sequences, so no blade is in both train and test.</p>
+          <p><b>Honest result:</b> 92–94% accuracy on damage type across the variants I tested, though the gaps between variants aren't statistically significant. <b>One caveat:</b> it's built for turbines that have already been flagged as underperforming, so it assumes there's damage to find from the start.</p>
           <table class="revs results">
             <thead><tr><th>Model (test, n = 159)</th><th>Acc</th><th>Macro-F1</th></tr></thead>
             <tbody>
@@ -225,12 +225,7 @@
               <tr><td>+ focal loss + severity heads</td><td>92.5%</td><td>91.6%</td></tr>
             </tbody>
           </table>
-          <ul class="spec">
-            <li><span>Data</span>Figshare WT blade set · 1,065 images · 6 classes · 747 / 159 / 159 leak-free split</li>
-            <li><span>Severity</span>Learned head: MAE 0.346 levels, 71.1% exact, against 0.415 for the best class lookup. The labels come from my own proxy rule, not an industry standard.</li>
-          </ul>
-          <p class="links"><a class="link tb-geek" href="turbine/">Geek out: the full detail set →</a><a class="link" href="https://github.com/arshhjain/turbine-blade-defect-triage" target="_blank" rel="noopener">GitHub ↗</a></p>
-        </div>
+          <p class="links geek-row"><a class="geek-btn" href="turbine/">Geek out: the full detail set →</a><a class="link" href="https://github.com/arshhjain/turbine-blade-defect-triage" target="_blank" rel="noopener">GitHub ↗</a></p>
       </div>
     </div>
   </div>
@@ -551,10 +546,10 @@
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
 } }
 </script>
-<script src="js/main.js?v=2611281205"></script>
-<script type="module" src="js/cad3d.js?v=2611281205"></script>
-<script type="module" src="js/car3d.js?v=2611281205"></script>
-<script type="module" src="js/ll3d.js?v=2611281205"></script>
-<script type="module" src="js/tb3d.js?v=2611281205"></script>
+<script src="js/main.js?v=2611281237"></script>
+<script type="module" src="js/cad3d.js?v=2611281237"></script>
+<script type="module" src="js/car3d.js?v=2611281237"></script>
+<script type="module" src="js/ll3d.js?v=2611281237"></script>
+<script type="module" src="js/tb3d.js?v=2611281237"></script>
 </body>
 </html>

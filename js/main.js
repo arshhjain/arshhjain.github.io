@@ -182,6 +182,7 @@
      of the momentum is swallowed: inertia arrives as a run of shrinking deltas, so the lock holds
      until that run stops (a 140 ms gap) or a delta jumps up, which means a fresh swipe has started.
      Nav links, the hero tap's auto-scroll and scrollbar drags never lock. */
+  const LOCK_MAX = 950;
   let lastUserInput = -1e9, lockOn = false, lockUntil = 0, lockAnchor = 0, lastWheelT = 0, lastWheelAbs = 0;
   const userDriven = () => !autoScrolling && performance.now() - lastUserInput < 350;
   function releaseLock() { lockOn = false; }
@@ -189,7 +190,8 @@
     if (!userDriven() || reduceMotion) return;
     const span = sec.offsetHeight - window.innerHeight;
     lockAnchor = Math.round(sec.getBoundingClientRect().top + window.scrollY + span * clamp(frac, 0, 1));
-    lockUntil = performance.now() + ms;
+    /* hold only long enough to swallow the flick's momentum; the detent's animation keeps playing after release */
+    lockUntil = performance.now() + Math.min(ms, LOCK_MAX);
     lockOn = true;
     lastWheelAbs = Infinity;
     window.scrollTo({ top: lockAnchor, behavior: "instant" });
