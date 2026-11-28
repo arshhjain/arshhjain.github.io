@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turbine Blade Defect Triage, taken apart — Arsh Jain</title>
+<meta name="description" content="Detail drawing set for the turbine blade triage model: proxy severity labels, the leak-free group split, ResNet50 + CBAM with an ordinal severity head, ablations, failures and limits.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500;600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css?v=2611281205">
+<link rel="stylesheet" href="../lecturelens/geek.css?v=2611281205">
+<link rel="stylesheet" href="tgeek.css?v=2611281205">
+</head>
+<body class="geek">
+
+<header class="topbar">
+  <a class="mark" href="../#turbine">← A.JAIN<span>/DWG 002 DETAIL SET</span></a>
+  <nav>
+    <a href="#s2">Labels</a>
+    <a href="#s3">Split</a>
+    <a href="#s5">Ablation</a>
+    <a href="#s7">Failures</a>
+    <a href="#s8">Limits</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- ============ COVER ============ -->
+<section class="cover">
+  <div class="frame cover-frame">
+    <div class="zones zones-top" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span></div>
+    <div class="zones zones-side" aria-hidden="true"><span>A</span><span>B</span><span>C</span><span>D</span></div>
+
+    <ol class="dreg" aria-label="Drawing register">
+      <li class="reg-head"><span>SHEET</span><span>TITLE</span><span>ANSWERS</span></li>
+      <li><a href="#s0"><span>002.0</span><span>Why</span><span>What is triage, and who acts on it?</span></a></li>
+      <li><a href="#s1"><span>002.1</span><span>Pipeline</span><span>From an XML box to a repair crew</span></a></li>
+      <li><a href="#s2"><span>002.2</span><span>Labels</span><span>Where does "level 4" come from?</span></a></li>
+      <li><a href="#s3"><span>002.3</span><span>The split</span><span>Has it seen this blade before?</span></a></li>
+      <li><a href="#s4"><span>002.4</span><span>Architecture</span><span>What looks at the photo?</span></a></li>
+      <li><a href="#s5"><span>002.5</span><span>Ablation</span><span>Did CBAM actually help?</span></a></li>
+      <li><a href="#s6"><span>002.6</span><span>Severity</span><span>Is the head better than a lookup?</span></a></li>
+      <li><a href="#s7"><span>002.7</span><span>Failures</span><span>Where is it wrong, and where was it looking?</span></a></li>
+      <li><a href="#s8"><span>002.8</span><span>Limits</span><span>What it can't say</span></a></li>
+      <li><a href="#sR"><span>002.R</span><span>Revisions</span><span>What I'd build next</span></a></li>
+    </ol>
+
+    <div class="titleblock">
+      <div><small>DRAWN</small>A. JAIN</div>
+      <div><small>PARENT</small>DWG 002</div>
+      <div><small>SHEETS</small>10</div>
+      <div><small>REV</small>DRAFT A</div>
+      <div class="wide"><small>TITLE</small>TURBINE BLADE DEFECT TRIAGE — DETAIL SET</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 002.0 WHY ============ -->
+<article class="sheet" id="s0" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 002.0</span>
+    <h3>Why</h3>
+    <span class="tag">Deep Learning · Sem V · evaluated 23 Nov 2026</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">An inspection drone comes back with hundreds of blade photos. Somebody has to decide which ones get a crew, which crew, and how soon.</p>
+      <p>That's triage. The damage type decides who goes up (crack, erosion and lightning damage need different people and kit), and the severity decides when. So the model answers two questions per photo, not one.</p>
+      <p>It started as a semester project with a two-day build target. The version on this page is the one I audited afterwards: every number recomputed from saved checkpoints, the claims cut back to what the test set supports, and the failures kept in.</p>
+    </div>
+    <figure class="fig">
+      <figcaption class="fig-cap">FIG 002.0-A — REQUIREMENTS → SHEETS</figcaption>
+      <ol class="reqs">
+        <li><b>REQ-01</b><span>Name the defect type, out of six, so the right crew goes.</span><a href="#s4">002.4</a></li>
+        <li><b>REQ-02</b><span>Put a level from 1 to 5 on it, so the worst goes first.</span><a href="#s6">002.6</a></li>
+        <li><b>REQ-03</b><span>Never be graded on a blade it trained on.</span><a href="#s3">002.3</a></li>
+        <li><b>REQ-04</b><span>Show where in the photo it looked.</span><a href="#s7">002.7</a></li>
+        <li><b>REQ-05</b><span>Say plainly what it can't do.</span><a href="#s8">002.8</a></li>
+      </ol>
+    </figure>
+  </div>
+</article>
+
+<!-- ============ 002.1 PIPELINE ============ -->
+<article class="sheet" id="s1" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 002.1</span>
+    <h3>Pipeline</h3>
+    <span class="tag">Figshare XML → crew + priority</span>
+  </header>
+  <div class="sheet-body single">
+    <div class="copy narrow">
+      <p class="big">Seven stages, and only one of them is the neural network.</p>
+      <p>Most of the work, and most of the ways to fool yourself, sit before training: how the labels are made and how the frames are split. Click a stage for what happens there.</p>
+    </div>
+    <figure class="fig fig-wide">
+      <figcaption class="fig-cap">FIG 002.1-A — ONE PHOTO, END TO END<span class="try">CLICK A STAGE</span></figcaption>
+      <ol class="pipe" id="pipe">
+        <li data-i="0" class="on"><b>01</b><span>ANNOTATIONS</span><em>Pascal VOC boxes</em></li>
+        <li data-i="1"><b>02</b><span>CLASSES</span><em>6 canonical names</em></li>
+        <li data-i="2"><b>03</b><span>LABEL</span><em>type + level 1–5</em></li>
+        <li data-i="3"><b>04</b><span>GROUP</span><em>361 sequences</em></li>
+        <li data-i="4"><b>05</b><span>TRAIN</span><em>ResNet50 + CBAM</em></li>
+        <li data-i="5"><b>06</b><span>EVALUATE</span><em>test set, once</em></li>
+        <li data-i="6"><b>07</b><span>TRIAGE</span><em>crew + priority</em></li>
+      </ol>
+      <div class="pipe-detail" id="pipeDetail" aria-live="polite"></div>
+    </figure>
+  </div>
+</article>
+
+<!-- ============ 002.2 LABELS ============ -->
+<article class="sheet" id="s2" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 002.2</span>
+    <h3>Labels</h3>
+    <span class="tag">REQ-02 · my proxy rule, not the dataset's</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">The dataset has boxes and class names. It has no severity at all, so I wrote a rule.</p>
+      <p>Each class gets a base level (surface damage 1, erosion 2, craze cracking 3, crack and delamination 4, lightning 5). A box covering at least 8% of the image bumps it up one; a box under 0.5% knocks it down one. An image with several defects takes its worst one.</p>
+      <p>That rule changes the label on 473 of 1,065 images. It's loosely inspired by maintenance practice and it is <em>not</em> an industry standard, so every severity number on this site measures agreement with my rule, not real-world damage.</p>
+      <p>The rule also has a flaw I only saw later: box area in pixels depends on how far away the drone was. Pull the drone back and watch.</p>
+    </div>
+    <figure class="fig">
+      <figcaption class="fig-cap">FIG 002.2-A — THE RULE<span class="try">PICK A CLASS · DRAG THE BOX</span></figcaption>
+      <div class="chips" id="lblClass" role="radiogroup" aria-label="Defect class"></div>
+      <svg class="lbl" id="lblSvg" viewBox="0 0 520 150" role="slider" tabindex="0" aria-label="Box area as a share of the image" aria-valuemin="0.001" aria-valuemax="0.6"></svg>
+      <div class="lbl-out">
+        <div><small>BASE</small><b id="lblBase">4</b></div>
+        <div><small>BOX</small><b id="lblArea">3.0%</b></div>
+        <div class="big-l"><small>LABEL</small><b id="lblLevel">L4</b></div>
+      </div>
+      <label class="dist"><span>DRONE DISTANCE</span><input type="range" id="lblDist" min="1" max="3" step="0.05" value="1"><output id="lblDistO">1.0×</output></label>
+      <p class="fig-note" id="lblNote">Ticks under the ruler are the 1,065 real images: the largest box of each image's labelled class.</p>
+    </figure>
+  </div>
+</article>
+
+<!-- ============ 002.3 SPLIT ============ -->
+<article class="sheet" id="s3" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 002.3</span>
+    <h3>The split</h3>
+    <span class="tag">REQ-03 · leak-free by sequence</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">The part that mattered most. Consecutive frames are often the same blade a second later.</p>
+      <p>Shuffle images into train and test and the model gets graded on near-copies of photos it trained on. The score looks great and means very little.</p>
+      <p>So frames are grouped first: a new group starts whenever the frame number jumps, or when the mean pixel difference to the previous frame (both shrunk to 64 × 64) goes above 75. That gives 361 groups, from 174 single frames up to one run of 27, and whole groups go to train, validation or test.</p>
+      <p>Every cell on the right is one of the 1,065 real frames, in order. Flip to a per-image shuffle and count the leaks.</p>
+    </div>
+    <figure class="fig">
+      <figcaption class="fig-cap">FIG 002.3-A — 1,065 FRAMES · <button class="chip on" id="splitGroup">GROUP SPLIT · SHIPPED</button><button class="chip" id="splitRandom">PER-IMAGE SHUFFLE</button><span class="try">FLIP · RE-ROLL</span></figcaption>
+      <canvas class="frames" id="framesCv" width="520" height="300" aria-label="Frames coloured by split"></canvas>
+      <p class="split-key"><span><i class="k-tr"></i>train</span><span><i class="k-va"></i>val</span><span><i class="k-te"></i>test</span><span><i class="k-leak"></i>test frame with a sibling in train</span></p>
+      <div class="split-out">
+        <div><small>GROUPS CROSSING SPLITS</small><b id="splitCross">0</b></div>
+        <div><small>TEST FRAMES WITH A SIBLING IN TRAIN</small><b id="splitLeak">0</b></div>
+      </div>
+      <button class="chip" id="splitReroll" hidden>RE-ROLL SHUFFLE</button>
+    </figure>
+  </div>
+</article>
+
+<!-- ============ 002.4 ARCHITECTURE ============ -->
+<article class="sheet" id="s4" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 002.4</span>
+    <h3>Architecture</h3>
+    <span class="tag">REQ-01 · ResNet50 · CBAM · two heads</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">A pretrained ResNet50 does the seeing. Everything after it is small.</p>
+      <p>The photo is resized to 224 × 224 and runs through all four ResNet stages, ending as a 2048 × 7 × 7 feature map. CBAM then re-weights it twice: which channels matter, then where in the 7 × 7 grid. Average and max pooling are concatenated into 4,096 numbers, squeezed to 512, and three heads read that.</p>
+      <p>The type head is trained with class-weighted focal loss (γ = 2) so rare classes like lightning still count. Severity is ordinal: four yes/no thresholds ("worse than L1? worse than L2? …"), and the level is one plus the number of yeses. A scalar regression head rides along as an extra signal.</p>
+      <div class="formula">L = focal(type) + 0.5 · SmoothL1(scalar) + 0.5 · BCE(4 thresholds)</div>
+      <p>The whole network is fine-tuned end to end: AdamW at 3e-4, cosine down to 1e-6, 12 epochs, batch 16, seed 42. About five minutes on a laptop RTX 3050.</p>
+    </div>
+    <figure class="fig">
+      <figcaption class="fig-cap">FIG 002.4-A — FORWARD PASS · <button class="chip" data-v="A">A</button><button class="chip" data-v="B">B</button><button class="chip on" data-v="C">C</button><span class="try">SWITCH VARIANT</span></figcaption>
+      <svg class="arch" id="arch" viewBox="0 0 460 540" role="img" aria-label="Network diagram"></svg>
+      <p class="fig-note" id="archNote"></p>
+    </figure>
+  </div>
+</article>
+
+<!-- ============ 002.5 ABLATION ============ -->
+<article class="sheet" id="s5" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 002.5</span>
+    <h3>Ablation</h3>
+    <span class="tag">Same code · same split · same seed</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">Deep features beat hand-crafted ones by a mile. Past that, the differences are a handful of images.</p>
+      <p>Four runs on the same 159 test images. A colour-and-edge SVM gets 36%. A plain ResNet50 gets 93.7%. Adding CBAM gets 94.3%, one more image right. The full multi-task model C gets 92.5%, two fewer.</p>
+      <p>To ask whether C really differs from A, only the images where exactly one of them is right matter. A alone gets 4 of those, C alone gets 2. If the two models were equally good, a 4–2 split would happen by coin flip 69% of the time. So: not significant, and a single seed can't settle it.</p>
+      <p>Drag the counts to see how lopsided it would need to be.</p>
+    </div>
+    <div class="fig-stack">
+      <figure class="fig">
+        <figcaption class="fig-cap">FIG 002.5-A — TEST SET, N = 159</figcaption>
+        <table class="revs results abl">
+          <thead><tr><th>RUN</th><th>WHAT CHANGES</th><th>ACC</th><th>MACRO-F1</th><th>WRONG</th></tr></thead>
+          <tbody>
+            <tr><td>SVM</td><td>HSV + Sobel features, RBF SVM</td><td>35.85%</td><td>33.22%</td><td>102</td></tr>
+            <tr><td>A</td><td>ResNet50, cross-entropy</td><td>93.71%</td><td>93.14%</td><td>10</td></tr>
+            <tr class="best"><td>B</td><td>A + CBAM</td><td>94.34%</td><td>93.75%</td><td>9</td></tr>
+            <tr><td>C</td><td>B + focal loss + severity heads</td><td>92.45%</td><td>91.61%</td><td>12</td></tr>
+          </tbody>
+        </table>
+      </figure>
+      <figure class="fig">
+        <figcaption class="fig-cap">FIG 002.5-B — EXACT McNEMAR · <button class="chip on" id="mcCA">C vs A · 4–2</button><button class="chip" id="mcBA">B vs A · 3–2</button><span class="try">DRAG EITHER BAR</span></figcaption>
+        <svg class="mc" id="mcSvg" viewBox="0 0 520 170" role="group" aria-label="Discordant pairs"></svg>
+        <div class="mc-out"><div><small>p (TWO-SIDED)</small><b id="mcP">0.69</b></div><p id="mcVerdict"></p></div>
+      </figure>
+    </div>
+  </div>
+</article>
+
+<!-- ============ 002.6 SEVERITY ============ -->
+<article class="sheet" id="s6" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 002.6</span>
+    <h3>Severity</h3>
+    <span class="tag">REQ-02 · model C · ordinal head</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">The fair question for a severity head: is it better than just looking up the class?</p>
+      <p>Because the labels come from class + box size, a lookup table is a real competitor. Even a lookup that's handed the <em>true</em> class, which no deployed system would have, is off by 0.415 levels on average. The learned head is off by 0.346 and exactly right 71% of the time, so it has picked up the size part of the rule too.</p>
+      <p>The matrix is where it gets less comfortable. The most common mistake is calling a level 5 a level 4, sixteen times. Three images are under-called by two or more levels, and those are the dangerous ones in triage.</p>
+    </div>
+    <div class="fig-stack">
+      <figure class="fig">
+        <figcaption class="fig-cap">FIG 002.6-A — MEAN ABSOLUTE ERROR, LEVELS (LOWER IS BETTER)</figcaption>
+        <div class="mae" id="mae"></div>
+      </figure>
+      <figure class="fig">
+        <figcaption class="fig-cap">FIG 002.6-B — TRUE vs PREDICTED LEVEL · <button class="chip" id="sevUnder">SHOW UNDER-CALLS</button><span class="try">HOVER A CELL</span></figcaption>
+        <div class="sevcm" id="sevcm"></div>
+        <p class="fig-note" id="sevNote">Rows are the true level, columns the predicted level. 159 test images.</p>
+      </figure>
+    </div>
+  </div>
+</article>
+
+<!-- ============ 002.7 FAILURES ============ -->
+<article class="sheet" id="s7" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 002.7</span>
+    <h3>Failures</h3>
+    <span class="tag">REQ-04 · all 12 of model C's misses</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">Twelve wrong out of 159. Every one is below, with what the model was looking at.</p>
+      <p>Lightning damage is the weakest class: 4 of 15 missed. Burn marks with cracked edges look a lot like a craze network, and "craze crack" soaks up 7 of the 12 wrong answers. Images 14, 77, 95, 754 and 764 are wrong for all three deep models, so they're hard images, not one model's quirk.</p>
+      <p>Grad-CAM doesn't always flatter it either. On 729 the heat sits on a gantry in the background, not the blade, and on 539 a second hot spot lands on rocks on the ground.</p>
+      <p>Most misses are also unsure ones. If the system handed anything under a confidence threshold to a person, how many mistakes would it catch, and how many good calls would it waste a human's time on? That rule isn't in the trained system; this is me working out whether it should be.</p>
+    </div>
+    <div class="fig-stack">
+      <figure class="fig">
+        <figcaption class="fig-cap">FIG 002.7-A — THE 12 MISSES<span class="try">CLICK ONE · TOGGLE GRAD-CAM</span></figcaption>
+        <div class="fails" id="fails"></div>
+        <div class="fail-view" id="failView">
+          <div class="fv-img"><img id="fvRaw" alt=""><img id="fvCam" alt="" class="cam"></div>
+          <div class="fv-txt">
+            <p class="fv-id" id="fvId"></p>
+            <p><small>TRUE</small><b id="fvTrue"></b></p>
+            <p><small>MODEL C</small><b id="fvPred"></b></p>
+            <p><small>RUNNER-UP</small><b id="fvP2"></b></p>
+            <button class="chip on" id="fvToggle">GRAD-CAM ON</button>
+            <p class="fv-note" id="fvNote"></p>
+          </div>
+        </div>
+      </figure>
+      <figure class="fig">
+        <figcaption class="fig-cap">FIG 002.7-B — HAND LOW-CONFIDENCE CALLS TO A HUMAN?<span class="try">DRAG THE THRESHOLD</span></figcaption>
+        <svg class="thr" id="thrSvg" viewBox="0 0 520 120" role="slider" tabindex="0" aria-label="Confidence threshold" aria-valuemin="0.2" aria-valuemax="0.95"></svg>
+        <div class="thr-out">
+          <div><small>SENT TO A HUMAN</small><b id="thrSent">9</b></div>
+          <div><small>MISSES CAUGHT</small><b id="thrCaught">5 / 12</b></div>
+          <div><small>ACCURACY ON THE REST</small><b id="thrAcc">95.3%</b></div>
+        </div>
+      </figure>
+    </div>
+  </div>
+</article>
+
+<!-- ============ 002.8 LIMITS ============ -->
+<article class="sheet" id="s8" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 002.8</span>
+    <h3>Limits</h3>
+    <span class="tag">REQ-05</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">It can't tell you a blade is healthy. Every photo it ever saw had damage in it.</p>
+      <p>All 1,065 images contain at least one defect, so the model has six answers and no "none of the above". Its probabilities always add up to one across those six. On 23 November I showed it a photo of a brand-new blade and it said crack.</p>
+      <p>That's why it's scoped as triage of damage that has already been reported, and why the farm on the main sheet only sends the drone to turbines whose output has dropped. A real deployment needs a first stage that says "this looks normal" before this model is asked anything.</p>
+      <p>The other limits are smaller but real: severity is measured against my own rule (002.2), apparent size changes with drone distance, and one seed on 159 test images can't separate models that differ by one or two images (002.5).</p>
+    </div>
+    <figure class="fig">
+      <figcaption class="fig-cap">FIG 002.8-A — SIX DOORS, NO "NONE"<span class="try">SHOW IT A PHOTO</span></figcaption>
+      <div class="chips" id="closedPick">
+        <button class="chip on" data-k="crack">CRACKED BLADE · 4.jpg</button>
+        <button class="chip" data-k="healthy">NEW BLADE · 23 NOV</button>
+      </div>
+      <div class="doors" id="doors"></div>
+      <p class="fig-note" id="closedNote"></p>
+    </figure>
+  </div>
+</article>
+
+<!-- ============ 002.R REVISIONS ============ -->
+<article class="sheet" id="sR" data-reveal>
+  <header class="sheet-head">
+    <span class="dwg">DWG 002.R</span>
+    <h3>Revisions</h3>
+    <span class="tag">What I'd build next</span>
+  </header>
+  <div class="sheet-body">
+    <div class="copy">
+      <p class="big">The next version is mostly about what happens before this model, not inside it.</p>
+      <p>A first-stage anomaly detector would let it see healthy blades. A fixed capture distance, or ground sample distance from the drone's altitude, would turn pixel area into real area. Measuring damage against the blade's own width in the same photo would make size distance-proof, but needs a blade segmentation model first.</p>
+      <p>And before claiming CBAM or multi-task learning helps, more seeds and a bigger test set. Right now the honest answer is "can't tell".</p>
+    </div>
+    <figure class="fig">
+      <figcaption class="fig-cap">FIG 002.R-A — REVISION TABLE</figcaption>
+      <table class="revs">
+        <thead><tr><th>REV</th><th>CHANGE</th><th>STATUS</th></tr></thead>
+        <tbody>
+          <tr><td>A</td><td>Stage-1 anomaly filter (PatchCore-style nearest-neighbour distance on ResNet features of defect-free regions)</td><td class="st-cut">NOT BUILT</td></tr>
+          <tr><td>B</td><td>Capture SOP: fixed stand-off distance, camera and zoom, then recalibrate the 0.5% / 8% thresholds</td><td class="st-cut">NOT BUILT</td></tr>
+          <tr><td>C</td><td>Damage size relative to local blade width (needs blade segmentation)</td><td class="st-cut">NOT BUILT</td></tr>
+          <tr><td>D</td><td>More seeds and a larger test set to resolve A vs B vs C</td><td class="st-pause">OPEN</td></tr>
+          <tr><td>E</td><td>Older "baseline B" run at 91.19%, trained on an earlier code version</td><td class="st-pause">REPLACED · run A is the controlled baseline</td></tr>
+        </tbody>
+      </table>
+    </figure>
+  </div>
+</article>
+
+</main>
+
+<footer class="geek-end">
+  <a class="link" href="../#turbine">← back to the full set</a>
+  <a class="link" href="https://github.com/arshhjain/turbine-blade-defect-triage" target="_blank" rel="noopener">source on GitHub ↗</a>
+  <div class="titleblock end">
+    <div><small>DRAWN</small>A. JAIN</div>
+    <div><small>CHECKED</small>—</div>
+    <div><small>SHEET</small>10 / 10</div>
+    <div><small>REV</small>DRAFT A</div>
+    <div class="wide"><small>TITLE</small>TURBINE BLADE DEFECT TRIAGE — DETAIL SET — END</div>
+  </div>
+</footer>
+
+<script src="geek.js?v=2611281205"></script>
+</body>
+</html>

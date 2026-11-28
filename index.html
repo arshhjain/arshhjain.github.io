@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500;600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=2611271841">
+<link rel="stylesheet" href="css/style.css?v=2611281205">
 </head>
 <body>
 
@@ -149,40 +149,92 @@
 </section>
 
 <!-- DWG 002 Turbine -->
-<article class="sheet" id="turbine" data-reveal>
-  <header class="sheet-head">
-    <span class="dwg">DWG 002</span>
-    <h3>Turbine Blade Defect Triage</h3>
-    <span class="tag">Deep Learning · Sem V · PyTorch</span>
-  </header>
-  <div class="sheet-body">
-    <div class="copy">
-      <p class="big">Triage for drone inspection photos of wind turbine blades: what kind of damage it is, and how soon someone needs to climb up there.</p>
-      <p>An ImageNet-pretrained ResNet50, fine-tuned end to end on 1,065 drone images across six defect classes, with CBAM attention and a separate ordinal head that predicts severity from L1 to L5.</p>
-      <p><b>The part that mattered most was the split.</b> Consecutive frames are near-duplicates of the same blade, so a random split quietly leaks test images into training. I grouped the frames into 361 inspection sequences, and no group crosses train, validation and test.</p>
-      <p>Honest results: deep features beat hand-crafted ones by a mile, but CBAM's edge over a plain ResNet50 is one image out of 159, which isn't statistically significant (McNemar p = 0.69). Every image in the dataset contains a defect, so it can't yet say a blade is healthy. It's scoped as triage of damage that's already been reported.</p>
-      <ul class="spec">
-        <li><span>Data</span>Figshare WT blade set · 1,065 images · 6 classes · 747 / 159 / 159 leak-free split</li>
-        <li><span>Severity</span>Learned head: MAE 0.346 levels, 71.1% exact, against 0.415 for the best class lookup. The labels come from my own proxy rule, not an industry standard.</li>
-      </ul>
-    </div>
-    <div class="stack-col">
-      <figure class="media photo-fixed">
-        <img alt="Grad-CAM heatmap over a cracked turbine blade" src="assets/media/turbine-gradcam.jpg" loading="lazy">
-        <figcaption>Grad-CAM, crack class (training-split image)</figcaption>
-      </figure>
-      <table class="revs results">
-        <thead><tr><th>Model (test, n = 159)</th><th>Acc</th><th>Macro-F1</th></tr></thead>
-        <tbody>
-          <tr><td>HSV + Sobel + SVM</td><td>35.9%</td><td>33.2%</td></tr>
-          <tr><td>ResNet50</td><td>93.7%</td><td>93.1%</td></tr>
-          <tr class="best"><td>+ CBAM</td><td>94.3%</td><td>93.8%</td></tr>
-          <tr><td>+ focal loss + severity heads</td><td>92.5%</td><td>91.6%</td></tr>
-        </tbody>
-      </table>
+<section id="turbine" class="pin tb-pin" style="--h:560vh">
+  <div class="sticky">
+    <div class="tb-sheet">
+      <header class="sheet-head">
+        <span class="dwg">DWG 002</span>
+        <h3>Turbine Blade Defect Triage</h3>
+        <span class="tag">Deep Learning · Sem V · PyTorch</span>
+      </header>
+      <div class="tb-stage" id="tbStage">
+        <canvas id="tbWorld" aria-hidden="true"></canvas>
+        <div class="tb-labels" id="tbLabels" aria-hidden="true"></div>
+
+        <div class="tb-caps" aria-live="polite">
+          <p class="tb-cap"><small>SITE OFFICE · 24 TURBINES</small>The farm's making less than it should.</p>
+          <p class="tb-cap"><small>SCADA · 3 TURBINES FLAGGED</small>Three turbines are down on output. Nobody knows why.</p>
+          <p class="tb-cap"><small>INSPECTION DRONE · OUTBOUND</small>So a drone goes and looks.</p>
+          <p class="tb-cap"><small>T-04 · BLADE B</small>What is it, and how bad?</p>
+          <p class="tb-cap"><small>WHOLE FARM</small>Then it works the whole farm.</p>
+        </div>
+
+        <div class="tb-scada" id="tbScada" aria-hidden="true">
+          <p class="tb-scada-h">SCADA · OUTPUT vs POWER CURVE</p>
+          <ol class="tb-bars" id="tbBars"></ol>
+        </div>
+
+        <div class="tb-reticle" id="tbReticle" aria-hidden="true"><i></i><i></i><i></i><i></i><span id="tbRetText">SCANNING</span></div>
+
+        <figure class="tb-feed" id="tbFeed">
+          <figcaption class="tb-feed-h"><span>DRONE FEED · T-04</span><span class="tb-rec">REC</span></figcaption>
+          <div class="tb-frame">
+            <img src="assets/media/turbine/tb-4.jpg" alt="Drone photo of a turbine with a split blade (test image 4)" loading="lazy">
+            <img class="tb-cam" src="assets/media/turbine/tb-4-cam.jpg" alt="" loading="lazy">
+            <i class="tb-scanline"></i>
+          </div>
+          <div class="tb-read">
+            <p><span>TYPE</span><b>crack</b><em>91.1%</em></p>
+            <p><span>RUNNER-UP</span><b>delamination</b><em>6.1%</em></p>
+            <p><span>SEVERITY</span><b class="tb-pips" style="--n:5"><i></i><i></i><i></i><i></i><i></i></b><em>L5</em></p>
+          </div>
+          <p class="tb-feed-note">Test image 4.jpg, never seen in training. Model C's real output, Grad-CAM on the CBAM layer.</p>
+        </figure>
+
+        <div class="tb-dialog" id="tbDialog" role="alertdialog" aria-label="Triage result">
+          <p class="tb-dialog-bar"><span>TRIAGE.EXE</span><span aria-hidden="true">✕</span></p>
+          <div class="tb-dialog-body">
+            <p class="tb-dialog-k">CRACK · LEVEL 5</p>
+            <p class="tb-dialog-m">Assign crack repair team. <b>STAT.</b></p>
+            <p class="tb-dialog-btns"><span class="tb-btn on">ASSIGN</span><span class="tb-btn off" title="Not an option at level 5">SNOOZE</span></p>
+          </div>
+        </div>
+
+        <aside class="tb-hud" id="tbHud" aria-label="Simulated dispatch board">
+          <p class="tb-hud-h"><span>DISPATCH BOARD</span><span>SCANNED <b id="tbScanned">0</b></span></p>
+          <ul class="tb-queues" id="tbQueues"></ul>
+          <p class="tb-hud-row tb-human"><span>REQUESTING A HUMAN</span><b id="tbHuman">0</b></p>
+          <p class="tb-hud-row"><span>WRONG TYPE · FOUND ON SITE</span><b id="tbWrong">0</b></p>
+          <div class="tb-last" id="tbLast"><i class="tb-thumb" id="tbThumb"></i><p id="tbLastText">Waiting for the first report…</p></div>
+          <p class="tb-note">Farm, schedule and turbines are simulated. Every report is model C's real call on one of the 159 held-out test images, so it's wrong as often as the model is. "Requesting a human" below 50% confidence is a rule for this demo, not part of the trained system.</p>
+        </aside>
+
+        <p class="tb-annot" id="tbAnnot" aria-hidden="true">finally.</p>
+
+        <div class="tb-copy">
+          <p class="big">Triage for drone photos of turbine blades: what kind of damage it is, and how soon someone needs to climb up there.</p>
+          <p>An ImageNet-pretrained ResNet50, fine-tuned end to end on 1,065 drone images across six defect classes, with CBAM attention and a separate ordinal head that predicts severity from L1 to L5.</p>
+          <p><b>The part that mattered most was the split.</b> Consecutive frames are near-duplicates of the same blade, so a random split quietly leaks test images into training. I grouped the frames into 361 inspection sequences, and no group crosses train, validation and test.</p>
+          <p>Honest results: deep features beat hand-crafted ones by a mile, but CBAM's edge over a plain ResNet50 is one image out of 159, which isn't statistically significant (McNemar p = 0.69). Every image in the dataset contains a defect, so it can't yet say a blade is healthy. It's scoped as triage of damage that's already been reported.</p>
+          <table class="revs results">
+            <thead><tr><th>Model (test, n = 159)</th><th>Acc</th><th>Macro-F1</th></tr></thead>
+            <tbody>
+              <tr><td>HSV + Sobel + SVM</td><td>35.9%</td><td>33.2%</td></tr>
+              <tr><td>ResNet50</td><td>93.7%</td><td>93.1%</td></tr>
+              <tr class="best"><td>+ CBAM</td><td>94.3%</td><td>93.8%</td></tr>
+              <tr><td>+ focal loss + severity heads</td><td>92.5%</td><td>91.6%</td></tr>
+            </tbody>
+          </table>
+          <ul class="spec">
+            <li><span>Data</span>Figshare WT blade set · 1,065 images · 6 classes · 747 / 159 / 159 leak-free split</li>
+            <li><span>Severity</span>Learned head: MAE 0.346 levels, 71.1% exact, against 0.415 for the best class lookup. The labels come from my own proxy rule, not an industry standard.</li>
+          </ul>
+          <p class="links"><a class="link tb-geek" href="turbine/">Geek out: the full detail set →</a><a class="link" href="https://github.com/arshhjain/turbine-blade-defect-triage" target="_blank" rel="noopener">GitHub ↗</a></p>
+        </div>
+      </div>
     </div>
   </div>
-</article>
+</section>
 
 <!-- DWG 003 F1 -->
 <article class="sheet" id="f1" data-reveal>
@@ -499,9 +551,10 @@
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
 } }
 </script>
-<script src="js/main.js?v=2611271841"></script>
-<script type="module" src="js/cad3d.js?v=2611271841"></script>
-<script type="module" src="js/car3d.js?v=2611271841"></script>
-<script type="module" src="js/ll3d.js?v=2611271841"></script>
+<script src="js/main.js?v=2611281205"></script>
+<script type="module" src="js/cad3d.js?v=2611281205"></script>
+<script type="module" src="js/car3d.js?v=2611281205"></script>
+<script type="module" src="js/ll3d.js?v=2611281205"></script>
+<script type="module" src="js/tb3d.js?v=2611281205"></script>
 </body>
 </html>
