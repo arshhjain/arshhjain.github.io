@@ -375,9 +375,20 @@ import * as THREE from "three";
 
     /* ---------- dispatch board ---------- */
     const CLASSES = ["crack", "craze_crack", "delamination", "erosion", "lightning_damage", "surface_damage"];
-    const TEAM = { crack: "CRACK", craze_crack: "CRAZE", delamination: "DELAM", erosion: "EROSION", lightning_damage: "LIGHTNING", surface_damage: "SURFACE" };
-    queuesEl.innerHTML = CLASSES.map((c) => `<li data-c="${c}"><span>${TEAM[c]} CREW</span><span class="tb-q"></span><b>0</b></li>`).join("");
-    const qRows = Object.fromEntries(CLASSES.map((c) => [c, queuesEl.querySelector(`[data-c="${c}"]`)]));
+    /* the five crews, routing and queue order from the project's own app/dispatch_board.py:
+       type → crew, each queue ordered by severity then arrival, under 60% confidence → a human inspector */
+    const CREWS = [
+      ["structural", "STRUCTURAL", ["crack", "craze_crack"]],
+      ["laminate", "LAMINATE", ["delamination"]],
+      ["leading_edge", "LEADING EDGE", ["erosion"]],
+      ["lightning", "LIGHTNING PROT.", ["lightning_damage"]],
+      ["coating", "COATING", ["surface_damage"]]
+    ];
+    const CREW_OF = Object.fromEntries(CREWS.flatMap(([k, , cs]) => cs.map((c) => [c, k])));
+    const CREW_NAME = Object.fromEntries(CREWS.map(([k, n]) => [k, n]));
+    const LOW_CONF = 0.6;
+    queuesEl.innerHTML = CREWS.map(([k, n]) => `<li data-c="${k}"><span>${n}</span><span class="tb-q"></span><b>0</b></li>`).join("");
+    const qRows = Object.fromEntries(CREWS.map(([k]) => [k, queuesEl.querySelector(`[data-c="${k}"]`)]));
     const ORDER = ["", "LOGGED · COSMETIC", "NEXT ROUND", "THIS QUARTER", "NDT WITHIN 48 H", "STAT."];
     const pretty = (c) => c.replace("_", " ");
 
@@ -404,7 +415,7 @@ import * as THREE from "three";
     /* ---------- farm simulation (runs after the pull-back) ---------- */
     let sim;
     function resetSim() {
-      sim = { scanned: 1, human: 0, wrong: 0, next: 0, queue: { crack: [5] }, mode: "pick", target: null, t: 0, from: null, curve: null, flagIn: 3 };
+      sim = { scanned: 1, human: 0, wrong: 0, next: 0, queue: { structural: [5] }, fresh: "structural", mode: "pick", target: null, t: 0, from: null, curve: null, flagIn: 3 };
       turbines.forEach((t) => { t.state = "ok"; setLabel(t, false); });
       T04.state = "parked";
       FIRST_FLAGS.slice(1).forEach((n) => { byName(n).state = "flagged"; setLabel(byName(n), true); });
@@ -412,24 +423,21 @@ import * as THREE from "three";
       const r4 = all.find((r) => r.id === 4);
       hud.thumb.style.visibility = r4 ? "visible" : "hidden";
       if (r4) hud.thumb.style.backgroundPosition = spritePos(r4.k);
-      hud.last.textContent = "T-04 · crack · L5 · crack crew, stat.";
+      hud.last.textContent = "T-04 · 4.jpg · crack 91% · L5 → structural, top of the queue";
     }
     const HOVER = (t) => new THREE.Vector3(t.x + 4.2, TOWER - 2.2, t.z + 7.5);
     function drawHud() {
       hud.scanned.textContent = sim.scanned;
       hud.human.textContent = sim.human;
       hud.wrong.textContent = sim.wrong;
-      for (const c of CLASSES) {
-        const q = sim.queue[c] || [];
-        const row = qRows[c];
+      /* each queue is drawn worst first, as the crew would work it */
+      for (const [k] of CREWS) {
+        const q = (sim.queue[k] || []).slice().sort((x, y) => y - x);
+        const row = qRows[k];
         row.querySelector("b").textContent = q.length;
-        const box = row.querySelector(".tb-q");
-        while (box.children.length < Math.min(q.length, 14)) {
-          const i = document.createElement("i"); const s = q[box.children.length];
-          i.className = `s${s} new`; i.style.setProperty("--s", s); box.appendChild(i);
-        }
-        while (box.children.length > Math.min(q.length, 14)) box.lastChild.remove();
+        row.querySelector(".tb-q").innerHTML = q.slice(0, 14).map((lv, i) => `<i class="s${lv}${k === sim.fresh && lv === sim.freshLv && i === q.indexOf(lv) ? " new" : ""}" style="--s:${lv}"></i>`).join("");
       }
+      sim.fresh = null;
     }
     function report(t) {
       if (!records || !records.length) return;
@@ -438,15 +446,18 @@ import * as THREE from "three";
       hud.thumb.style.visibility = "visible";
       hud.thumb.style.backgroundPosition = spritePos(r.k ?? 0);
       if (r.p !== r.t) sim.wrong++;
-      if (r.c < 0.5) {
+      if (r.c < LOW_CONF) {
         sim.human++;
-        chip(t, `<small>${t.name} · ${r.id}.jpg</small>${pretty(r.p)} or ${pretty(r.p2)}? ${Math.round(r.c * 100)}%… <b>requesting a human</b>`, "human");
-        hud.last.textContent = `${t.name} · ${r.id}.jpg · ${pretty(r.p)} ${Math.round(r.c * 100)}% vs ${pretty(r.p2)} ${Math.round(r.c2 * 100)}% → human review`;
+        chip(t, `<small>${t.name} · ${r.id}.jpg</small>${pretty(r.p)} or ${pretty(r.p2)}? ${Math.round(r.c * 100)}%… <b>sending a human</b>`, "human");
+        hud.last.textContent = `${t.name} · ${r.id}.jpg · ${pretty(r.p)} ${Math.round(r.c * 100)}% vs ${pretty(r.p2)} ${Math.round(r.c2 * 100)}% → human inspector`;
       } else {
-        (sim.queue[r.p] = sim.queue[r.p] || []).push(r.ps);
-        const msg = r.ps >= 5 ? `${TEAM[r.p]} CREW. <b>STAT.</b>` : `${TEAM[r.p].toLowerCase()} crew · ${ORDER[r.ps].toLowerCase()}`;
+        const k = CREW_OF[r.p];
+        (sim.queue[k] = sim.queue[k] || []).push(r.ps);
+        sim.fresh = k; sim.freshLv = r.ps;
+        const crew = CREW_NAME[k].toLowerCase();
+        const msg = r.ps >= 5 ? `${CREW_NAME[k]} CREW. <b>STAT.</b>` : `${crew} crew · ${ORDER[r.ps].toLowerCase()}`;
         chip(t, `<small>${t.name} · ${r.id}.jpg · ${pretty(r.p)} ${Math.round(r.c * 100)}% · L${r.ps}</small>${msg}`, `s${r.ps}`);
-        hud.last.textContent = `${t.name} · ${r.id}.jpg · ${pretty(r.p)} ${Math.round(r.c * 100)}% · L${r.ps}${r.p !== r.t ? ` (was ${pretty(r.t)})` : ""}`;
+        hud.last.textContent = `${t.name} · ${r.id}.jpg · ${pretty(r.p)} ${Math.round(r.c * 100)}% · L${r.ps} → ${crew}${r.p !== r.t ? ` (actually ${pretty(r.t)})` : ""}`;
       }
       t.state = "crew"; t.stateT = 16 + rnd() * 8;
       setLabel(t, false);
@@ -629,8 +640,7 @@ import * as THREE from "three";
         setLabel(t, (c > 0.5 && e < 0.4 && (t.state === "flagged" || t.state === "visiting")) || early);
         if (t.label) place(t.label, tipOf(t));
       });
-      /* the board steps aside at the end so the operator is the subject */
-      hudEl.style.opacity = (sm(0.55, 1, c) * (1 - e)).toFixed(3);
+      hudEl.style.opacity = sm(0.55, 1, c).toFixed(3);
       if (!!D.farm.t !== farmState) { farmState = !!D.farm.t; section.classList.toggle("tb-farm", farmState); }
 
       /* operator: sulk → looks up and taps (push) → on his feet and cheering (end) */

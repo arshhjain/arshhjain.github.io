@@ -8,9 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500;600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/style.css?v=2611281340">
-<link rel="stylesheet" href="../lecturelens/geek.css?v=2611281340">
-<link rel="stylesheet" href="tgeek.css?v=2611281340">
+<link rel="stylesheet" href="../css/style.css?v=2611281400">
+<link rel="stylesheet" href="../lecturelens/geek.css?v=2611281400">
+<link rel="stylesheet" href="tgeek.css?v=2611281400">
 </head>
 <body class="geek">
 
@@ -265,7 +265,7 @@
       <p class="big">Twelve wrong out of 159. Every one is below, with what the model was looking at.</p>
       <p>Lightning damage is the weakest class: 4 of 15 missed. Burn marks with cracked edges look a lot like a craze network, and "craze crack" soaks up 7 of the 12 wrong answers. Images 14, 77, 95, 754 and 764 are wrong for all three deep models, so they're hard images, not one model's quirk.</p>
       <p>Grad-CAM doesn't always flatter it either. On 729 the heat sits on a gantry in the background, not the blade, and on 539 a second hot spot lands on rocks on the ground.</p>
-      <p>Most misses are also unsure ones. If the system handed anything under a confidence threshold to a person, how many mistakes would it catch, and how many good calls would it waste a human's time on? That rule isn't in the trained system; this is me working out whether it should be.</p>
+      <p>Most misses are also unsure ones, which is why the dispatch board in the repo sends anything under 60% confidence to a human inspector instead of a crew. That's a fixed rule on top of the model, not something it learned. Drag the threshold to see what 60% buys: how many mistakes it catches, and how many good calls it costs a person's time.</p>
     </div>
     <div class="fig-stack">
       <figure class="fig">
@@ -284,12 +284,12 @@
         </div>
       </figure>
       <figure class="fig">
-        <figcaption class="fig-cap">FIG 002.7-B — HAND LOW-CONFIDENCE CALLS TO A HUMAN?<span class="try">DRAG THE THRESHOLD</span></figcaption>
+        <figcaption class="fig-cap">FIG 002.7-B — THE 60% HUMAN CHECK<span class="try">DRAG THE THRESHOLD</span></figcaption>
         <svg class="thr" id="thrSvg" viewBox="0 0 520 120" role="slider" tabindex="0" aria-label="Confidence threshold" aria-valuemin="0.2" aria-valuemax="0.95"></svg>
         <div class="thr-out">
-          <div><small>SENT TO A HUMAN</small><b id="thrSent">9</b></div>
-          <div><small>MISSES CAUGHT</small><b id="thrCaught">5 / 12</b></div>
-          <div><small>ACCURACY ON THE REST</small><b id="thrAcc">95.3%</b></div>
+          <div><small>SENT TO A HUMAN</small><b id="thrSent">16</b></div>
+          <div><small>MISSES CAUGHT</small><b id="thrCaught">6 / 12</b></div>
+          <div><small>ACCURACY ON THE REST</small><b id="thrAcc">95.8%</b></div>
         </div>
       </figure>
     </div>
@@ -365,6 +365,6 @@
   </div>
 </footer>
 
-<script src="geek.js?v=2611281340"></script>
+<script src="geek.js?v=2611281400"></script>
 </body>
 </html>

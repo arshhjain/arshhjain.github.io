@@ -963,7 +963,7 @@ html.hero-locked, html.hero-locked body { overflow: hidden; }
 .tb-hud-h { display: flex; justify-content: space-between; margin: 0 0 6px; padding-bottom: 7px; border-bottom: 1.5px solid var(--ink); font-size: 10px; font-weight: 600; letter-spacing: .12em; }
 .tb-hud-h b { font-variant-numeric: tabular-nums; color: var(--accent); }
 .tb-queues { list-style: none; margin: 0; padding: 0; }
-.tb-queues li { display: grid; grid-template-columns: 82px 1fr 22px; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid var(--line); font-size: 10px; letter-spacing: .06em; }
+.tb-queues li { display: grid; grid-template-columns: 112px 1fr 22px; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid var(--line); font-size: 10px; letter-spacing: .06em; }
 .tb-queues li b { text-align: right; font-variant-numeric: tabular-nums; }
 .tb-q { display: flex; gap: 2px; flex-wrap: wrap; min-height: 8px; }
 .tb-q i { width: 8px; height: 8px; background: var(--ink); opacity: calc(.25 + var(--s) * .15); }

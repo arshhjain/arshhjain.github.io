@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500;600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=2611281340">
+<link rel="stylesheet" href="css/style.css?v=2611281400">
 </head>
 <body>
 
@@ -195,37 +195,29 @@
         <div class="tb-dialog" id="tbDialog" role="alertdialog" aria-label="Triage result">
           <p class="tb-dialog-bar"><span>TRIAGE.EXE</span><span aria-hidden="true">✕</span></p>
           <div class="tb-dialog-body">
-            <p class="tb-dialog-k">CRACK · LEVEL 5</p>
+            <p class="tb-dialog-k">CRACK · LEVEL 5 → STRUCTURAL CREW</p>
             <p class="tb-dialog-m">Assign crack repair team. <b>STAT.</b></p>
             <p class="tb-dialog-btns"><span class="tb-btn on">ASSIGN</span><span class="tb-btn off" title="Not an option at level 5">SNOOZE</span></p>
           </div>
         </div>
 
         <aside class="tb-hud" id="tbHud" aria-label="Simulated dispatch board">
-          <p class="tb-hud-h"><span>DISPATCH BOARD</span><span>SCANNED <b id="tbScanned">0</b></span></p>
+          <p class="tb-hud-h"><span>DISPATCH · WORST FIRST</span><span>SCANNED <b id="tbScanned">0</b></span></p>
           <ul class="tb-queues" id="tbQueues"></ul>
-          <p class="tb-hud-row tb-human"><span>REQUESTING A HUMAN</span><b id="tbHuman">0</b></p>
+          <p class="tb-hud-row tb-human"><span>UNDER 60% → HUMAN INSPECTOR</span><b id="tbHuman">0</b></p>
           <p class="tb-hud-row"><span>WRONG TYPE · FOUND ON SITE</span><b id="tbWrong">0</b></p>
           <div class="tb-last" id="tbLast"><i class="tb-thumb" id="tbThumb"></i><p id="tbLastText">Waiting for the first report…</p></div>
-          <p class="tb-note">Farm, schedule and turbines are simulated. Every report is model C's real call on one of the 159 held-out test images, so it's wrong as often as the model is. "Requesting a human" below 50% confidence is a rule for this demo, not part of the trained system.</p>
+          <p class="tb-note">The farm and its schedule are simulated. Every report is the model's real call on one of 159 held-out test photos, so it's wrong as often as the model is. Routing, worst-first queues and the 60% human check are fixed rules from the project's dispatch board, not learned.</p>
         </aside>
 
         <p class="tb-annot" id="tbAnnot" aria-hidden="true"><span>finally!</span></p>
 
         <div class="tb-copy">
-          <p class="big">Drone photos of turbine blades in; damage type and urgency out.</p>
-          <p>ResNet50 with CBAM attention and an ordinal severity head, trained on 1,065 drone images across six defect classes. Near-duplicate frames are grouped into 361 sequences, so no blade is in both train and test.</p>
-          <p><b>Honest result:</b> 92–94% accuracy on damage type across the variants I tested, though the gaps between variants aren't statistically significant. <b>One caveat:</b> it's built for turbines that have already been flagged as underperforming, so it assumes there's damage to find from the start.</p>
-          <table class="revs results">
-            <thead><tr><th>Model (test, n = 159)</th><th>Acc</th><th>Macro-F1</th></tr></thead>
-            <tbody>
-              <tr><td>HSV + Sobel + SVM</td><td>35.9%</td><td>33.2%</td></tr>
-              <tr><td>ResNet50</td><td>93.7%</td><td>93.1%</td></tr>
-              <tr class="best"><td>+ CBAM</td><td>94.3%</td><td>93.8%</td></tr>
-              <tr><td>+ focal loss + severity heads</td><td>92.5%</td><td>91.6%</td></tr>
-            </tbody>
-          </table>
-          <p class="links geek-row"><a class="geek-btn" href="turbine/">Geek out: the full detail set →</a><a class="link" href="https://github.com/arshhjain/turbine-blade-defect-triage" target="_blank" rel="noopener">GitHub ↗</a></p>
+          <p class="big">Drone photo in. Damage type, severity and the right repair crew out, worst jobs first.</p>
+          <p>The drone sends each blade photo to the model, which names the damage (one of six types) and grades it from level 1 to 5. The type decides which crew gets the job: structural, laminate, leading-edge, lightning protection or coating. The level decides where it sits in that crew's queue, so a level-5 crack is first in line and a cosmetic scuff waits for the next round.</p>
+          <p>When the model is less than 60% sure, the photo goes to a human inspector instead of a crew.</p>
+          <p><b>Honest result:</b> 92–94% accurate on damage type across the variants I tested, on photos it never trained on. <b>One caveat:</b> it's built for turbines that have already been flagged as underperforming, so it assumes there's damage to find from the start.</p>
+          <p class="links geek-row"><a class="geek-btn" href="turbine/">Geek out: how the model works →</a><a class="link" href="https://github.com/arshhjain/turbine-blade-defect-triage" target="_blank" rel="noopener">GitHub ↗</a></p>
       </div>
     </div>
   </div>
@@ -546,10 +538,10 @@
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
 } }
 </script>
-<script src="js/main.js?v=2611281340"></script>
-<script type="module" src="js/cad3d.js?v=2611281340"></script>
-<script type="module" src="js/car3d.js?v=2611281340"></script>
-<script type="module" src="js/ll3d.js?v=2611281340"></script>
-<script type="module" src="js/tb3d.js?v=2611281340"></script>
+<script src="js/main.js?v=2611281400"></script>
+<script type="module" src="js/cad3d.js?v=2611281400"></script>
+<script type="module" src="js/car3d.js?v=2611281400"></script>
+<script type="module" src="js/ll3d.js?v=2611281400"></script>
+<script type="module" src="js/tb3d.js?v=2611281400"></script>
 </body>
 </html>

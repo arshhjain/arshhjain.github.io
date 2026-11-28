@@ -39,7 +39,7 @@
       { h: "Group", p: ["Frames are chained into sequences by frame number and pixel difference, then whole sequences are split 70 / 15 / 15 (002.3)."], d: [["GROUPS", "361"], ["TRAIN · VAL · TEST", "747 · 159 · 159 images"]] },
       { h: "Train", p: ["Pretrained ResNet50, CBAM and two heads, fine-tuned end to end (002.4). Heavy augmentation on the training split only: affine, rotation, lighting, motion blur, fog.", "The best epoch is picked on validation macro-F1."], d: [["EPOCHS", "12"], ["INPUT", "224 × 224"]] },
       { h: "Evaluate", p: ["The test set is used once, at the end. Every number on this page was recomputed from the saved checkpoints on 22 November by scripts/verify_test_metrics.py."], d: [["TEST", "159 images · 36 groups"], ["MODEL C", "92.45% acc · 0.346 MAE"]] },
-      { h: "Triage", p: ["Type picks the crew; level picks how soon. L5 means ground the turbine now, L4 means non-destructive testing within 48 hours, and so on down to cosmetic logging at L1.", "This mapping is a demo policy on top of the model, not something the model learned."], d: [["TYPE →", "crew"], ["LEVEL →", "priority"]] }
+      { h: "Triage", p: ["The dispatch board in the repo (app/dispatch_board.py) turns each prediction into a ticket. The type picks one of five crews: structural (crack, craze crack), laminate (delamination), leading-edge (erosion), lightning protection, or coating (surface damage). Each crew's queue is ordered by level, then by arrival.", "Below 60% confidence the ticket goes to a human inspector instead. All of this is fixed rules on top of the model, not something it learned."], d: [["TYPE →", "one of 5 crews"], ["LEVEL →", "queue position"], ["< 60% →", "human inspector"]] }
     ];
     const items = [...list.children];
     const show = (i) => {
@@ -304,14 +304,14 @@
       14: "Delamination's original dataset label is hide_craze, which is visually subtle. Wrong for all three deep models.",
       77: "Lightning damage, the weakest class. Wrong for all three deep models.",
       95: "Lightning called erosion. Wrong for all three deep models.",
-      181: "Under 50% confident: one of the calls a human threshold would catch.",
-      539: "A second hot spot sits on rocks on the ground, not on the blade.",
-      641: "Delamination called craze crack at under 50%.",
-      729: "The heat is on a gantry in the background, not on the blade.",
-      732: "Confidently wrong at 90%. A threshold wouldn't catch this one.",
-      754: "Burn mark with cracked edges, read as a craze network. Wrong for all three deep models.",
+      181: "Under 60% confident, so the dispatch board would send it to a human.",
+      539: "A second hot spot sits on rocks on the ground, not on the blade. Under 60%, so a human gets it.",
+      641: "Delamination called craze crack at under 60%: caught by the human check.",
+      729: "The heat is on a gantry in the background, not on the blade. Under 60%, so a human gets it.",
+      732: "Confidently wrong at 90%. The 60% check doesn't catch this one.",
+      754: "Burn mark with cracked edges, read as a craze network. Wrong for all three deep models; at 56% the human check catches it.",
       764: "Delamination (hide_craze) called surface damage. Wrong for all three deep models.",
-      834: "Lightning again, and under 50% confident."
+      834: "Lightning again, and under 60% confident: caught by the human check."
     };
     const fv = { raw: $("#fvRaw"), cam: $("#fvCam"), img: $(".fv-img"), id: $("#fvId"), t: $("#fvTrue"), p: $("#fvPred"), p2: $("#fvP2"), note: $("#fvNote"), tog: $("#fvToggle") };
     let recs = {};
@@ -341,7 +341,7 @@
     const X0 = 20, X1 = 500, C0 = 0.2, C1 = 1;
     const xOf = (c) => X0 + ((clamp(c, C0, C1) - C0) / (C1 - C0)) * (X1 - X0);
     const cOf = (x) => C0 + ((clamp(x, X0, X1) - X0) / (X1 - X0)) * (C1 - C0);
-    let t = 0.5, all = [];
+    let t = 0.6, all = [];
     const shade = el("rect", { class: "shade", x: X0, y: 8, height: 84, width: 0 }, svg);
     const dots = el("g", {}, svg);
     el("line", { class: "axis", x1: X0, x2: X1, y1: 96, y2: 96, stroke: "currentColor" }, svg);
